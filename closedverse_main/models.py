@@ -384,10 +384,10 @@ class Profile(models.Model):
 		if not self.user.origin_id:
 			return None
 		return self.user.origin_id
-	def following(self, limit=50, offset=0, request=None):
+	def get_following(self, limit=50, offset=0, request=None):
 		following = self.user.follow_source.filter().order_by('-created')[offset:offset + limit]
 		return following
-	def followers(self, limit=50, offset=0, request=None):
+	def get_followers(self, limit=50, offset=0, request=None):
 		followers = self.user.follow_target.filter().order_by('-created')[offset:offset + limit]
 		return followers
 
@@ -396,6 +396,7 @@ class Follow(models.Model):
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='follow_source')
 	target = models.ForeignKey(User, related_name='follow_target')
+	created = models.DateTimeField(auto_now=True)
 	
 	def __str__(self):
 		return "follow: from " + self.source.username + " to " + self.target.username

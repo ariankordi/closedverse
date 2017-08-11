@@ -234,6 +234,13 @@ def user_followers(request, username):
 	else:
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
+	followers = profile.get_followers()
+	return render(request, 'closedverse_main/user_followers.html', {
+			'user': user,
+			'title': title,
+			'profile': profile,
+			'followers': followers,
+		})
 	# Todo user_follows.html
 
 @login_required
