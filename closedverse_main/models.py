@@ -384,6 +384,12 @@ class Profile(models.Model):
 		if not self.user.origin_id:
 			return None
 		return self.user.origin_id
+	def following(self, limit=50, offset=0, request=None):
+		following = self.user.follow_source.filter().order_by('-created')[offset:offset + limit]
+		return following
+	def followers(self, limit=50, offset=0, request=None):
+		followers = self.user.follow_target.filter().order_by('-created')[offset:offset + limit]
+		return followers
 
 class Follow(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

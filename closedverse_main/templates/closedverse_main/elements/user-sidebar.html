@@ -25,8 +25,8 @@
 		{% endif %}
 
     <ul id="sidebar-profile-status">
-      <li><a href="{% if selection == 3 %}selected{% endif %}" class=""><span><span class="number test-friend-count">0</span>Todo friends models ( and href for this + everything else related to following followers )</span></a></li>
-      <li><a href="{% if selection == 4 %}selected{% endif %}" class=""><span><span class="number test-following-count">{{ user.num_following }}</span>Following</span></a></li>
+      <li><a href="{% url "main:user-following" user.username %}" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">0</span>Todo friends models ( and href for this + everything else related to following followers )</span></a></li>
+      <li><a href="{% url "main:user-followers" user.username %}" class="{% if selection == 4 %}selected{% endif %}"><span><span class="number test-following-count">{{ user.num_following }}</span>Following</span></a></li>
       <li><a href="{% if selection == 5 %}selected{% endif %}" class=""><span><span class="number test-follower-count">{{ user.num_followers }}</span>Followers</span></a></li>
     </ul>
   </div>

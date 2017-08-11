@@ -212,6 +212,30 @@ def user_yeahs(request, username):
 			'profile': profile,
 			'next': next_offset,
 		})
+
+def user_following(request, username):
+	try:
+		user = User.objects.get(username=username)
+	except User.DoesNotExist:
+		raise Http404()
+	if user.is_me(request):
+		title = 'My follows'
+	else:
+		title = '{0}\'s follows'.format(user.nickname)
+	profile = user.profile()
+	# Todo user_follows.html
+def user_followers(request, username):
+	try:
+		user = User.objects.get(username=username)
+	except User.DoesNotExist:
+		raise Http404()
+	if user.is_me(request):
+		title = 'My followers'
+	else:
+		title = '{0}\'s followers'.format(user.nickname)
+	profile = user.profile()
+	# Todo user_follows.html
+
 @login_required
 def profile_settings(request):
 	profile = request.user.profile()
