@@ -36,7 +36,7 @@ class UserManager(BaseUserManager):
 			username=username,
 			password=password,
 		)
-		user.is_staff = True
+		user.staff = True
 		user.save(using=self._db)
 		return user
 	def authenticate(self, username, password):
