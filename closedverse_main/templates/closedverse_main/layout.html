@@ -1,0 +1,94 @@
+{% load static %}{% load closedverse_tags %}{% block html %}{% if not request.META.HTTP_X_PJAX %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	{% endif %}
+    <title>{% if title %}{{ title }} - Closedverse{% else %}Closedverse{% endif %}</title>
+    {% if not request.META.HTTP_X_PJAX %}
+	<meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-title" content="Closedverse">
+    <meta name="description" content="Closedverse is a social network made by Arian Kordi that allows you to discuss games, communities and more. With over-protective administration and a post limit, you're sure to have fun here!">
+	<link rel="shortcut icon" type="image/png" href="{% static "favicon.png" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "closedverse.css" %}">
+    <script src="{% static "closedverse.js" %}"></script>
+  </head>
+
+  <body class=""{% if request.user.is_authenticated %}
+  sess-usern="{{ request.user.username }}"
+  {% endif %}>
+{% endif %}
+    <div id="wrapper" class="{% if classes %}{{ classes|join:" " }} {% endif %}{% if not request.user.is_authenticated %}
+	guest{% endif %}" 
+	csrf-token="{{ csrf_token }}">
+      <div id="sub-body">
+        <menu id="global-menu">
+          <li id="global-menu-logo"><h1><a href="/"><img src="{% static "img/menu-logo.png" %}" alt="Closedverse"></a></h1></li>
+		  {% if request.user.unique_id %}
+          <li id="global-menu-list">
+            <ul>
+              <li id="global-menu-mymenu"><a href="{% url "main:user-view" request.user.username %}"><span class="icon-container {% user_class request.user %}"><img src="{% avatar request.user.avatar %}" alt="User Page"></span><span>User Page</span></a></li>
+              
+			  <!-- !! -->
+			  <li id="global-menu-feed"><a href="/activity" class="symbol" onclick="event.preventDefault(),alert('Nothing here')"><span>Activity Feed</span></a></li>
+			  <!-- !! // -->
+			  
+              <li id="global-menu-community"><a href="/" class="symbol"><span>Communities</span></a></li>
+			  
+			  <!-- !! -->
+			  
+			  <li id="global-menu-message"><a href="/messages" class="symbol" onclick="event.preventDefault(),alert('Nothing here yet')"><span>Messages</span></a></li>
+              <li id="global-menu-news"><a href="/news/my_news" class="symbol" onclick="event.preventDefault(),alert('Line 612 of JS has check update commented')"></a></li>
+			  
+			  <!-- !! // -->
+			  
+              <li id="global-menu-my-menu"><button class="symbol js-open-global-my-menu open-global-my-menu"></button>
+                <menu id="global-my-menu" class="invisible none">
+                  <!--<li><a href="/settings/profile" class="symbol my-menu-profile-setting"><span>Profile Settings</span></a></li>
+                  <li><a href="/settings/account" class="symbol my-menu-miiverse-setting"><span>Miiverse Settings</span></a></li>
+                  <li><a href="/titles/14866558073002733838/14866558073004999187" class="symbol my-menu-info"><span>Miiverse Announcements</span></a></li>
+                  <li><a href="/guide/terms" class="symbol my-menu-guide"><span>Use of Miiverse</span></a></li>
+                  <li><a href="/guide/" class="symbol my-menu-guide"><span>Miiverse Code of Conduct</span></a></li>
+                  <li><a href="/guide/faq" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>-->
+                  <li>
+                    <form action="{% url "main:logout" %}" method="post" id="my-menu-logout" class="symbol">
+                      {% csrf_token %}
+                      <input type="submit" value="Log out">
+                    </form>
+                  </li>
+                </menu>
+              </li>
+            </ul>
+          </li>
+		  {% else %}
+		  <li id="global-menu-login">
+            <a href="{% url "main:login" %}" class="login">
+              <input type="image" alt="Sign in" src="{% static "img/sign-in.png" %}">
+            </a>
+          </li>
+		  {% endif %}
+        </menu>
+      </div>
+      <div id="main-body">
+	  {% block main-body %}
+	  {% endblock %}
+      </div>
+      <div id="footer">
+        <div id="footer-inner">
+          <div class="link-container">
+			<p><a href="https://www.pf2m.com/openverse/">Openverse</a></p>
+			<p><a href="https://ariankordi.net/">My website</a></p>
+			<p><a href="https://github.com/ariankordi/closedverse" onclick="event.preventDefault(),alert('Todo at release: put this into a Github repo, but make sure to sanitize settings files first before sending')">Github</a></p>
+			<p id="copyright"><a href="https://miiverse.nintendo.net/">Inspired by Hatena Co, Ltd/Nintendo's Miiverse.</a> I don't nor wish to money from this. Please support the original creators for what they do.<br>
+			<a href="https://getfedora.org/"><img class="fimg" src="https://i.imgur.com/KYUMjTN.png" alt="[ Powered by Fedora ]" width="88" height="31"></a></p>
+			</div>
+        </div>
+      </div>
+    </div>
+{% if not request.META.HTTP_X_PJAX %}
+  </body>
+</html>
+{% endif %}{% endblock html %}

@@ -1,0 +1,25 @@
+{% load closedverse_tags %}<h3 class="community-title">{{ title }}</h3>
+{% if communities %}
+<ul class="list community-list community-card-list device-new-community-list">
+	{% for community in communities %}
+	<li class="trigger" data-href="{% url "main:community-view" community.id %}">
+		<div class="community-list-body">
+			<span class="icon-container">
+				<img class="icon" src="{{ community.icon }}">
+			</span>
+			<div class="body">
+				<a class="title" href="{% url "main:community-view" community.id %}">{{ community.name }}</a>
+				<span class="platform-tag">
+				{% if community.type_platform %}{% load static %}	<img src="{% static community.type_platform %}">{% endif %}
+				</span>
+				<span class="text">{{ community.type_txt }}</span>
+			</div>
+		</div>
+	</li>
+	{% endfor %}
+</ul>
+{% else %}
+	<div class="post-list-outline">
+		{% nocontent "No communities of this type have been created yet." %}
+	</div>
+{% endif %}

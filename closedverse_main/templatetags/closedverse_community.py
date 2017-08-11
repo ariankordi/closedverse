@@ -1,0 +1,45 @@
+from django import template
+register = template.Library()
+
+@register.inclusion_tag('closedverse_main/elements/community_sidebar.html')
+def community_sidebar(community):
+	return {
+		'community': community,
+	}
+@register.inclusion_tag('closedverse_main/elements/community_post.html')
+def community_post(post, type=0):
+	return {
+	'post': post,
+	'type': type,
+	}
+
+@register.inclusion_tag('closedverse_main/elements/post-list.html')
+def post_list(posts, next_offset=None, type=0, nf_text=''):
+	text = {
+	0: "This community doesn't have any posts yet.",
+	}.get(type, nf_text)
+	return {
+		'posts': posts,
+		'nf': text,
+		'next': next_offset,
+	}
+@register.inclusion_tag('closedverse_main/elements/post-form.html')
+def post_form(user, community):
+	return {
+		'user': user,
+		'community': community,
+	}
+@register.inclusion_tag('closedverse_main/elements/post-comment.html')
+def post_comment(comment):
+	return {
+		'comment': comment,
+	}
+@register.inclusion_tag('closedverse_main/elements/feeling-selector.html')
+def feeling_selector():
+	return {}
+@register.inclusion_tag('closedverse_main/elements/comment-form.html')
+def comment_form(post, myself=None):
+	return {
+		'post': post,
+		'myself': myself,
+	}

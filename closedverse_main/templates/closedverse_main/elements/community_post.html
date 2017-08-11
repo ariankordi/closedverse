@@ -1,0 +1,37 @@
+{% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}" class="post post-subtype-default trigger{% if post.spoils and not post.is_mine %} hidden test-hidden{% endif %}" tabindex="0">
+  {% if with_community_container %}
+  <p class="community-container">
+	{% if post.is_reply %}
+	<a class="test-community-link" href="{% url "main:post-view" post.original_post.id %}"><img src="{% avatar post.original_post.creator.avatar post.original_post.feeling %}" class="community-icon">
+	<span class="reply symbol"></span>Comment on {{ post.original_post.creator.nickname }}'s post</a>
+	{% else %}
+    <a class="test-community-link" href="{% url "main:community-view" post.community.id %}"><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
+	{% endif %}
+  </p>
+  {% endif %}
+  {% user_icon_container post.creator post.feeling %}
+  <p class="user-name"><a href="{% url "main:user-view" post.creator.username %}">{{ post.creator.nickname }}</a></p>
+    <p class="timestamp-container">
+	  <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">Spoilers·</span>
+      <a class="timestamp" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}">{% time post.created %}</a>
+	</p>
+    <div class="body post-content">
+			{% if post.screenshot %}<a class="screenshot-container still-image" href="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}"><img src="{{ post.screenshot }}"></a>{% endif %}
+            <p class="post-content-text">{{ post.body|truncatechars:200|linebreaksbr }}</p>
+		{% if post.spoils and not post.is_mine %}
+		<div class="hidden-content"><p>This post contains spoilers.</p>
+              <button type="button" class="hidden-content-button">View Post</button>
+        </div>
+		{% endif %}
+        <div class="post-meta">
+          <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit empathy-button
+		  {% if post.has_yeah %}empathy-added{% endif %}
+		  {% if not post.can_yeah %}disabled{% endif %}
+		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="empathy-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
+          <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
+		  {% if not post.original_post %}
+          <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
+		  {% endif %}
+		</div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+{% extends "closedverse_main/layout.html" %}{% block main-body %}{% load closedverse_community %}
+{% community_sidebar community %}
+    <!--<div class="sidebar-setting sidebar-container">
+      <ul class="sidebar-other-menu test-related-communities">
+        <li><a href="/titles/14866558072985245728" class="sidebar-menu-relation symbol test-related-communities-link"><span>Related Communities</span></a></li>
+        <li class="community-list"><ul>
+          
+            
+<li id="community-14866558073038703604" class="trigger test-community-list-item " data-href="/titles/14866558072985245728/14866558073038703604" tabindex="0">
+  <img class="community-list-cover">
+  <div class="community-list-body">
+  <span class="icon-container"><img src="https://d3esbfg30x759i.cloudfront.net/cip/zlCfzRAwC_Q4pt-7Z2" class="icon"></span>
+  <div class="body">      <a class="title" href="/titles/14866558072985245728/14866558073038703604" tabindex="-1">New Super Luigi U Game Posts</a>
+      <span class="text">New SUPER MARIO BROS. U</span>
+  </div>
+  </div>
+</li>
+
+          
+            
+<li id="community-14866558073012533363" class="trigger test-community-list-item " data-href="/titles/14866558072985245728/14866558073012533363" tabindex="0">
+  <img class="community-list-cover">
+  <div class="community-list-body">
+  <span class="icon-container"><img src="https://d3esbfg30x759i.cloudfront.net/tip/AAUAABAQHQA0TbQq7G" class="icon"></span>
+  <div class="body">      <a class="title" href="/titles/14866558072985245728/14866558073012533363" tabindex="-1">New Super Mario Bros. U Game Posts</a>
+      <span class="text">New SUPER MARIO BROS. U</span>
+  </div>
+  </div>
+</li>
+
+          
+            
+<li id="community-14866558073005182827" class="trigger test-community-list-item " data-href="/titles/14866558072985245728/14866558073005182827" tabindex="0">
+  <img src="https://d3esbfg30x759i.cloudfront.net/cnj/zlCfzQ4wj2sQnoWF2A" class="community-list-cover">
+  <div class="community-list-body">
+  <span class="icon-container"><img src="https://d3esbfg30x759i.cloudfront.net/tip/AAUAABAQHQA0TbQq7G" class="icon"></span>
+  <div class="body"><span class="news-community-badge">Announcement Community</span>      <a class="title" href="/titles/14866558072985245728/14866558073005182827" tabindex="-1">Announcement Community: Developers' Room</a>
+      <span class="text">New SUPER MARIO BROS. U</span>
+  </div>
+  </div>
+</li>
+
+          
+            
+<li id="community-14866558072985245729" class="trigger test-community-list-item " data-href="/titles/14866558072985245728/14866558072985245729" tabindex="0">
+  <img src="https://d3esbfg30x759i.cloudfront.net/cnj/zlCfzQ0AWCEu0Zcb5J" class="community-list-cover">
+  <div class="community-list-body">
+  <span class="icon-container"><img src="https://d3esbfg30x759i.cloudfront.net/tip/AAUAABAQHQA0TbQq7G" class="icon"></span>
+  <div class="body"><span class="news-community-badge">Main Community</span>      <a class="title" href="/titles/14866558072985245728/14866558072985245729" tabindex="-1">New Super Mario Bros. U Community</a>
+      <span class="text">New SUPER MARIO BROS. U</span>
+  </div>
+  </div>
+</li>
+
+          
+          
+        </ul></li>
+      </ul>
+    </div>-->
+	<div class="main-column">
+		<div class="post-list-outline">
+		{% if request.user.is_authenticated %}
+		{% post_form request.user community %}
+		{% endif %}
+			<div class="body-content" id="community-post-list">
+				{% post_list posts next %}
+			</div>
+		</div>
+	</div>
+
+{% endblock %}

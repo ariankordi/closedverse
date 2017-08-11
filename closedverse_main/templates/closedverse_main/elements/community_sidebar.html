@@ -1,0 +1,31 @@
+<div id="sidebar">
+  <section class="sidebar-container" id="sidebar-community">
+      {% if community.banner %}
+	  <span id="sidebar-cover">
+        <a href="{% url "main:community-view" community.id %}">
+          <img src="{{ community.banner }}">
+        </a>
+      </span>
+	  {% endif %}
+    <header id="sidebar-community-body">
+      <span id="sidebar-community-img">
+        <span class="icon-container">
+          <a href="{% url "main:community-view" community.id %}">
+            <img src="{{ community.icon }}" class="icon">
+          </a>
+        </span>
+		<span class="platform-tag">
+		{% if community.type_platform %}{% load static %}	<img src="{% static community.type_platform %}">{% endif %}
+		</span>
+      </span>
+      <h1 class="community-name">
+        <a href="{% url "main:community-view" community.id %}">{{ community.name }}
+        </a>      </h1>
+    </header>
+	{% if community.description %}
+      <div class="community-description js-community-description">
+        <p class="text js-truncated-text">{{ community.description|linebreaksbr }}</p>
+      </div>
+	{% endif %}
+  </section>
+</div>

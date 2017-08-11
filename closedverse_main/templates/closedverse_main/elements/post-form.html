@@ -1,0 +1,26 @@
+{% load closedverse_community %}<form id="post-form" method="post" action="{% url "main:post-create" community.id %}" class="folded" data-post-subtype="default" name="test-post-default-form">
+	{% csrf_token %}
+	<input type="hidden" name="community" value="{{ community.unique_id }}">
+
+    {% feeling_selector %}
+
+  <div class="textarea-container">
+    <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Share your thoughts in a post to {{ community.name }}." data-open-folded-form="" data-required=""></textarea>
+  </div>
+
+
+  <div class="post-form-footer-options">
+
+      <div class="post-form-footer-option-inner post-form-spoiler js-post-form-spoiler test-post-form-spoiler">
+        <label class="spoiler-button symbol">
+          <input type="checkbox" id="is_spoiler" name="is_spoiler" value="1">
+          Spoilers
+        </label>
+      </div>
+  </div>
+
+
+  <div class="form-buttons">
+    <input type="submit" class="black-button post-button disabled" value="Send" data-community-id="{{ community.unique_id }}" data-post-content-type="text" data-post-with-screenshot="nodata" disabled="">
+  </div>
+</form>

@@ -1,0 +1,7 @@
+closedverse/settings.py
+*.pyc
+*.db3
+*.db
+*.log
+.DS_Store
+.python-version

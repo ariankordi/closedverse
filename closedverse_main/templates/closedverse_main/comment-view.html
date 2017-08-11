@@ -1,0 +1,47 @@
+{% extends "closedverse_main/layout.html" %}
+{% load closedverse_tags %}{% load closedverse_community %}{% block main-body %}
+<div class="main-column">
+
+<div class="post-list-outline">
+  <a class="post-permalink-button info-ticker" href="{% url "main:post-view" comment.original_post.id %}">
+    <span class="icon-container {% user_class comment.original_post.creator %}"><img src="{% avatar comment.original_post.creator.avatar comment.original_post.feeling %}" class="icon"></span>
+    <span>View <span class="post-user-description">{{ comment.original_post.creator.nickname }}'s post ({{ comment.original_post.body|truncatechars:35 }})</span> for this comment.</span>
+  </a>
+</div>
+<div class="post-list-outline">
+  <div id="post-content" class="post reply-permalink-post">
+    <div id="{{ comment.unique_id }}" class="other">
+      <p class="community-container"><a href="{% url "main:community-view" comment.community.id %}"><img src="{{ comment.community.icon }}" class="community-icon">{{ comment.community.name }}</a></p>
+      <div class="user-content">
+        <a href="{% url "main:user-view" comment.creator.username %}" class="icon-container {% user_class comment.creator %}"><img src="{% avatar comment.creator.avatar comment.feeling %}" class="icon"></a>
+        <div class="user-name-content">
+          <p class="user-name"><a href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
+          <p class="timestamp-container">
+            <span class="spoiler-status{% if comment.spoils %} spoiler{% endif %}">Spoilers ·</span>
+            <span class="timestamp">{% time comment.created %}</span>          </p>
+        </div>
+      </div>
+      <div class="body">
+            <p class="reply-content-text">{{ comment.body|linebreaksbr }}</p>
+		{% if comment.screenshot %}
+		<div class="screenshot-container still-image"><img src="{{ comment.screenshot }}"></div>
+		{% endif %}
+        <div class="post-meta">
+		<button type="button"{% if not comment.can_yeah %} disabled{% endif %} class="symbol submit empathy-button
+		  {% if comment.has_yeah %}empathy-added{% endif %}
+		  {% if not comment.can_yeah %}disabled{% endif %}
+		  " data-feeling="" data-action="{% url "main:comment-add-yeah" comment.id %}" data-community-id="{{ comment.community.unique_id }}" data-url-id="{{ comment.id }}"><span class="empathy-button-text">{% empathy_txt comment.feeling comment.has_yeah %}</span></button>
+          <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ comment.number_yeahs }}</span></div>
+        </div>
+        {% empathy_content yeahs request comment.has_yeah %}
+
+        <div class="post-meta">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+</div>
+</div>
+{% endblock %}

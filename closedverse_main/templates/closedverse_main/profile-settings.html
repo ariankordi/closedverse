@@ -1,0 +1,84 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}
+{% user_sidebar request user profile 0 %}
+<div class="main-column"><div class="post-list-outline">
+<h2 class="label">{{ title }}</h2>
+<form class="setting-form" method="post">
+<ul class="settings-list">
+      <li class="setting-nickname">
+        <p class="settings-label">Nickname</p>
+        <div class="center center-input">
+			<input type="text" name="screen_name" maxlength="32" placeholder="Nickname" value="{{ user.nickname }}">
+		</div>
+        <p class="note">Nickname, up to 32 characters.</p>
+      </li>
+      <li class="setting-profile-comment">
+        <p class="settings-label">Profile comment</p>
+        <textarea class="textarea" name="profile_comment" maxlength="1000" placeholder="Write about yourself here.">{{ profile.comment }}</textarea>
+
+        <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="/help/rules">Closedverse's rules</a>.</p>
+      </li>
+      <li>
+        <p class="settings-label"><label for="relationship_visibility">Who should be able to see your friends, followers and following lists?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="relationship_visibility" id="relationship_visibility">
+              <option value="0">Everyone</option>
+              <option value="1">My friends</option>
+              <option value="2">Only me</option>
+            </select>
+          </div>
+        </div>
+      </li>
+      <li class="setting-country">
+        <p class="settings-label">Region</p>
+        <div class="center center-input">
+			<input type="text" name="country" maxlength="64" placeholder="Region" value="{{ profile.country }}">
+		</div>
+        <p class="note">Enter your region here. It'll appear on your profile.
+		<br>
+		<a class="get-ipinfo" href="#">If you want to use your location, you can get it automatically here (it will not be automatically saved).</a>
+		</p>
+      </li>
+      <li class="setting-website">
+        <p class="settings-label">Web URL</p>
+        <div class="center center-input">
+			<input type="text" name="website" maxlength="255" placeholder="URL" value="{{ profile.weblink }}">
+		</div>
+        <p class="note">If you want to advertise a URL of some sorts on your profile, this is where it goes.</p>
+      </li>
+	  	  {% if user.origin_id %}
+      <li>
+        <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="id_visibility" id="id_visibility">
+              <option value="0">Everyone</option>
+              <option value="1">My friends</option>
+              <option value="2">Only me</option>
+            </select>
+          </div>
+        </div>
+      </li>
+	  {% endif %}
+      <li class="setting-avatarsecond">
+        <p class="settings-label">Nintendo Network ID (NNID)</p>
+        <div class="center center-input">
+			<input type="text" name="origin_id" maxlength="16" placeholder="NNID" value="{{ user.origin_id }}">
+		</div>
+        <p class="note">You can </p>
+      </li>
+      <li class="setting-avatar">
+        <p class="settings-label">Avatar</p>
+        <div class="center center-input">
+			<input type="text" name="avatar" maxlength="255" placeholder="Avatar" {% if user.origin_id %}disabled class="disabled" value="Using Mii from ID {{ user.origin_id }}"{% else %}value="{{ user.avatar }}"{% endif %}>
+		</div>
+        <p class="note">Todo: Either make this an upload or an NNID form</p>
+      </li>
+
+	<div class="form-buttons">
+	<input type="submit" class="black-button apply-button" value="Save these settings">
+	</div>
+
+</ul></form></div></div>
+{% endblock %}
