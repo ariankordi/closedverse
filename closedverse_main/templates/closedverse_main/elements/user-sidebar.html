@@ -25,7 +25,7 @@
 		{% endif %}
 
     <ul id="sidebar-profile-status">
-      <li><a href="" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">0</span>Todo friends models ( and href for this + everything else related to following followers )</span></a></li>
+      <li><a href="" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">Nil</span>Friends</span></a></li>
       <li><a href="{% url "main:user-following" user.username %}" class="{% if selection == 4 %}selected{% endif %}"><span><span class="number test-following-count">{{ user.num_following }}</span>Following</span></a></li>
       <li><a href="{% url "main:user-followers" user.username %}" class="{% if selection == 5 %}selected{% endif %}"><span><span class="number test-follower-count">{{ user.num_followers }}</span>Followers</span></a></li>
     </ul>
@@ -33,7 +33,7 @@
   <div class="sidebar-setting sidebar-container">
     <div class="sidebar-post-menu">
       <a href="{% url "main:user-posts" user.username %}" class="sidebar-menu-post with-count symbol{% if selection == 1 %} selected{% endif %}">
-        <span>All posts</span>
+        <span>{% if user.is_me %}My{% else %}All{% endif %} posts</span>
         <span class="post-count">
           <span class="test-post-count">{{ user.num_posts }}</span>
         </span>
@@ -66,7 +66,7 @@
 		<div class="data-content">
 			<h4><span>NNID</span></h4>
 			<div class="note">
-				<span>{% if profile.origin_id %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id }}">{{ profile.origin_id }}</a>{% elif profile.origin_id == 0 %}Private{% else %}Not Set{% endif %}</span>
+				<span>{% if profile.origin_id %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id }}">{{ profile.origin_id }}</a>{% elif profile.origin_id == 0 %}Private{% else %}None{% endif %}</span>
 			</div>
 		</div>
 		<div class="data-content">

@@ -1,0 +1,25 @@
+{% load closedverse_tags %}<li class="trigger" data-href="{% url "main:user-view" user.username %}">
+    {% user_icon_container user %}
+
+{% if not user.is_following %}
+<div class="toggle-button">
+    <button type="button" data-action="{% url "main:user-follow" user.username %}" class="follow-button button symbol relationship-button">Follow</button>
+      <button type="button" class="button follow-done-button relationship-button symbol none" disabled="">Follow</button>
+</div>
+{% endif %}
+
+
+  <div class="body">
+    <p class="title">
+      <span class="nick-name"><a href="{% url "main:user-view" user.username %}">{{ user.nickname }}</a></span>
+      <span class="id-name">{{ user.username }}</span>
+    </p>
+    <p class="text">{{ user.profile.comment }}</p>
+
+	  {% if user.profile.favorite.screenshot %}
+      <div class="user-profile-memo-content">
+        <img src="{{ user.profile.favorite.screenshot }}" class="user-profile-memo">
+      </div>
+	  {% endif %}
+  </div>
+</li>

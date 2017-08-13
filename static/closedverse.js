@@ -10,13 +10,15 @@ function e(e,a,r){return r=m(a,r),this.on("click.pjax",e,function(e){var a=r;a.c
 !function(e,n){
 "function"==typeof define&&define.amd?define(n):"object"==typeof exports?module.exports=n():e.NProgress=n()}(this,function(){function e(e,n,t){return e<n?n:e>t?t:e}function n(e){return 100*(-1+e)}function t(e,t,r){var i;return i="translate3d"===c.positionUsing?{transform:"translate3d("+n(e)+"%,0,0)"}:"translate"===c.positionUsing?{transform:"translate("+n(e)+"%,0)"}:{"margin-left":n(e)+"%"},i.transition="all "+t+"ms "+r,i}function r(e,n){return("string"==typeof e?e:o(e)).indexOf(" "+n+" ")>=0}function i(e,n){var t=o(e),i=t+n;r(t,n)||(e.className=i.substring(1))}function s(e,n){var t,i=o(e);r(e,n)&&(t=i.replace(" "+n+" "," "),e.className=t.substring(1,t.length-1))}function o(e){return(" "+(e&&e.className||"")+" ").replace(/\s+/gi," ")}function u(e){e&&e.parentNode&&e.parentNode.removeChild(e)}var a={};a.version="0.2.0";var c=a.settings={minimum:.08,easing:"linear",positionUsing:"",speed:200,trickle:!0,trickleSpeed:200,showSpinner:!0,barSelector:'[role="bar"]',spinnerSelector:'[role="spinner"]',parent:"body",template:'<div class="bar" role="bar"><div class="peg"></div></div><div class="spinner" role="spinner"><div class="spinner-icon"></div></div>'};a.configure=function(e){var n,t;for(n in e)void 0!==(t=e[n])&&e.hasOwnProperty(n)&&(c[n]=t);return this},a.status=null,a.set=function(n){var r=a.isStarted();n=e(n,c.minimum,1),a.status=1===n?null:n;var i=a.render(!r),s=i.querySelector(c.barSelector),o=c.speed,u=c.easing;return i.offsetWidth,f(function(e){""===c.positionUsing&&(c.positionUsing=a.getPositioningCSS()),l(s,t(n,o,u)),1===n?(i.offsetWidth,setTimeout(function(){setTimeout(function(){a.remove(),e()},o)},o)):setTimeout(e,o)}),this},a.isStarted=function(){return"number"==typeof a.status},a.start=function(){a.status||a.set(0);var e=function(){setTimeout(function(){a.status&&(a.trickle(),e())},c.trickleSpeed)};return c.trickle&&e(),this},a.done=function(e){return e||a.status?a.inc(.3+.5*Math.random()).set(1):this},a.inc=function(n){var t=a.status;return t?t>1?void 0:("number"!=typeof n&&(n=t>=0&&t<.2?.1:t>=.2&&t<.5?.04:t>=.5&&t<.8?.02:t>=.8&&t<.99?.005:0),t=e(t+n,0,.994),a.set(t)):a.start()},a.trickle=function(){return a.inc()},function(){var e=0,n=0;a.promise=function(t){return t&&"resolved"!==t.state()?(0===n&&a.start(),e++,n++,t.always(function(){0===--n?(e=0,a.done()):a.set((e-n)/e)}),this):this}}(),a.render=function(e){if(a.isRendered())return document.getElementById("nprogress");i(document.documentElement,"nprogress-busy");var t=document.createElement("div");t.id="nprogress",t.innerHTML=c.template;t.querySelector(c.barSelector),e||n(a.status||0);var r,s=document.querySelector(c.parent);return c.showSpinner||(r=t.querySelector(c.spinnerSelector))&&u(r),s!=document.body&&i(s,"nprogress-custom-parent"),s.appendChild(t),t},a.remove=function(){s(document.documentElement,"nprogress-busy"),s(document.querySelector(c.parent),"nprogress-custom-parent");var e=document.getElementById("nprogress");e&&u(e)},a.isRendered=function(){return!!document.getElementById("nprogress")},a.getPositioningCSS=function(){var e=document.body.style,n="WebkitTransform"in e?"Webkit":"MozTransform"in e?"Moz":"msTransform"in e?"ms":"OTransform"in e?"O":"";return n+"Perspective"in e?"translate3d":n+"Transform"in e?"translate":"margin"};var f=function(){function e(){var t=n.shift();t&&t(e)}var n=[];return function(t){n.push(t),1==n.length&&e()}}(),l=function(){function e(e){return e.replace(/^-ms-/,"ms-").replace(/-([\da-z])/gi,function(e,n){return n.toUpperCase()})}function n(e){var n=document.body.style;if(e in n)return e;for(var t,r=i.length,s=e.charAt(0).toUpperCase()+e.slice(1);r--;)if((t=i[r]+s)in n)return t;return e}function t(t){return t=e(t),s[t]||(s[t]=n(t))}function r(e,n,r){n=t(n),e.style[n]=r}var i=["Webkit","O","Moz","ms"],s={};return function(e,n){var t,i,s=arguments;if(2==s.length)for(t in n)void 0!==(i=n[t])&&n.hasOwnProperty(t)&&r(e,t,i);else r(e,s[1],s[2])}}();return a});
 
-var pjax_container = 'body';
+var pjax_container = '#container';
 function go(a) {
 $.pjax({url: a, container: pjax_container});
 }
-function changesel(a) {
+function changesel(a = null) {
 $("li.selected").removeClass("selected");
-$("li#global-menu-" + a).addClass("selected");
+if(a !== null) {
+		$("li#global-menu-" + a).addClass("selected");
+	}
 }
 var Olv = Olv || {};
 (function(a, b) {
@@ -244,7 +246,8 @@ var Olv = Olv || {};
                 url: a,
                 data: c,
                 success: d,
-                dataType: e
+                dataType: e,
+				beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
             })
         },
         post: function(a, c, d, e) {
@@ -253,7 +256,8 @@ var Olv = Olv || {};
                 url: a,
                 data: c,
                 success: d,
-                dataType: e
+                dataType: e,
+				beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
             })
         }
     },
@@ -320,7 +324,7 @@ var Olv = Olv || {};
         if (/^https?:/.test(c))
             return c;
         var d = b.Utils._staticRoot;
-        return null === d && document.getElementById("wrapper") && (d = b.Utils._staticRoot = (a("#wrapper").attr("data-static-root") || "").replace(/\/$/, "")),
+        return null === d && document.getElementById("main-body") && (d = b.Utils._staticRoot = (a("#main-body").attr("data-static-root") || "").replace(/\/$/, "")),
         (d || "") + c.replace(/^(?!\/)/, "/")
     }
     ,
@@ -363,7 +367,7 @@ var Olv = Olv || {};
         function e() {
             if (!(k._disabledCount || h.scrollTop() + h.height() + 200 < f.offset().top + f.outerHeight())) {
                 var d = a("<div/>").attr("class", "post-list-loading").append(a("<img/>").attr({
-                    src: b.Utils.staticURL("/c/img/loading-image-blue.gif"),
+                    src: b.Utils.staticURL("/s/img/loading-image-blue.gif"),
                     alt: ""
                 })).appendTo(f);
                 i = a.ajax({
@@ -392,7 +396,7 @@ var Olv = Olv || {};
         var f = a(c)
           , g = f.attr("data-next-page-url");
         if (g) {
-            a("#wrapper").addClass("is-autopagerized");
+            a("#main-body").addClass("is-autopagerized");
             var h = a(window)
               , i = null
               , j = a.Deferred()
@@ -401,7 +405,7 @@ var Olv = Olv || {};
             j.done(function() {
                 h.off("scroll", e),
                 i && i.abort(),
-                a("#wrapper").removeClass("is-autopagerized")
+                a("#main-body").removeClass("is-autopagerized")
             }),
             setTimeout(e, 0),
             d.done(j.resolve)
@@ -507,7 +511,7 @@ var Olv = Olv || {};
         },
         _csrfmiddlewaretoken: null,
         csrfmiddlewaretoken: function() {
-            return null === b.Form._csrfmiddlewaretoken && (b.Form._csrfmiddlewaretoken = a("#wrapper").attr("csrf-token")),
+            return null === b.Form._csrfmiddlewaretoken && (b.Form._csrfmiddlewaretoken = a("#main-body").attr("csrf-token")),
             b.Form._csrfmiddlewaretoken
         },
         post: function(c, d, e) {
@@ -581,7 +585,7 @@ var Olv = Olv || {};
     b.router.connect("", b.Form.setupForPage),
     b.Guest = {
         isGuest: function() {
-            return a("wrapper").hasClass("guest")
+            return a("main-body").hasClass("guest")
         }
     },
     b.DecreasingTimer = function(a, b, c) {
@@ -636,7 +640,7 @@ var Olv = Olv || {};
     }
     ,
     b.UpdateChecker.prototype.callback_ = function() {
-		/*
+		
         var c = {};
         a.each(this._settings, a.proxy(function(d) {
             void 0 != this._settings[d].pathname && this._settings[d].pathname != location.pathname ? delete this._settings[d] : a.each(this._settings[d].params, a.proxy(function(a, d) {
@@ -644,14 +648,13 @@ var Olv = Olv || {};
             }, this))
         }, this)),
         b.Net.ajax({
-            url: "/check_update.json",
-            data: c,
+            url: "/notif_count.json",
             silent: !0,
             cache: !1
         }).done(a.proxy(function(b) {
             a(this).triggerHandler("update", [b])
         }, this))
-		*/
+		
     }
     ,
     b.UpdateChecker.prototype.onUpdate = function(a, b, c, d) {
@@ -743,7 +746,7 @@ var Olv = Olv || {};
                 if(a(".mask").length) {
                 a(".mask").remove();
                 } else {
-    a("#wrapper").append("<div class=mask>");
+    a("#main-body").append("<div class=mask>");
                 }
     }
     ,
@@ -794,7 +797,7 @@ var Olv = Olv || {};
         b.ModalWindowManager.register(this),
         b.Form.toggleDisabled(this.triggerElement, !0),
         this.element.addClass("modal-window-open").removeClass("none"),
-        this.temporary && this.element.appendTo(document.getElementById("wrapper")),
+        this.temporary && this.element.appendTo(document.getElementById("main-body")),
         this.triggerOpenHandlers(a.Deferred()),
         this)
     }
@@ -1019,7 +1022,7 @@ var Olv = Olv || {};
             if (!f && !b.Form.isDisabled(d)) {
                 var g = d.text();
                 d.text("").append(a("<img/>").attr({
-                    src: b.Utils.staticURL("/c/img/loading-image-blue.gif"),
+                    src: b.Utils.staticURL("/s/img/loading-image-blue.gif"),
                     alt: ""
                 })),
                 f = b.Form.get(d.attr("data-fragment-url"), null, d).done(function(b) {
@@ -1796,6 +1799,7 @@ var Olv = Olv || {};
     }
     ,
     b.init.done(function() {
+		$('#wrapper').attr('class', $('#main-body').attr('class'));
         b.Global.setupMyMenu()
     }),
     b.init.done(function(a) {
@@ -1814,7 +1818,8 @@ var Olv = Olv || {};
                 })
             }),
             c.onUpdate("check_update", {
-                news: {}
+                n: {},
+				msg: {}
             }, function(b, c) {
                 var d = a("#global-menu-news")
                   , e = d.find(".badge");
@@ -1823,13 +1828,36 @@ var Olv = Olv || {};
                 }),
                 e.hide().appendTo(d.find("a")));
                 var f = 0;
-                a.each(c, function(a, c) {
-                    f += Number(b[a].unread_count)
+                    f += b['n']
+                e.text(f),
+                e.toggle(f > 0)
+				
+				
+			    var g = a("#global-menu-message")
+                  , h = g.find(".badge");
+                0 === h.length && (h = a("<span>", {
+                    "class": "badge"
                 }),
+                h.hide().appendTo(g.find("a")));
+                var j = 0;
+                    j += b['msg']
+                h.text(j),
+                h.toggle(j > 0)
+            },
+			
+			function(b, c) {
+                var d = a("#global-menu-message")
+                  , e = d.find(".badge");
+                0 === e.length && (e = a("<span>", {
+                    "class": "badge"
+                }),
+                e.hide().appendTo(d.find("a")));
+                var f = 0;
+                    f += b['msg']
                 e.text(f),
                 e.toggle(f > 0)
             }),
-            a("wrapper").on("pjax:complete", function(a) {
+            a("#main-body").on("pjax:complete", function(a) {
                 c.resetInterval()
             }),
             c.invoke()
@@ -1980,10 +2008,20 @@ var Olv = Olv || {};
             a("#filter-select-page form").off("submit", f)
         })
     }),
-    b.router.connect("^/(identified_user_posts|news/my_news)+$", function(a, c, d) {
+    b.router.connect("^/(identified_user_posts|notifications)+$", function(a, c, d) {
         b.Guest.isGuest() || b.User.setupFollowButton(d),
         b.Content.autopagerize(".js-post-list", d)
     }),
+	b.router.connect("/notifications(\/)?$", function(a, c, d) {
+	   changesel("news");
+	   if($('div.notify').length) {
+			b.Form.get("/notifications/set_read")
+	   }
+	   $('button.rm').on('click', function() {
+		   $(this).parent().parent().remove()
+		   b.Form.post('/notifications/' + $(this).parent().parent().attr('id') + '.rm')
+	   })
+	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
 		changesel("community");
         b.Content.autopagerize(".community-list", d)
@@ -2197,8 +2235,9 @@ var Olv = Olv || {};
     }),
 	b.router.connect("^/login/$|^/signup/$", function() {
 		function lfinish(b) {
-		a('body').attr('sess-usern', a('input[name=username]').val())
-		go(b)
+		window.location.href=b
+		//a('body').attr('sess-usern', a('input[name=username]').val())
+		//go(b)
 		}
 		cac = function (){$.ajax({type:'POST',url:window.location.href,data:$('form').serialize(),success:function(e){lfinish(e)},error:function(e){$('p.red').text(e.responseText)},beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}})};
 		a("form[method=post]").on("submit", function(e) {
@@ -2480,4 +2519,4 @@ mode_post = 0;
 Olv.Locale.Data={
 "olv.portal.age_gate.select_label":{value:"Please enter your date of birth."},"olv.portal.album.delete_confirm":{value:"Are you sure you want to delete this?"},"olv.portal.button.remove":{value:"Yes"},"olv.portal.cancel":{value:"Cancel"},"olv.portal.close":{value:"Close"},"olv.portal.dialog.apply_settings_done":{value:"Settings saved."},"olv.portal.dialog.report_spoiler_done":{value:"Spoiler reported. Thank you for your help!"},"olv.portal.dialog.report_violation_done":{value:"Violation reported. Thank you for your help!"},"olv.portal.edit.action.close_topic_post":{value:"Close for Comments"},"olv.portal.edit.action.close_topic_post.confirm":{value:"It will no longer be possible to post comments on this discussion. Is that OK? (This action cannot be reversed.)"},"olv.portal.edit.edit_post":{value:"Edit Post"},"olv.portal.edit.edit_reply":{value:"Edit Comment"},"olv.portal.error.500.for_offdevice":{value:"An error occurred.\nPlease try again later."},"olv.portal.error.album_limit_exceeded":{value:"Unable to save because the maximum number of screenshots that can be saved has been reached. Please delete some saved screenshots, and then try again."},"olv.portal.error.code":{args:[1],value:"Error Code: %s"},"olv.portal.error.code %1":{args:[1],value:"Error Code: %s"},"olv.portal.error.code [_1]":{args:[1],value:"Error Code: %s"},"olv.portal.error.daily_post_limit_exceeded":{value:"You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow."},"olv.portal.error.failed_to_connect.for_offdevice":{value:"An error occurred."},"olv.portal.error.network_unavailable.for_offdevice":{value:"Cannot connect to the Internet. Please check your network connection and try again."},"olv.portal.error.post_time_restriction":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction %1":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction [_1]":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.followlist.confirm_unfollow_with_name":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name %1":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name [_1]":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.miitoo.frustrated":{value:"Yeah..."},"olv.portal.miitoo.frustrated.delete":{value:"Unyeah"},"olv.portal.miitoo.happy":{value:"Yeah!"},"olv.portal.miitoo.happy.delete":{value:"Unyeah"},"olv.portal.miitoo.like":{value:"Yeah♥"},"olv.portal.miitoo.like.delete":{value:"Unyeah"},"olv.portal.miitoo.normal":{value:"Yeah!"},"olv.portal.miitoo.normal.delete":{value:"Unyeah"},"olv.portal.miitoo.puzzled":{value:"Yeah..."},"olv.portal.miitoo.puzzled.delete":{value:"Unyeah"},"olv.portal.miitoo.surprised":{value:"Yeah!?"},"olv.portal.miitoo.surprised.delete":{value:"Unyeah"},"olv.portal.ok":{value:"OK"},"olv.portal.post.delete_confirm":{value:"Delete this post?"},"olv.portal.profile_post":{value:"Favorite Post"},"olv.portal.profile_post.confirm_remove":{value:"Remove this post from your profile?\nThe original post will not be deleted."},"olv.portal.profile_post.confirm_update":{value:"Set this post as your favorite?\nPlease note, it will replace any existing favorite post."},"olv.portal.profile_post.confirm_update.yes":{value:"OK"},"olv.portal.profile_post.done":{value:"Your favorite post has been set.\nWould you like to view your profile?"},"olv.portal.read_more_content":{value:"Read More"},"olv.portal.reply.delete_confirm":{value:"Delete this comment?"},"olv.portal.report.report_comment_id":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id %1":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id [_1]":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_post_id":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id %1":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id [_1]":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_spoiler":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_violation":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.setup":{value:"Set Up"},"olv.portal.show_more_content":{value:"View Entire Post"},"olv.portal.stop":{value:"Cancel"},"olv.portal.unfollow":{value:"Unfollow"},"olv.portal.user.search.go":{value:"View Profile"},"olv.portal.yes":{value:"Yes"}};
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false}),/*$(document).on('pjax:error',function(){return false}),*/
-$(document).on('pjax:send',function(){NProgress.start()});$(document).on('pjax:complete',function(){NProgress.done();Olv.Global.setupMyMenu(),Olv.init.done()});
+$(document).on('pjax:send',function(){NProgress.start()});$(document).on('pjax:complete',function(){$('#wrapper').attr('class', $('#main-body').attr('class')),NProgress.done();Olv.init.done()});

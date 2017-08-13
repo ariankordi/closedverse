@@ -1,17 +1,13 @@
 {% extends "closedverse_main/layout.html" %}
 {% block main-body %}{% load closedverse_tags %}{% load closedverse_user %}
-{% user_sidebar request user profile 5 %}
+{% user_sidebar request user profile 4 %}
 <div class="main-column"><div class="post-list-outline">
     <h2 class="label">{{ title }}</h2>
 
-{% if not followers %}
-	{% if user.is_me %}
-		{% nocontent "You don't have any followers." %}
-	{% else %}
-		{% nocontent "This user doesn't have any followers." %}
-	{% endif %}
+{% if not following %}
+{% if user.is_me %}{% nocontent "You're not following anyone yet." %}{% else %}{% nocontent "This user isn't following anyone yet." %}{% endif %}
 {% else %}
-	{% profile_user_list followers next request %}
+{% profile_user_list following next request %}
 {% endif %}
 
 </div></div>

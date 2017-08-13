@@ -74,3 +74,8 @@ def empathy_content(yeahs, request, has_yeah=False):
 		'myself': request.user,
 		'has_yeah': has_yeah,
 	}
+@register.inclusion_tag('closedverse_main/elements/names.html')
+def print_names(names):
+	return {
+		'names': names,
+	}

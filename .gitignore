@@ -1,7 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+pip-log.txt
+pip-delete-this-directory.txt
+
+# My
 closedverse/settings.py
 *.pyc
 *.db3
 *.db
 *.log
+*.sql
+local_settings.py
 .DS_Store
 .python-version

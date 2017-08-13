@@ -1,0 +1,27 @@
+{% load closedverse_tags %}<div class="news-list-content trigger{% if not notification.read %} notify{% endif %}" tabindex="0" id="{{ notification.unique_id }}" data-href="{{ notification.url }}">
+  {% user_icon_container notification.source %}
+  <div class="body">
+  {% if notification.type == 0 %}
+  {% print_names notification.all_users %} gave <a href="{{ notification.url }}" class="link">your post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a> a Yeah.
+  {% elif notification.type == 1 %}
+  {% print_names notification.all_users %} gave <a href="{{ notification.url }}" class="link">your comment&nbsp;({{ notification.context_comment.trun|truncatechars:30 }})</a> a Yeah.
+  {% elif notification.type == 2 %}
+  {% print_names notification.all_users %} commented on <a href="{{ notification.url }}" class="link">your post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a>.
+  {% elif notification.type == 3 %}
+  {% print_names notification.all_users %} commented on <a href="{{ notification.url }}" class="link">your post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a>.
+  {% elif notification.type == 4 %}
+  Followed by {% print_names notification.all_users %}.
+  {% endif %}
+    <span class="timestamp"> {% time notification.latest %}</span>
+{% if notification.type == 4 and not notification.source.is_following %}
+<div class="toggle-button">
+    <button type="button" data-action="{% url "main:user-follow" notification.source.username %}" class="follow-button button symbol">Follow</button>
+      <button type="button" class="button follow-done-button relationship-button symbol none" disabled="">Follow</button>
+</div>
+{% else %}
+<button class="symbol button rm" type="button"></button>
+{% endif %}
+
+  </div>
+
+</div>

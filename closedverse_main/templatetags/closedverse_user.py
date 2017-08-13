@@ -36,3 +36,24 @@ def profile_post(post):
 	return {
 		'post': post,
 	}
+@register.inclusion_tag('closedverse_main/elements/profile-user-list.html')
+def profile_user_list(users, next_offset=None, request=None):
+	if request:
+		for user in users:
+			user.is_following = user.is_following(request.user)
+	return {
+		'users': users,
+		'next': next_offset,
+	}
+@register.inclusion_tag('closedverse_main/elements/profile-user.html')
+def profile_user(user):
+	return {
+		'user': user,
+	}
+
+@register.inclusion_tag('closedverse_main/elements/user-notification.html')
+def user_notification(notification, request):
+	notification.source.is_following = notification.source.is_following(request.user)
+	return {
+		'notification': notification,
+	}

@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import User, Community, Post, Comment, Yeah, Profile
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification
 from .util import get_mii, recaptcha_verify
 from closedverse import settings
 import re
@@ -223,7 +223,34 @@ def user_following(request, username):
 	else:
 		title = '{0}\'s follows'.format(user.nickname)
 	profile = user.profile()
-	# Todo user_follows.html
+
+	if request.GET.get('offset'):
+		following_list = user.get_following(20, int(request.GET['offset']))
+	else:
+		following_list = user.get_following(20, 0)
+	if following_list.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+	following = []
+	for follow in following_list:
+		following.append(follow.target)
+	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			return render(request, 'closedverse_main/elements/profile-user-list.html', {
+			'users': following,
+			'next': next_offset,
+		})
+	else:
+		return render(request, 'closedverse_main/user_following.html', {
+			'user': user,
+			'title': title,
+			'following': following,
+			'profile': profile,
+			'next': next_offset,
+		})
 def user_followers(request, username):
 	try:
 		user = User.objects.get(username=username)
@@ -234,23 +261,63 @@ def user_followers(request, username):
 	else:
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
-	followers = profile.get_followers()
-	return render(request, 'closedverse_main/user_followers.html', {
+
+	if request.GET.get('offset'):
+		followers_list = user.get_followers(20, int(request.GET['offset']))
+	else:
+		followers_list = user.get_followers(20, 0)
+	if followers_list.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+	followers = []
+	for follow in followers_list:
+		followers.append(follow.source)
+	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			return render(request, 'closedverse_main/elements/profile-user-list.html', {
+			'users': followers,
+			'next': next_offset,
+		})
+	else:
+		return render(request, 'closedverse_main/user_followers.html', {
 			'user': user,
 			'title': title,
-			'profile': profile,
 			'followers': followers,
+			'profile': profile,
+			'next': next_offset,
 		})
-	# Todo user_follows.html
 
 @login_required
 def profile_settings(request):
 	profile = request.user.profile()
+	user = request.user
 	if request.method == 'POST':
-		return HttpResponseBadRequest('cock suck')
+		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
+			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
+		if len(request.POST.get('profile_comment')) > 2200:
+			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
+		if len(request.POST.get('country')) > 255:
+			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
+		if len(request.POST.get('website')) > 255:
+			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		if len(request.POST.get('avatar')) > 255:
+			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		profile.avatar = request.POST.get('avatar')
+		profile.country = request.POST.get('country')
+		profile.weblink = request.POST.get('website')
+		profile.comment = request.POST.get('profile_comment')
+		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
+		profile.id_visibility = (request.POST.get('id_visibility') or 0)
+		user.nickname = request.POST.get('screen_name')
+		profile.save()
+		user.save()
+		return HttpResponse()
 	return render(request, 'closedverse_main/profile-settings.html', {
 		'title': 'Profile settings',
-		'user': request.user,
+		'user': user,
 		'profile': profile,
 	})
 
@@ -287,15 +354,15 @@ def community_view(request, community):
 def post_create(request, community):
 	if request.method == 'POST':
 		if not (request.POST['community'] and request.POST['body'] and request.POST['feeling_id']):
-			return HttpResponseBadRequest('')
+			return HttpResponseBadRequest()
 		try:
 			community = Community.objects.get(id=community, unique_id=request.POST['community'])
 		except (Community.DoesNotExist, ValueError):
-			return HttpResponseNotFound('')
+			return HttpResponseNotFound()
 		# Method of Community
 		new_post = community.create_post(request)
 		if not new_post:
-			return HttpResponseBadRequest('')
+			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
 			return json_response({
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
@@ -326,34 +393,38 @@ def post_add_yeah(request, post):
 	try:
 		the_post = Post.objects.get(id=post)
 	except (Post.DoesNotExist, ValueError):
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	the_post.give_yeah(request)
-	return HttpResponse('')
+	# Give the notification!
+	Notification.give_notification(request.user, 0, the_post.creator, the_post)
+	return HttpResponse()
 @login_required
 def post_delete_yeah(request, post):
 	try:
 		the_post = Post.objects.get(id=post)
 	except (Post.DoesNotExist, ValueError):
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	the_post.remove_yeah(request)
-	return HttpResponse('')
+	return HttpResponse()
 @login_required
 def post_comments(request, post):
 	if request.method == 'POST':
 		if not (request.POST['body'] and request.POST['feeling_id']):
-			return HttpResponseBadRequest('')
+			return HttpResponseBadRequest()
 		try:
 			post = Post.objects.get(id=post)
 		except (Post.DoesNotExist, ValueError):
-			return HttpResponseNotFound('')
+			return HttpResponseNotFound()
 		# Method of Post
 		new_post = post.create_comment(request)
 		if not new_post:
-			return HttpResponseBadRequest('')
+			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
 			return json_response({
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			}.get(new_post))
+		# Give the notification!
+		Notification.give_notification(request.user, 2, post.creator, post)
 		return render(request, 'closedverse_main/elements/post-comment.html', { 'comment': new_post })
 	else:
 		raise Http404()
@@ -382,41 +453,63 @@ def comment_add_yeah(request, comment):
 	try:
 		the_post = Comment.objects.get(id=comment)
 	except (Comment.DoesNotExist, ValueError):
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	the_post.give_yeah(request)
-	return HttpResponse('')
+	# Give the notification!
+	Notification.give_notification(request.user, 1, the_post.creator, None, the_post)
+	return HttpResponse()
 @login_required
 def comment_delete_yeah(request, comment):
 	try:
 		the_post = Comment.objects.get(id=comment)
 	except (Comment.DoesNotExist, ValueError):
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	the_post.remove_yeah(request)
-	return HttpResponse('')
+	return HttpResponse()
 @login_required
 def user_follow(request, username):
 	try:
 		user = User.objects.get(username=username)
 	except User.DoesNotExist:
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	user.follow(request.user)
-	return HttpResponse('')
+	# Give the notification!
+	Notification.give_notification(request.user, 4, user)
+	return HttpResponse()
 @login_required
 def user_unfollow(request, username):
 	try:
 		user = User.objects.get(username=username)
 	except User.DoesNotExist:
-		return HttpResponseNotFound('')
+		return HttpResponseNotFound()
 	user.unfollow(request.user)
-	return HttpResponse('')
+	return HttpResponse()
 
+def check_notifications(request):
+	if not request.user.is_authenticated:
+		return JsonResponse({'success': True})
+	n_count = request.user.notification_count()
+	# n for notifications icon, msg for messages icon
+	return JsonResponse({'success': True, 'n': n_count, 'msg': 0})
+@login_required
+def notification_setread(request):
+	update = request.user.notification_read()
+	return HttpResponse()
+@login_required
+def notification_delete(request, notification):
+	if not request.method == 'POST':
+		raise Http404()
+	try:
+		notification = Notification.objects.get(to=request.user, unique_id=notification)
+	except Notification.DoesNotExist:
+		return HttpResponseNotFound()
+	remove = notification.delete()
+	return HttpResponse()
 
-
-
-def test_page(request):
-	number = int(request.session.get("no", 0)) + 1
-	request.session['no'] = number
-	return HttpResponse("""
-	""" + str(number) + """<br><br>
-	<img src="/s/img/menu-logo.png">
-	""")
+@login_required
+def notifications(request):
+	notifications = request.user.get_notifications()
+	return render(request, 'closedverse_main/notifications.html', {
+		'title': 'My notifications',
+		'notifications': notifications,
+	})

@@ -774,7 +774,7 @@ body:not(.is-autopagerized) .adx-link-container {
   min-width: 9px;
   padding: 1px 5px 0;
   border: 2px solid #fff;
-  background: #00bbff;
+  background: #fc951e;
   color: #fff;
   font-size: 12px;
   font-weight: bold;
@@ -789,6 +789,9 @@ body:not(.is-autopagerized) .adx-link-container {
   -ms-border-radius: 20px;
   -o-border-radius: 20px;
   border-radius: 20px;
+}
+#global-menu #global-menu-message .badge {
+left: 10% !important;
 }
 #global-menu #global-my-menu {
   background-color: #fff;
@@ -1483,6 +1486,21 @@ h2.label-topic .with-filter-right {
   font-size: 18px;
   color: #969696;
 }
+
+.button.rm {
+  width: 34px;
+  float: right;
+  padding: 4px 0 3px;
+}
+.button.rm:hover {
+  text-decoration: none;
+}
+.button.rm:before {
+  content: "d";
+  font-size: 18px;
+  color: #969696;
+}
+
 .big-button {
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.1);

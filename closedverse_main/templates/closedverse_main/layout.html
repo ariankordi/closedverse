@@ -20,10 +20,7 @@
   <body class=""{% if request.user.is_authenticated %}
   sess-usern="{{ request.user.username }}"
   {% endif %}>
-{% endif %}
-    <div id="wrapper" class="{% if classes %}{{ classes|join:" " }} {% endif %}{% if not request.user.is_authenticated %}
-	guest{% endif %}" 
-	csrf-token="{{ csrf_token }}">
+    <div id="wrapper"{% if not request.user.is_authenticated %} class="guest"{% endif %}>
       <div id="sub-body">
         <menu id="global-menu">
           <li id="global-menu-logo"><h1><a href="/"><img src="{% static "img/menu-logo.png" %}" alt="Closedverse"></a></h1></li>
@@ -31,23 +28,22 @@
           <li id="global-menu-list">
             <ul>
               <li id="global-menu-mymenu"><a href="{% url "main:user-view" request.user.username %}"><span class="icon-container {% user_class request.user %}"><img src="{% avatar request.user.avatar %}" alt="User Page"></span><span>User Page</span></a></li>
-              
+
 			  <!-- !! -->
 			  <li id="global-menu-feed"><a href="/activity" class="symbol" onclick="event.preventDefault(),alert('Nothing here')"><span>Activity Feed</span></a></li>
 			  <!-- !! // -->
-			  
+
               <li id="global-menu-community"><a href="/" class="symbol"><span>Communities</span></a></li>
-			  
+
 			  <!-- !! -->
-			  
-			  <li id="global-menu-message"><a href="/messages" class="symbol" onclick="event.preventDefault(),alert('Nothing here yet')"><span>Messages</span></a></li>
-              <li id="global-menu-news"><a href="/news/my_news" class="symbol" onclick="event.preventDefault(),alert('Line 612 of JS has check update commented')"></a></li>
-			  
+			  <li id="global-menu-message"><a href="/messages" class="symbol" onclick="event.preventDefault(),alert('Todo friends & messages models (and href for friends in user sidebar)')"><span>Messages</span></a></li>
 			  <!-- !! // -->
-			  
+
+			  <li id="global-menu-news"><a href="{% url "main:notifications" %}" class="symbol"></a></li>
               <li id="global-menu-my-menu"><button class="symbol js-open-global-my-menu open-global-my-menu"></button>
                 <menu id="global-my-menu" class="invisible none">
-                  <!--<li><a href="/settings/profile" class="symbol my-menu-profile-setting"><span>Profile Settings</span></a></li>
+                  <li><a href="{% url "main:profile-settings" %}" class="symbol my-menu-profile-setting"><span>Profile settings</span></a></li>
+				  <!--
                   <li><a href="/settings/account" class="symbol my-menu-miiverse-setting"><span>Miiverse Settings</span></a></li>
                   <li><a href="/titles/14866558073002733838/14866558073004999187" class="symbol my-menu-info"><span>Miiverse Announcements</span></a></li>
                   <li><a href="/guide/terms" class="symbol my-menu-guide"><span>Use of Miiverse</span></a></li>
@@ -72,10 +68,17 @@
 		  {% endif %}
         </menu>
       </div>
-      <div id="main-body">
+	  <div id="container">
+	  {% endif %}
+      <div id="main-body" 
+    class="{% if classes %}{{ classes|join:" " }} {% endif %}{% if not request.user.is_authenticated %}
+	guest{% endif %}" 
+	csrf-token="{{ csrf_token }}">
 	  {% block main-body %}
 	  {% endblock %}
       </div>
+	  {% if not request.META.HTTP_X_PJAX %}
+	  </div>
       <div id="footer">
         <div id="footer-inner">
           <div class="link-container">
@@ -88,7 +91,6 @@
         </div>
       </div>
     </div>
-{% if not request.META.HTTP_X_PJAX %}
   </body>
 </html>
 {% endif %}{% endblock html %}
