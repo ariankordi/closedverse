@@ -6,6 +6,9 @@
   font-weight: normal;
   font-style: normal;
 }
+html.os-mac::-webkit-scrollbar { 
+display: none; 
+}
 body {
   position: relative;
   font-size: 28px;
