@@ -45,14 +45,13 @@
 
 <div id="reply-content">
   <h2 class="reply-label">Comment</h2>
-  <div class="no-reply-content{% if post.number_comments %} none{% endif %}"><div>
+  <div class="no-reply-content{% if all_comment_count %} none{% endif %}"><div>
     <p>This post has no comments.</p>
   </div></div>
-<ul class="list reply-list test-reply-list">
-{% for comment in comments %}
-{% post_comment comment %}
-{% endfor %}
-</ul>
+{% if all_comment_count > 20 %}
+<button data-fragment-url="{% url "main:post-comments" post.id %}" class="more-button all-replies-button" data-reply-count="{{ all_comment_count }}"><span class="symbol">Show all comments ({{ all_comment_count }})</span></button>
+{% endif %}
+{% post_comments comments %}
 
 </div>
 <h2 class="reply-label">Add a Comment</h2>

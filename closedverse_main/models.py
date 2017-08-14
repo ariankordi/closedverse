@@ -75,7 +75,7 @@ class User(models.Model):
 	is_authenticated = True
 	
 	last_login = models.DateTimeField(auto_now=True)
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	USERNAME_FIELD = 'username'
 	EMAIL_FIELD = 'email'
 	REQUIRED_FIELDS = []
@@ -148,6 +148,8 @@ class User(models.Model):
 					post.has_yeah = post.has_yeah(request)
 					post.can_yeah = post.can_yeah(request)
 					post.is_mine = post.is_mine(request)
+					post.recent_comment = post.recent_comment()
+					post.comment_count = post.get_comments().count()
 		return posts
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
@@ -179,7 +181,7 @@ class Community(models.Model):
 	# Platform - 0/none, 1/3DS, 2/Wii U, 3/both
 	platform = models.SmallIntegerField(default=0, choices=((0, 'none'), (1, '3ds'), (2, 'wii u'), (3, 'both')))
 	tags = models.CharField(blank=True, null=True, max_length=255, choices=(('announcements', 'main announcement community'), ('changelog', 'main changelog')))
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
 	creator = models.ForeignKey(User, blank=True, null=True)
 	def __str__(self):
@@ -216,10 +218,12 @@ class Community(models.Model):
 	def get_posts(self, limit=50, offset=0, request=None):
 		posts = Post.objects.filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
-				for post in posts:
-					post.has_yeah = post.has_yeah(request)
-					post.can_yeah = post.can_yeah(request)
-					post.is_mine = post.is_mine(request)
+			for post in posts:
+				post.has_yeah = post.has_yeah(request)
+				post.can_yeah = post.can_yeah(request)
+				post.is_mine = post.is_mine(request)
+				post.recent_comment = post.recent_comment()
+				post.comment_count = post.get_comments().count()
 		return posts
 		
 	def create_post(self, request):
@@ -234,7 +238,7 @@ class CommunityClink(models.Model):
 	# root/also order doesn't matter, time does though
 	root = models.ForeignKey(Community, related_name='one')
 	also = models.ForeignKey(Community, related_name='two')
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	# type: related (f) / sub (t)
 	kind = models.BooleanField(default=False)
 
@@ -248,7 +252,7 @@ class Post(models.Model):
 	screenshot = models.URLField(max_length=1200, blank=True, default="")
 	url = models.URLField(max_length=1200, blank=True, default="")
 	spoils = models.BooleanField(default=False)
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User)
@@ -295,13 +299,18 @@ class Post(models.Model):
 		return self.comment_set.filter(original_post=self).count()
 	def get_yeahs(self, request):
 		return Yeah.objects.filter(type=0, post=self).order_by('-created')[0:30]
-	def get_comments(self, request=None):
-		comments = self.comment_set.filter(original_post=self).order_by('created')
+	def get_comments(self, request=None, limit=0, offset=0):
+		if limit:
+			comments = self.comment_set.filter(original_post=self).order_by('created')[offset:offset + limit]
+		elif offset:
+			comments = self.comment_set.filter(original_post=self).order_by('created')[offset:]
+		else:
+			comments = self.comment_set.filter(original_post=self).order_by('created')
 		if request:
-				for post in comments:
-					post.has_yeah = post.has_yeah(request)
-					post.can_yeah = post.can_yeah(request)
-					post.is_mine = post.is_mine(request)
+			for post in comments:
+				post.has_yeah = post.has_yeah(request)
+				post.can_yeah = post.can_yeah(request)
+				post.is_mine = post.is_mine(request)
 		return comments
 	def create_comment(self, request):
 		if len(request.POST['body']) > 2200:
@@ -311,7 +320,7 @@ class Post(models.Model):
 		return new_post
 	def recent_comment(self):
 		comments = self.comment_set.filter(spoils=False).exclude(creator=self.creator).order_by('-created')[:1]
-		if comments.count < 1:
+		if comments.count() < 1:
 			return False
 		return comments[0]
 
@@ -325,7 +334,7 @@ class Comment(models.Model):
 	screenshot = models.URLField(max_length=1200, blank=True, default="")
 	drawing = models.CharField(max_length=200, null=True, blank=True)
 	spoils = models.BooleanField(default=False)
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User, blank=True, null=True)
@@ -378,7 +387,7 @@ class Yeah(models.Model):
 	type = models.SmallIntegerField(default=0, choices=((0, 'post'), (1, 'comment'), ))
 	post = models.ForeignKey(Post, null=True, blank=True)
 	comment = models.ForeignKey(Comment, null=True, blank=True)
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
 		a = "from " + self.by.username + " to "
@@ -397,7 +406,7 @@ class Profile(models.Model):
 	birthday = models.DateField(null=True, blank=True)
 	# 0 - show, 1 - friends only, 2 - hide
 	id_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
-	relation_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
+	relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
 	weblink = models.CharField(max_length=1200, blank=True, default="")
 	gameskill = models.SmallIntegerField(default=0)
 	favorite = models.ForeignKey(Post, blank=True, null=True)
@@ -417,7 +426,7 @@ class Follow(models.Model):
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='follow_source')
 	target = models.ForeignKey(User, related_name='follow_target')
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
 		return "follow: from " + self.source.username + " to " + self.target.username
@@ -439,7 +448,7 @@ class Notification(models.Model):
 	context_post = models.ForeignKey(Post, null=True, blank=True)
 	context_comment = models.ForeignKey(Comment, null=True, blank=True)
 	
-	created = models.DateTimeField(auto_now=True)
+	created = models.DateTimeField(auto_now_add=True)
 	latest = models.DateTimeField(auto_now=True)
 
 	def __str__(self):
@@ -484,15 +493,11 @@ class Notification(models.Model):
 			return False
 		# Search for my own notifiaction. If it exists, set it as unread.
 		merge_own = user.notification_sender.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
-		print(merge_own)
 		if merge_own:
-			print('Oops we\'ve run into our own notif')
 			# If it's merged, don't unread that one, but unread what it's merging.
 			if merge_own[0].merged_with:
-				print('It was merged')
 				return merge_own[0].merged_with.set_unread()
 			else:
-				print('Actually it\'s just normal')
 				return merge_own[0].set_unread()
 		# Search for a notification already there so we can merge with it if it exists
 		merge_s = Notification.objects.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment, merged_with=None)

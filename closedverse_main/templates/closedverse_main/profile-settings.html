@@ -23,9 +23,9 @@
         <div class="select-content">
           <div class="select-button">
             <select name="relationship_visibility" id="relationship_visibility">
-              <option value="0">Everyone</option>
-              <option value="1">My friends</option>
-              <option value="2">Only me</option>
+              <option value="0"{% if profile.relationship_visibility == 0 %} selected{% endif %}>Everyone</option>
+              <option value="1"{% if profile.relationship_visibility == 1 %} selected{% endif %}>My friends</option>
+              <option value="2"{% if profile.relationship_visibility == 2 %} selected{% endif %}>Only me</option>
             </select>
           </div>
         </div>
@@ -49,13 +49,13 @@
       </li>
 	  	  {% if user.origin_id %}
       <li>
-        <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID?</label></p>
+        <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID? ({{ user.origin_id }})</label></p>
         <div class="select-content">
           <div class="select-button">
             <select name="id_visibility" id="id_visibility">
-              <option value="0">Everyone</option>
-              <option value="1">My friends</option>
-              <option value="2">Only me</option>
+              <option value="0"{% if profile.id_visibility == 0 %} selected{% endif %}>Everyone</option>
+              <option value="1"{% if profile.id_visibility == 1 %} selected{% endif %}>My friends</option>
+              <option value="2"{% if profile.id_visibility == 2 %} selected{% endif %}>Nobody</option>
             </select>
           </div>
         </div>

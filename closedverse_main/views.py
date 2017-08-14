@@ -381,12 +381,17 @@ def post_view(request, post):
 		title = 'Your post'
 	else:
 		title = '{0}\'s post'.format(post.creator.nickname)
-	comments = post.get_comments(request)
+	all_comment_count = post.get_comments().count()
+	if all_comment_count > 20:
+		comments = post.get_comments(request, None, all_comment_count - 20)
+	else:
+		comments = post.get_comments(request)
 	return render(request, 'closedverse_main/post-view.html', {
 		'title': title,
 		'post': post,
 		'yeahs': post.get_yeahs(request),
 		'comments': comments,
+		'all_comment_count': all_comment_count,
 	})
 @login_required
 def post_add_yeah(request, post):
@@ -408,13 +413,13 @@ def post_delete_yeah(request, post):
 	return HttpResponse()
 @login_required
 def post_comments(request, post):
+	try:
+		post = Post.objects.get(id=post)
+	except (Post.DoesNotExist, ValueError):
+		return HttpResponseNotFound()
 	if request.method == 'POST':
 		if not (request.POST['body'] and request.POST['feeling_id']):
 			return HttpResponseBadRequest()
-		try:
-			post = Post.objects.get(id=post)
-		except (Post.DoesNotExist, ValueError):
-			return HttpResponseNotFound()
 		# Method of Post
 		new_post = post.create_comment(request)
 		if not new_post:
@@ -427,7 +432,12 @@ def post_comments(request, post):
 		Notification.give_notification(request.user, 2, post.creator, post)
 		return render(request, 'closedverse_main/elements/post-comment.html', { 'comment': new_post })
 	else:
-		raise Http404()
+		comment_count = post.get_comments().count()
+		if comment_count > 20:
+			comments = post.get_comments(request, comment_count - 20, 0)
+			return render(request, 'closedverse_main/elements/post_comments.html', { 'comments': comments })
+		else:
+			return render(request, 'closedverse_main/elements/post_comments.html', { 'comments': post.get_comments(request) })
 
 def comment_view(request, comment):
 	try:

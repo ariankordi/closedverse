@@ -33,5 +33,30 @@
           <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
 		  {% endif %}
 		</div>
+{% if post.recent_comment %}
+	<div class="recent-reply-content">
+{% if post.comment_count > 1 %}
+<div class="recent-reply-read-more-container" data-href="{% url "main:post-view" post.id %}" tabindex="0">
+      View all comments ({{ post.comment_count }})
+    </div>
+{% endif %}
+  <div id="{{ post.recent_comment.unique_id }}" data-href="{% url "main:post-view" post.id %}" tabindex="0" class="recent-reply trigger">
+    {% user_icon_container post.recent_comment.creator post.recent_comment.feeling %}
+    <p class="user-name"><a href="{{ post.recent_comment.creator.username }}">{{ post.recent_comment.creator.nickname }}</a></p>
+    <p class="timestamp-container">
+        <a class="timestamp" href="{% url "main:comment-view" post.recent_comment.id %}">{% time post.recent_comment.created %}</a>
+    </p>
+    <div class="body">
+      <div class="post-content">
+		  {% if post.recent_comment.drawing %}
+		  <p class="recent-reply-content-memo"><img src="{{ post.recent_comment.drawing }}" class="recent-reply-memo"></p>
+		  {% else %}
+          <p class="recent-reply-content-text">{{ post.recent_comment.body }}</p>
+		  {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
     </div>
 </div>

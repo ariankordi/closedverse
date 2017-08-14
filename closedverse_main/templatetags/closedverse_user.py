@@ -3,7 +3,7 @@ register = template.Library()
 
 @register.inclusion_tag('closedverse_main/elements/user-sidebar.html')
 # 0 - main, 1 - posts, 2 - yeahs, 3 - friends, 4 - following, 5 - followers
-def user_sidebar(request, user, profile, selection=0):
+def user_sidebar(request, user, profile, selection=0, general=False):
 	user.is_following = user.is_following(request.user)
 	user.is_me = user.is_me(request)
 	return {
@@ -11,6 +11,7 @@ def user_sidebar(request, user, profile, selection=0):
 		'user': user,
 		'profile': profile,
 		'selection': selection,
+		'general': general,
 	}
 @register.inclusion_tag('closedverse_main/elements/community_post.html')
 def user_post(post, type=0):

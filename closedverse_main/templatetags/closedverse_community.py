@@ -34,6 +34,11 @@ def post_comment(comment):
 	return {
 		'comment': comment,
 	}
+@register.inclusion_tag('closedverse_main/elements/post_comments.html')
+def post_comments(comments):
+	return {
+		'comments': comments,
+	}
 @register.inclusion_tag('closedverse_main/elements/feeling-selector.html')
 def feeling_selector():
 	return {}
