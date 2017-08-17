@@ -43,13 +43,11 @@
               <li id="global-menu-my-menu"><button class="symbol js-open-global-my-menu open-global-my-menu"></button>
                 <menu id="global-my-menu" class="invisible none">
                   <li><a href="{% url "main:profile-settings" %}" class="symbol my-menu-profile-setting"><span>Profile settings</span></a></li>
-				  <!--
-                  <li><a href="/settings/account" class="symbol my-menu-miiverse-setting"><span>Miiverse Settings</span></a></li>
-                  <li><a href="/titles/14866558073002733838/14866558073004999187" class="symbol my-menu-info"><span>Miiverse Announcements</span></a></li>
-                  <li><a href="/guide/terms" class="symbol my-menu-guide"><span>Use of Miiverse</span></a></li>
-                  <li><a href="/guide/" class="symbol my-menu-guide"><span>Miiverse Code of Conduct</span></a></li>
-                  <li><a href="/guide/faq" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>-->
-                  <li>
+                  <!--<li><a href="/settings/account" class="symbol my-menu-miiverse-setting"><span>Miiverse Settings</span></a></li>-->
+                  <li><a href="{% url "main:special-community-tag" "announcements" %}" class="symbol my-menu-openman"><span>Closedverse Announcements</span></a></li>
+                  <li><a href="{% url "main:help-faq" %}" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>
+                  <li><a href="#" class="symbol my-menu-white-power"><span>Feedback/bug report</span></a></li>
+				  <li>
                     <form action="{% url "main:logout" %}" method="post" id="my-menu-logout" class="symbol">
                       {% csrf_token %}
                       <input type="submit" value="Log out">

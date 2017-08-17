@@ -22,10 +22,12 @@
 	</div>
 	<div id="community-guide-footer">
 		<div id="guide-menu">
-			<a class="arrow-button" href="/help/rules"><span>Closedverse Rules</span></a>
-			<a class="arrow-button" href="/help/faq"><span>Frequently Asked Questions (FAQ)</span></a>
-			<a class="arrow-button" href="/help/legal"><span>Legal information</span></a>
-			<a class="arrow-button" href="https://www.pf2m.com/openverse/"><span>About Openverse</span></a>
+			<a class="arrow-button" href="/help/"><span>Closedverse Rules</span></a>
+			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
+			{% if PROD %}
+			<a class="arrow-button" href="{% url "main:help-legal" %}"><span>Legal information</span></a>
+			{% endif %}
+			<a class="arrow-button" href="https://www.pf2m.com/openverse/"><span>Info about Openverse</span></a>
 		</div>
 	</div>
 {% endblock %}

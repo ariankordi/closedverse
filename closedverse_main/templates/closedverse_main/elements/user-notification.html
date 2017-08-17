@@ -8,7 +8,7 @@
   {% elif notification.type == 2 %}
   {% print_names notification.all_users %} commented on <a href="{{ notification.url }}" class="link">your post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a>.
   {% elif notification.type == 3 %}
-  {% print_names notification.all_users %} commented on <a href="{{ notification.url }}" class="link">your post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a>.
+  {% print_names notification.all_users %} commented on <a href="{{ notification.url }}" class="link">{{ notification.source.nickname }}'s post&nbsp;({{ notification.context_post.trun|truncatechars:30 }})</a>.
   {% elif notification.type == 4 %}
   Followed by {% print_names notification.all_users %}.
   {% endif %}

@@ -3,10 +3,11 @@ from django.shortcuts import render, redirect
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship
 from .util import get_mii, recaptcha_verify
 from closedverse import settings
 import re
+from django.urls import reverse
 from json import dumps
 
 def json_response(msg='', code=0, httperr=400):
@@ -34,6 +35,7 @@ def community_list(request):
 		'general': obj.filter(type=0).order_by('-created')[0:6],
 		'game': obj.filter(type=1).order_by('-created')[0:6],
 		'special': obj.filter(type=2).order_by('-created')[0:6],
+		'PROD': settings.PROD,
 	})
 
 def login_page(request):
@@ -55,7 +57,7 @@ def login_page(request):
 		#if request.META['HTTP_REFERER'] and "login" not in request.META['HTTP_REFERER'] and request.META['HTTP_HOST'] in request.META['HTTP_REFERER']:
 		#	location = request.META['HTTP_REFERER']
 		#else:
-		location = "/"
+		location = '/'
 		return HttpResponse(location)
 	else:
 		return render(request, 'closedverse_main/login_page.html', {
@@ -321,6 +323,13 @@ def profile_settings(request):
 		'profile': profile,
 	})
 
+def special_community_tag(request, tag):
+	try:
+		communities = Community.objects.get(tags=tag)
+	except Community.DoesNotExist:
+		raise Http404()
+	return redirect(reverse('main:community-view', args=[communities.id]))
+
 def community_view(request, community):
 	try:
 		communities = Community.objects.get(id=community)
@@ -429,7 +438,20 @@ def post_comments(request, post):
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			}.get(new_post))
 		# Give the notification!
-		Notification.give_notification(request.user, 2, post.creator, post)
+		if post.is_mine(request):
+			users = []
+			all_comment_count = post.get_comments().count()
+			if all_comment_count > 20:
+				comments = post.get_comments(request, None, all_comment_count - 20)
+			else:
+				comments = post.get_comments(request)
+			for comment in comments:
+				if comment.creator not in users and not comment.creator == request.user:
+					users.append(comment.creator)
+			for user in users:
+				Notification.give_notification(request.user, 3, user, post)
+		else:
+			Notification.give_notification(request.user, 2, post.creator, post)
 		return render(request, 'closedverse_main/elements/post-comment.html', { 'comment': new_post })
 	else:
 		comment_count = post.get_comments().count()
@@ -523,3 +545,23 @@ def notifications(request):
 		'title': 'My notifications',
 		'notifications': notifications,
 	})
+
+@login_required
+def help_complaint(request):
+	if not request.POST.get('b'):
+		return HttpResponseBadRequest()
+	if len(request.POST['b']) > 5000:
+		# I know that concatenating like this is a bad habit at this point, or I should simply just use formatting, but..
+		return json_response('Please do not send that many characters ('+str(len(request.POST['b']))+' characters)')
+	if Complaint.has_past_sent(request.user):
+		return json_response('Please do not send complaints that quickly (very very sorry, but there\'s a 5 minute wait to prevent spam)')
+	save = request.user.complaint_set.create(type=int(request.POST['a']), body=request.POST['b'])
+	print(save)
+	return HttpResponse()
+
+def help_faq(request):
+	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
+def help_legal(request):
+	if not settings.PROD:
+		return HttpResponseForbidden()
+	return render(request, 'closedverse_main/help/legal.html', {})

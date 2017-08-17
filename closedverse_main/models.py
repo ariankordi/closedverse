@@ -127,6 +127,8 @@ class User(models.Model):
 		return self.follow_source.filter().count()
 	def num_followers(self):
 		return self.follow_target.filter().count()
+	def num_friends(self):
+		return self.friend_source.filter().count() + self.friend_target.filter().count()
 	def is_following(self, me):
 		if not me.is_authenticated:
 			return False
@@ -168,6 +170,10 @@ class User(models.Model):
 		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
+	def friend_state(self, other):
+		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
+		print('todo')
+
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -241,6 +247,10 @@ class CommunityClink(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	# type: related (f) / sub (t)
 	kind = models.BooleanField(default=False)
+
+# Do this
+#class CommunityFavorite(models.Model):
+#
 
 class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -437,7 +447,7 @@ class Notification(models.Model):
 	to = models.ForeignKey(User, related_name='notification_to')
 	source = models.ForeignKey(User, related_name='notification_sender')
 	read = models.BooleanField(default=False)
-	type = models.PositiveSmallIntegerField(choices=(
+	type = models.SmallIntegerField(choices=(
 	(0, 'Yeah on post'),
 	(1, 'Yeah on comment'),
 	(2, 'Comment on my post'),
@@ -489,7 +499,7 @@ class Notification(models.Model):
 		# Just keeping this simple for now, might want to make it better later
 		# If the user sent a notification to this user at least 5 seconds ago, return False
 		# Or if user is to
-		if user == to or user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to):
+		if (not type == 3 and user == to) or user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to):
 			return False
 		# Search for my own notifiaction. If it exists, set it as unread.
 		merge_own = user.notification_sender.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
@@ -506,3 +516,50 @@ class Notification(models.Model):
 			return merge_s[0].merge(user)
 		else:
 			return user.notification_sender.create(source=user, type=type, to=to, context_post=post, context_comment=comment)
+
+class Complaint(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	creator = models.ForeignKey(User)
+	type = models.SmallIntegerField(choices=(
+	(0, 'Bug report'),
+	(1, 'Suggestion'),
+	(2, 'Want'),
+	))
+	body = models.TextField(blank=True, default="")
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "Complaint from " + str(self.creator) + " at " + str(self.created)
+	def has_past_sent(user):
+		return user.complaint_set.filter(created__gt=timezone.now() - timedelta(minutes=5))
+
+class FriendRequest(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	source = models.ForeignKey(User, related_name='fr_source')
+	target = models.ForeignKey(User, related_name='fr_target')
+	body = models.TextField(blank=True, default="")
+	read = models.BooleanField(default=False)
+	finished = models.BooleanField(default=False)
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "friend request ("+str(self.finished)+"): from " + str(self.source) + " to " + str(self.target)
+
+class Friendship(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	source = models.ForeignKey(User, related_name='friend_source')
+	target = models.ForeignKey(User, related_name='friend_target')
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "friendship with " + str(self.source) + " and " + str(self.target)
+	def other(self, user):
+		if source == user:
+			return target
+		return source
+
+	def get_friendships(user, limit=50, offset=0):
+		return Friendship.objects.filter(Q(source=self) | Q(target=self)).order_by('-created')[offset:offset + limit]

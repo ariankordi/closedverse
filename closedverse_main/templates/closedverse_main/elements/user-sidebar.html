@@ -17,15 +17,41 @@
 <div class="toggle-button">
     <button type="button" data-action="{% url "main:user-follow" user.username %}" class="follow-button button symbol{% if user.is_following %} none{% endif %}">Follow</button>
     <button type="button" data-action="{% url "main:user-unfollow" user.username %}" class="unfollow-button button symbol{% if not user.is_following %} none{% endif %}" data-screen-name="{{ user.nickname }}">Follow</button>
+	
 </div>
 
+<!--
+If can friend: add button that summons this but make events for AJAX and such
+If can friend: (templatize and niceize this, like feedback form)
+<div class="dialog none" data-modal-types="post-friend-request">
+<div class="dialog-inner">
+  <div class="window">
+    <h1 class="window-title">Send friend request to {{ user.nickname }}</h1>
+    <div class="window-body">
+      <p class="description">Friend Request: <img width="36px" height="36px" src="{% avatar user.avatar %}">test account 666</p>
+      <form method="post" action="/users/uncannedbread/friend_request.create.json">
+        
+        
+        
+        <textarea name="body" class="textarea" maxlength="100" data-placeholder="Write a message here." placeholder="Write a message here."></textarea>
+        
+        <div class="form-buttons">
+          <input type="button" class="olv-modal-close-button gray-button" value="Cancel">
+          <input type="submit" value="Send" class="post-button black-button">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+-->
       </div>
 		{% elif user.is_me %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
 		{% endif %}
 
     <ul id="sidebar-profile-status">
-      <li><a href="" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">Nil</span>Friends</span></a></li>
+      <li><a href="" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">{{ user.num_friends }}</span>Friends</span></a></li>
       <li><a href="{% url "main:user-following" user.username %}" class="{% if selection == 4 %}selected{% endif %}"><span><span class="number test-following-count">{{ user.num_following }}</span>Following</span></a></li>
       <li><a href="{% url "main:user-followers" user.username %}" class="{% if selection == 5 %}selected{% endif %}"><span><span class="number test-follower-count">{{ user.num_followers }}</span>Followers</span></a></li>
     </ul>

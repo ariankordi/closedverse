@@ -17,6 +17,7 @@ urlpatterns = [
 	url(r'^users/(?P<username>[A-Za-z0-9-._]+)/following$', views.user_following, name='user-following'),
 	url(r'^users/(?P<username>[A-Za-z0-9-._]+)/followers$', views.user_followers, name='user-followers'),
 	url(r'^communities/(?P<community>[0-9]+)$', views.community_view, name='community-view'),
+	url(r'^communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
 	url(r'^communities/(?P<community>[0-9]+)/posts$', views.post_create, name='post-create'),
 	# Some of these NAMES (not patterns) are hardcoded into models.py
 	url(r'^posts/(?P<post>[0-9]+)$', views.post_view, name='post-view'),
@@ -32,4 +33,8 @@ urlpatterns = [
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/set_read', views.notification_setread, name='set-read'),
 	url(r'notifications/(?P<notification>[0-9a-f\-]+)\.rm', views.notification_delete, name='notification-delete'),
+	
+	url(r'complaints', views.help_complaint, name='complaints'),
+	url(r'help/faq/?$', views.help_faq, name='help-faq'),
+	url(r'help/legal/?$', views.help_legal, name='help-legal'),
 ]
