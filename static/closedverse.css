@@ -12,7 +12,11 @@ display: none;
 body {
   position: relative;
   font-size: 28px;
-  font-family: sans-serif;
+  font-family: sans-serif;.tab-container#notification-tab-container {
+margin-bottom: 15px;
+}.tab-container#notification-tab-container {
+margin-bottom: 15px;
+}
   line-height: 1.5;
   margin: 0;
   padding: 0;
@@ -1095,6 +1099,9 @@ h2.label-topic .with-filter-right {
 }
 .tab-container + .community-list {
   margin-top: 15px;
+}
+.tab-container#notification-tab-container {
+  margin-bottom: 15px;
 }
 .tab2,
 .tab3 {

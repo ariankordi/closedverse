@@ -118,11 +118,32 @@ def user_view(request, username):
 		user = User.objects.get(username=username)
 	except User.DoesNotExist:
 		raise Http404()
+	profile = user.profile()
+	if request.method == 'POST' and user.is_me(request):
+		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
+			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
+		if len(request.POST.get('profile_comment')) > 2200:
+			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
+		if len(request.POST.get('country')) > 255:
+			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
+		if len(request.POST.get('website')) > 255:
+			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		if len(request.POST.get('avatar')) > 255:
+			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		profile.avatar = request.POST.get('avatar')
+		profile.country = request.POST.get('country')
+		profile.weblink = request.POST.get('website')
+		profile.comment = request.POST.get('profile_comment')
+		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
+		profile.id_visibility = (request.POST.get('id_visibility') or 0)
+		user.nickname = request.POST.get('screen_name')
+		profile.save()
+		user.save()
+		return HttpResponse()
 	if user.is_me(request):
 		title = 'My profile'
 	else:
 		title = '{0}\'s profile'.format(user.nickname)
-	profile = user.profile()
 	posts = user.get_posts(3, 0, request)
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
@@ -297,27 +318,6 @@ def user_followers(request, username):
 def profile_settings(request):
 	profile = request.user.profile()
 	user = request.user
-	if request.method == 'POST':
-		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
-			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
-		if len(request.POST.get('profile_comment')) > 2200:
-			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
-		if len(request.POST.get('country')) > 255:
-			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
-		if len(request.POST.get('website')) > 255:
-			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
-		if len(request.POST.get('avatar')) > 255:
-			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		profile.avatar = request.POST.get('avatar')
-		profile.country = request.POST.get('country')
-		profile.weblink = request.POST.get('website')
-		profile.comment = request.POST.get('profile_comment')
-		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
-		profile.id_visibility = (request.POST.get('id_visibility') or 0)
-		user.nickname = request.POST.get('screen_name')
-		profile.save()
-		user.save()
-		return HttpResponse()
 	return render(request, 'closedverse_main/profile-settings.html', {
 		'title': 'Profile settings',
 		'user': user,

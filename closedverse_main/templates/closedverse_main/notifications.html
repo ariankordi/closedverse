@@ -5,6 +5,15 @@
   <div class="post-list-outline">
 
     <h2 class="label">{{ title }}</h2>
+
+	<div id="notification-tab-container" class="tab-container">
+     	 <div class="tab2">
+       	 <a class="tab-icon-my-news selected" href="{% url "main:notifications" %}"><span>Updates</span></a>
+
+        <a class="tab-icon-friend-request" href="">Friend requests</a>
+      </div>
+
+    </div>
 	<div class="list news-list">
 	{% if notifications %}
 		{% for notification in notifications %}

@@ -3,7 +3,7 @@
 {% user_sidebar request user profile 0 %}
 <div class="main-column"><div class="post-list-outline">
 <h2 class="label">{{ title }}</h2>
-<form class="setting-form" method="post">
+<form class="setting-form" method="post" action="{% url "main:user-view" user.username %}">
 <ul class="settings-list">
       <li class="setting-nickname">
         <p class="settings-label">Nickname</p>
