@@ -93,9 +93,10 @@ def signup_page(request):
 				return HttpResponseBadRequest("The NNID provided doesn't exist.")
 			nick = mii[1]
 		else:
+			# Bug?: I've found once to have an avatar replaced by a username after an account was created with no avatar, strange, don't know the exact cause but just putting this comment here in case it becomes more of an issue
 			nick = request.POST['nickname']
 			mii = None
-		make = User.objects.closed_create_user(request.POST['username'], request.POST['password'], request.META['REMOTE_ADDR'], nick, mii)
+		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii)
 		Profile.objects.create(user=make)
 		login(request, make)
 		return HttpResponse("/")
