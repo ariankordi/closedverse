@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
+from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt_sha256
@@ -116,7 +117,7 @@ class User(models.Model):
 			return [first, second]
 	def is_me(self, request):
 		if request.user.is_authenticated:
-			return (self.unique_id == request.user.unique_id)
+			return (self == request.user)
 		else:
 			return False
 	def num_yeahs(self):
@@ -172,8 +173,47 @@ class User(models.Model):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
 	def friend_state(self, other):
 		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
-		print('todo')
-
+		query1 = other.fr_source.filter(target=self, finished=False)
+		if query1:
+			return 1
+		query2 = self.fr_source.filter(target=other, finished=False)
+		if query2:
+			return 2
+		query3 = Friendship.find_friendship(self, other)
+		if query3:
+			return 3
+		return 0
+	def get_fr(self, other):
+		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(target=other))
+	def get_frs_target(self):
+		return FriendRequest.objects.filter(target=self, finished=False)
+	def get_frs_notif(self):
+		return FriendRequest.objects.filter(target=self, finished=False, read=False).count()
+	def reject_fr(self, target):
+		fr = self.get_fr(target)
+		if fr:
+			fr[0].finished = True
+			fr[0].save()
+	def send_fr(self, source, body=None):
+		if not self.get_fr(source):
+			return FriendRequest.objects.create(source=source, target=self, body=body)
+	def accept_fr(self, target):
+		fr = self.get_fr(target)
+		if fr:
+			fr[0].finished = True
+			fr[0].save()
+			return Friendship.objects.create(source=self, target=target)
+	def cancel_fr(self, target):
+		fr = target.get_fr(self)
+		if fr:
+			fr[0].finished = True
+			return fr[0].save()
+	def read_fr(self):
+		return self.get_frs_target().update(read=True)
+	def delete_friend(self, target):
+		fr = Friendship.find_friendship(self, target)
+		if fr:
+			fr[0].delete()
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -238,6 +278,8 @@ class Community(models.Model):
 		new_post = self.post_set.create(body=request.POST['body'], creator=request.user, community=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')))
 		new_post.is_mine = True
 		return new_post
+	class Meta:
+		verbose_name_plural = "communities"
 
 # Links between communities for "related" communities
 class CommunityClink(models.Model):
@@ -273,7 +315,7 @@ class Post(models.Model):
 		return False
 	def trun(self):
 		if self.drawing:
-			return '(drawing)'
+			return 'drawing'
 		else:
 			return self.body
 	def is_mine(self, request):
@@ -539,7 +581,7 @@ class FriendRequest(models.Model):
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='fr_source')
 	target = models.ForeignKey(User, related_name='fr_target')
-	body = models.TextField(blank=True, default="")
+	body = models.TextField(blank=True, null=True, default="")
 	read = models.BooleanField(default=False)
 	finished = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
@@ -557,9 +599,11 @@ class Friendship(models.Model):
 	def __str__(self):
 		return "friendship with " + str(self.source) + " and " + str(self.target)
 	def other(self, user):
-		if source == user:
-			return target
-		return source
+		if self.source == user:
+			return self.target
+		return self.source
 
 	def get_friendships(user, limit=50, offset=0):
-		return Friendship.objects.filter(Q(source=self) | Q(target=self)).order_by('-created')[offset:offset + limit]
+		return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
+	def find_friendship(first, second):
+		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created')

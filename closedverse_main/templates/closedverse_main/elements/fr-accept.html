@@ -1,0 +1,15 @@
+{% load closedverse_tags %}{% load closedverse_user %}<div class="dialog none" data-modal-types="accept-friend-request" uuid="{{ fr.unique_id }}" data-screen-name="{{ fr.source.nickname }}" data-reject-action="{% url "main:user-fr-reject" fr.source.username %}" data-action="{% url "main:user-fr-accept" fr.source.username %}">
+    <div class="dialog-inner">
+        <div class="window">
+            <h1 class="window-title">Friend Request from {{ fr.source.nickname }} at {% time fr.created True %}</h1>
+            <div class="window-body">
+                {% user_sidebar_info fr.source %}
+                <pre>{% if fr.body %}{{ fr.body }}{% else %}<i>(No message)</i>{% endif %}</pre>
+                <p class="window-body-content">Accept {{ fr.source.nickname }}'s friend request?</p>
+                <div class="form-buttons">
+                    <button class="olv-modal-close-button gray-button" data-event-type="cancel" type="button">Cancel</button><button class="cancel-button gray-button" type="button">Reject</button><button class="ok-button post-button black-button" data-event-type="ok" type="button">Accept</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -71,7 +71,7 @@ def signup_page(request):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
 		if not (request.POST['username'] and request.POST['password'] and request.POST['password_again']):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
-		if not re.compile('^[A-Za-z0-9-._]{4,32}$').match(request.POST['username']):
+		if not re.compile(r'^[A-Za-z0-9-._]{4,32}$').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long.")
 		try:
 			al_exist = User.objects.get(username=request.POST['username'])
@@ -93,10 +93,9 @@ def signup_page(request):
 				return HttpResponseBadRequest("The NNID provided doesn't exist.")
 			nick = mii[1]
 		else:
-			# Bug?: I've found once to have an avatar replaced by a username after an account was created with no avatar, strange, don't know the exact cause but just putting this comment here in case it becomes more of an issue
 			nick = request.POST['nickname']
 			mii = None
-		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii)
+		make = User.objects.closed_create_user(request.POST['username'], request.POST['password'], request.META['REMOTE_ADDR'], nick, mii)
 		Profile.objects.create(user=make)
 		login(request, make)
 		return HttpResponse("/")
@@ -114,40 +113,22 @@ def logout_page(request):
 	return redirect('/')
 
 def user_view(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		raise Http404()
-	profile = user.profile()
-	if request.method == 'POST' and user.is_me(request):
-		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
-			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
-		if len(request.POST.get('profile_comment')) > 2200:
-			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
-		if len(request.POST.get('country')) > 255:
-			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
-		if len(request.POST.get('website')) > 255:
-			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
-		if len(request.POST.get('avatar')) > 255:
-			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		profile.avatar = request.POST.get('avatar')
-		profile.country = request.POST.get('country')
-		profile.weblink = request.POST.get('website')
-		profile.comment = request.POST.get('profile_comment')
-		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
-		profile.id_visibility = (request.POST.get('id_visibility') or 0)
-		user.nickname = request.POST.get('screen_name')
-		profile.save()
-		user.save()
-		return HttpResponse()
+	user = get_object_or_404(User, username=username)
 	if user.is_me(request):
 		title = 'My profile'
 	else:
 		title = '{0}\'s profile'.format(user.nickname)
+	profile = user.profile()
 	posts = user.get_posts(3, 0, request)
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
 		yeah.post.has_yeah, yeah.post.can_yeah, yeah.post.is_mine = yeah.post.has_yeah(request), yeah.post.can_yeah(request), yeah.post.is_mine(request)
+	fr = None
+	if request.user.is_authenticated:
+		user.friend_state = user.friend_state(request.user)
+		if user.friend_state == 2:
+			fr = user.get_fr(request.user)[0]
+
 	return render(request, 'closedverse_main/user_view.html', {
 		'title': title,
 		'classes': ['profile-top'],
@@ -155,13 +136,11 @@ def user_view(request, username):
 		'profile': profile,
 		'posts': posts,
 		'yeahed': yeahed,
+		'fr': fr,
 	})
 
 def user_posts(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		raise Http404()
+	user = get_object_or_404(User, username=username)
 	if user.is_me(request):
 		title = 'My posts'
 	else:
@@ -194,10 +173,7 @@ def user_posts(request, username):
 			'next': next_offset,
 		})
 def user_yeahs(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		raise Http404()
+	user = get_object_or_404(User, username=username)
 	if user.is_me(request):
 		title = 'My yeahs'
 	else:
@@ -238,10 +214,7 @@ def user_yeahs(request, username):
 		})
 
 def user_following(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		raise Http404()
+	user = get_object_or_404(User, username=username)
 	if user.is_me(request):
 		title = 'My follows'
 	else:
@@ -276,10 +249,7 @@ def user_following(request, username):
 			'next': next_offset,
 		})
 def user_followers(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		raise Http404()
+	user = get_object_or_404(User, username=username)
 	if user.is_me(request):
 		title = 'My followers'
 	else:
@@ -314,10 +284,67 @@ def user_followers(request, username):
 			'next': next_offset,
 		})
 
+def user_friends(request, username):
+	user = get_object_or_404(User, username=username)
+	if user.is_me(request):
+		title = 'My friends'
+	else:
+		title = '{0}\'s friends'.format(user.nickname)
+	profile = user.profile()
+
+	if request.GET.get('offset'):
+		friends_list = Friendship.get_friendships(user, 20, int(request.GET['offset']))
+	else:
+		friends_list = Friendship.get_friendships(user, 20, 0)
+	if friends_list.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+	friends = []
+	for friend in friends_list:
+		friends.append(friend.other(user))
+	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			return render(request, 'closedverse_main/elements/profile-user-list.html', {
+			'users': friends,
+			'next': next_offset,
+		})
+	else:
+		return render(request, 'closedverse_main/user_friends.html', {
+			'user': user,
+			'title': title,
+			'friends': friends,
+			'profile': profile,
+			'next': next_offset,
+		})
+
 @login_required
 def profile_settings(request):
 	profile = request.user.profile()
 	user = request.user
+	if request.method == 'POST':
+		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
+			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
+		if len(request.POST.get('profile_comment')) > 2200:
+			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
+		if len(request.POST.get('country')) > 255:
+			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
+		if len(request.POST.get('website')) > 255:
+			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		if len(request.POST.get('avatar')) > 255:
+			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		profile.avatar = request.POST.get('avatar')
+		profile.country = request.POST.get('country')
+		profile.weblink = request.POST.get('website')
+		profile.comment = request.POST.get('profile_comment')
+		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
+		profile.id_visibility = (request.POST.get('id_visibility') or 0)
+		user.nickname = request.POST.get('screen_name')
+		profile.save()
+		user.save()
+		return HttpResponse()
 	return render(request, 'closedverse_main/profile-settings.html', {
 		'title': 'Profile settings',
 		'user': user,
@@ -325,17 +352,11 @@ def profile_settings(request):
 	})
 
 def special_community_tag(request, tag):
-	try:
-		communities = Community.objects.get(tags=tag)
-	except Community.DoesNotExist:
-		raise Http404()
+	communities = get_object_or_404(Community, tags=tag)
 	return redirect(reverse('main:community-view', args=[communities.id]))
 
 def community_view(request, community):
-	try:
-		communities = Community.objects.get(id=community)
-	except Community.DoesNotExist:
-		raise Http404()
+	communities = get_object_or_404(Community, id=community)
 	if request.GET.get('offset'):
 		posts = communities.get_posts(50, int(request.GET['offset']), request)
 	else:
@@ -356,6 +377,7 @@ def community_view(request, community):
 	else:
 		return render(request, 'closedverse_main/community_view.html', {
 			'title': communities.name,
+			'classes': ['community-top'],
 			'community': communities,
 			'posts': posts,
 			'next': next_offset,
@@ -382,10 +404,7 @@ def post_create(request, community):
 		raise Http404()
 
 def post_view(request, post):
-	try:
-		post = Post.objects.get(id=post)
-	except (Post.DoesNotExist, ValueError):
-		raise Http404()
+	post = get_object_or_404(Post, id=post)
 	post.has_yeah, post.can_yeah, post.is_mine = post.has_yeah(request), post.can_yeah(request), post.is_mine(request)
 	if post.is_mine:
 		title = 'Your post'
@@ -405,28 +424,19 @@ def post_view(request, post):
 	})
 @login_required
 def post_add_yeah(request, post):
-	try:
-		the_post = Post.objects.get(id=post)
-	except (Post.DoesNotExist, ValueError):
-		return HttpResponseNotFound()
+	the_post = get_object_or_404(Post, id=post)
 	the_post.give_yeah(request)
 	# Give the notification!
 	Notification.give_notification(request.user, 0, the_post.creator, the_post)
 	return HttpResponse()
 @login_required
 def post_delete_yeah(request, post):
-	try:
-		the_post = Post.objects.get(id=post)
-	except (Post.DoesNotExist, ValueError):
-		return HttpResponseNotFound()
+	the_post = get_object_or_404(Post, id=post)
 	the_post.remove_yeah(request)
 	return HttpResponse()
 @login_required
 def post_comments(request, post):
-	try:
-		post = Post.objects.get(id=post)
-	except (Post.DoesNotExist, ValueError):
-		return HttpResponseNotFound()
+	post = get_object_or_404(Post, id=post)
 	if request.method == 'POST':
 		if not (request.POST['body'] and request.POST['feeling_id']):
 			return HttpResponseBadRequest()
@@ -463,10 +473,7 @@ def post_comments(request, post):
 			return render(request, 'closedverse_main/elements/post_comments.html', { 'comments': post.get_comments(request) })
 
 def comment_view(request, comment):
-	try:
-		comment = Comment.objects.get(id=comment)
-	except (Comment.DoesNotExist, ValueError):
-		raise Http404()
+	comment = get_object_or_404(Comment, id=comment)
 	comment.has_yeah, comment.can_yeah, comment.is_mine = comment.has_yeah(request), comment.can_yeah(request), comment.is_mine(request)
 	if comment.is_mine:
 		title = 'Your comment'
@@ -483,50 +490,72 @@ def comment_view(request, comment):
 	})
 @login_required
 def comment_add_yeah(request, comment):
-	try:
-		the_post = Comment.objects.get(id=comment)
-	except (Comment.DoesNotExist, ValueError):
-		return HttpResponseNotFound()
+	the_post = get_object_or_404(Comment, id=comment)
 	the_post.give_yeah(request)
 	# Give the notification!
 	Notification.give_notification(request.user, 1, the_post.creator, None, the_post)
 	return HttpResponse()
 @login_required
 def comment_delete_yeah(request, comment):
-	try:
-		the_post = Comment.objects.get(id=comment)
-	except (Comment.DoesNotExist, ValueError):
-		return HttpResponseNotFound()
+	the_post = get_object_or_404(Comment, id=comment)
 	the_post.remove_yeah(request)
 	return HttpResponse()
 @login_required
 def user_follow(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		return HttpResponseNotFound()
+	user = get_object_or_404(User, username=username)
 	user.follow(request.user)
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
 	return HttpResponse()
 @login_required
 def user_unfollow(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		return HttpResponseNotFound()
+	user = get_object_or_404(User, username=username)
 	user.unfollow(request.user)
+	return HttpResponse()
+@login_required
+def user_friendrequest_create(request, username):
+	user = get_object_or_404(User, username=username)
+	if user.friend_state(request.user) == 0:
+		if request.POST.get('body'):
+			if len(request.POST['body']) > 2200:
+				return json_response('Sorry, but you can\'t send that many characters in a friend request ('+str(len(request.POST['body']))+' sent, 2200 max)\nYou can send more characters in a message once you friend them though.')
+			user.send_fr(request.user, request.POST['body'])
+		else:
+			user.send_fr(request.user)
+	return HttpResponse()
+@login_required
+def user_friendrequest_accept(request, username):
+	user = get_object_or_404(User, username=username)
+	user.accept_fr(request.user)
+	return HttpResponse()
+@login_required
+def user_friendrequest_reject(request, username):
+	user = get_object_or_404(User, username=username)
+	user.reject_fr(request.user)
+	return HttpResponse()
+@login_required
+def user_friendrequest_cancel(request, username):
+	user = get_object_or_404(User, username=username)
+	user.cancel_fr(request.user)
+	return HttpResponse()
+@login_required
+def user_friendrequest_delete(request, username):
+	user = get_object_or_404(User, username=username)
+	user.delete_friend(request.user)
 	return HttpResponse()
 
 def check_notifications(request):
 	if not request.user.is_authenticated:
 		return JsonResponse({'success': True})
 	n_count = request.user.notification_count()
+	all_count = request.user.get_frs_notif() + n_count
 	# n for notifications icon, msg for messages icon
-	return JsonResponse({'success': True, 'n': n_count, 'msg': 0})
+	return JsonResponse({'success': True, 'n': all_count, 'msg': 0})
 @login_required
 def notification_setread(request):
 	update = request.user.notification_read()
+	if request.GET.get('fr'):
+		request.user.read_fr()
 	return HttpResponse()
 @login_required
 def notification_delete(request, notification):
@@ -542,11 +571,28 @@ def notification_delete(request, notification):
 @login_required
 def notifications(request):
 	notifications = request.user.get_notifications()
+	frs = request.user.get_frs_notif()
 	return render(request, 'closedverse_main/notifications.html', {
 		'title': 'My notifications',
 		'notifications': notifications,
+		'frs': frs,
+	})
+@login_required
+def friend_requests(request):
+	friendrequests = request.user.get_frs_target()
+	notifs = request.user.notification_count()
+	return render(request, 'closedverse_main/friendrequests.html', {
+		'title': 'My friend requests',
+		'friendrequests': friendrequests,
+		'notifs': notifs,
 	})
 
+def set_lighting(request):
+	if not request.session.get('lights', False):
+		request.session['lights'] = True
+	else:
+		request.session['lights'] = False
+	return HttpResponse()
 @login_required
 def help_complaint(request):
 	if not request.POST.get('b'):

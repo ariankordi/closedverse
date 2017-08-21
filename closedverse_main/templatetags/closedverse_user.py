@@ -3,15 +3,27 @@ register = template.Library()
 
 @register.inclusion_tag('closedverse_main/elements/user-sidebar.html')
 # 0 - main, 1 - posts, 2 - yeahs, 3 - friends, 4 - following, 5 - followers
-def user_sidebar(request, user, profile, selection=0, general=False):
-	user.is_following = user.is_following(request.user)
-	user.is_me = user.is_me(request)
+def user_sidebar(request, user, profile, selection=0, general=False, fr=None):
+	if user.is_authenticated:
+		user.is_following = user.is_following(request.user)
+		user.is_me = user.is_me(request)
 	return {
 		'request': request,
 		'user': user,
 		'profile': profile,
 		'selection': selection,
 		'general': general,
+		'fr': fr,
+	}
+@register.inclusion_tag('closedverse_main/elements/user-sidebar-info.html')
+def user_sidebar_info(user):
+	return {
+		'user': user,
+	}
+@register.inclusion_tag('closedverse_main/elements/fr-accept.html')
+def fr_accept(fr):
+	return {
+		'fr': fr,
 	}
 @register.inclusion_tag('closedverse_main/elements/community_post.html')
 def user_post(post, type=0):

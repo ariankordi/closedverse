@@ -1,0 +1,11 @@
+{% load closedverse_tags %}<div id="sidebar-profile-body">
+	<div class="icon-container {% user_class user %}">
+		<a href="{% url "main:user-view" user.username %}">
+			<img src="{% avatar user.avatar %}" alt="{{ user.nickname }}" class="icon">
+		</a>
+	</div>
+	{% if user.get_class.1 %}<p class="user-organization">{% user_level user %}</p>{% endif %}
+
+		<a href="{% url "main:user-view" user.username %}" class="nick-name">{{ user.nickname }}</a>
+		<p class="id-name">{{ user.username }}</p>
+	</div>

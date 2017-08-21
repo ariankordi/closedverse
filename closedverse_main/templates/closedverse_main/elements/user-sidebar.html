@@ -1,39 +1,37 @@
-{% load closedverse_tags %}<div id="sidebar" class="{% if general %}general{% else %}user{% endif %}-sidebar">
+{% load closedverse_tags %}{% load closedverse_user %}
+{% if user.is_authenticated %}<div id="sidebar" class="{% if general %}general{% else %}user{% endif %}-sidebar">
   <div class="sidebar-container">
       
-    <div id="sidebar-profile-body">
-      <div class="icon-container {% user_class user %}">
-        <a href="{% url "main:user-view" user.username %}">
-          <img src="{% avatar user.avatar %}" alt="{{ user.nickname }}" class="icon">
-        </a>
-      </div>
-      {% if user.get_class.1 %}<p class="user-organization">{% user_level user %}</p>{% endif %}
-	  
-      <a href="{% url "main:user-view" user.username %}" class="nick-name">{{ user.nickname }}</a>
-      <p class="id-name">{{ user.username }}</p>
-    </div>
+	{% user_sidebar_info user %}
 {% if request.user.is_authenticated and not user.is_me %}
       <div class="user-action-content">
 <div class="toggle-button">
     <button type="button" data-action="{% url "main:user-follow" user.username %}" class="follow-button button symbol{% if user.is_following %} none{% endif %}">Follow</button>
     <button type="button" data-action="{% url "main:user-unfollow" user.username %}" class="unfollow-button button symbol{% if not user.is_following %} none{% endif %}" data-screen-name="{{ user.nickname }}">Follow</button>
-	
+	{% if selection == 0 %}
+		{% if user.friend_state == 0 %}
+		<button type="button" data-action="{% url "main:user-fr-create" user.username %}" class="friend-button create button symbol">Send friend request</button>
+		{% elif user.friend_state == 1 %}
+		<button type="button" data-action="{% url "main:user-fr-cancel" user.username %}" data-screen-name="{{ user.nickname }}" class="friend-button unf cancel button symbol">Cancel friend request</button>
+		{% elif user.friend_state == 2 %}
+		<button type="button" data-action="{% url "main:user-fr-create" user.username %}" data-screen-name="{{ user.nickname }}" data-time="{% time fr.created True %}" data-msg="{{ fr.body }}" class="friend-button accept button symbol">Become friends</button>
+		{% elif user.friend_state == 3 %}
+		<button type="button" data-action="{% url "main:user-fr-delete" user.username %}" data-screen-name="{{ user.nickname }}" class="friend-button unf delete button symbol">Friends</button>
+		{% endif %}
+	{% endif %}
 </div>
 
-<!--
-If can friend: add button that summons this but make events for AJAX and such
-If can friend: (templatize and niceize this, like feedback form)
+{% if fr %}{% fr_accept fr %}{% endif %}
+{% if user.friend_state == 0 %}
 <div class="dialog none" data-modal-types="post-friend-request">
 <div class="dialog-inner">
   <div class="window">
     <h1 class="window-title">Send friend request to {{ user.nickname }}</h1>
     <div class="window-body">
-      <p class="description">Friend Request: <img width="36px" height="36px" src="{% avatar user.avatar %}">test account 666</p>
-      <form method="post" action="/users/uncannedbread/friend_request.create.json">
+      <p class="description">Friend Request: <img width="36px" height="36px" src="{% avatar user.avatar %}">{{ user.nickname }}</p>
+      <form method="post">
         
-        
-        
-        <textarea name="body" class="textarea" maxlength="100" data-placeholder="Write a message here." placeholder="Write a message here."></textarea>
+        <textarea name="body" class="textarea" maxlength="2200" data-placeholder="Write a friend request here." placeholder="Write a friend request here."></textarea>
         
         <div class="form-buttons">
           <input type="button" class="olv-modal-close-button gray-button" value="Cancel">
@@ -44,14 +42,16 @@ If can friend: (templatize and niceize this, like feedback form)
   </div>
 </div>
 </div>
--->
+{% endif %}
+
       </div>
 		{% elif user.is_me %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
+		<!--<div><a class="button" href="#" onclick="event.preventDefault();lights()">Turn the lights on/off</a></div>-->
 		{% endif %}
 
     <ul id="sidebar-profile-status">
-      <li><a href="" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">{{ user.num_friends }}</span>Friends</span></a></li>
+      <li><a href="{% url "main:user-friends" user.username %}" class="{% if selection == 3 %}selected{% endif %}"><span><span class="number test-friend-count">{{ user.num_friends }}</span>Friends</span></a></li>
       <li><a href="{% url "main:user-following" user.username %}" class="{% if selection == 4 %}selected{% endif %}"><span><span class="number test-following-count">{{ user.num_following }}</span>Following</span></a></li>
       <li><a href="{% url "main:user-followers" user.username %}" class="{% if selection == 5 %}selected{% endif %}"><span><span class="number test-follower-count">{{ user.num_followers }}</span>Followers</span></a></li>
     </ul>
@@ -118,3 +118,4 @@ If can friend: (templatize and niceize this, like feedback form)
 
     
 </div>
+{% endif %}

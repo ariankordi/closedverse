@@ -14,6 +14,7 @@
     <meta name="description" content="Closedverse is a social network made by Arian Kordi that allows you to discuss games, communities and more. With over-protective administration and a post limit, you're sure to have fun here!">
 	<link rel="shortcut icon" type="image/png" href="{% static "favicon.png" %}">
     <link rel="stylesheet" type="text/css" href="{% static "closedverse.css" %}">
+	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "darkness.css" %}">
     <script src="{% static "closedverse.js" %}"></script>
   </head>
 

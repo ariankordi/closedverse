@@ -7,7 +7,7 @@ register = template.Library()
 
 @register.simple_tag
 def avatar(avatar, feeling=0):
-	if bool(re.compile('^[a-z0-9]{11,13}$').match(avatar)):
+	if bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
 		feeling = {
 		0: 'normal',
 		1: 'happy',

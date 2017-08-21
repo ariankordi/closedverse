@@ -8,9 +8,16 @@
 
 	<div id="notification-tab-container" class="tab-container">
      	 <div class="tab2">
-       	 <a class="tab-icon-my-news selected" href="{% url "main:notifications" %}"><span>Updates</span></a>
+       	 <a class="tab-icon-my-news selected" href="{% url "main:notifications" %}">
+			<span class="symbol nf"></span>
+			<span>Updates</span>
+		</a>
 
-        <a class="tab-icon-friend-request" href="">Friend requests</a>
+        <a class="tab-icon-my-news{% if frs %} notify{% endif %}" href="{% url "main:friend-requests" %}">
+			<span class="symbol fr"></span>
+			<span>Friend Requests</span>
+		</a>
+
       </div>
 
     </div>

@@ -7,6 +7,7 @@ pip-delete-this-directory.txt
 
 # My
 closedverse/settings.py
+settings.py
 *.pyc
 *.db3
 *.db
@@ -15,3 +16,6 @@ closedverse/settings.py
 local_settings.py
 .DS_Store
 .python-version
+closedverse_main/migrations
+migrations
+migrations-old

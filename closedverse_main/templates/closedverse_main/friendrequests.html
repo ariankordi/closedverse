@@ -1,0 +1,43 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_tags %}{% load closedverse_user %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column">
+  <div class="post-list-outline">
+
+    <h2 class="label">{{ title }}</h2>
+
+	<div id="notification-tab-container" class="tab-container">
+     	 <div class="tab2">
+       	 <a class="tab-icon-my-news{% if notifs %} notify{% endif %}" href="{% url "main:notifications" %}">
+			<span class="symbol nf"></span>
+			<span>Updates</span>
+		</a>
+
+        <a class="tab-icon-my-news selected" href="{% url "main:friend-requests" %}">
+			<span class="symbol fr"></span>
+			<span>Friend Requests</span>
+		</a>
+
+      </div>
+
+    </div>
+	<div class="list news-list">
+	{% if friendrequests %}
+		{% for fr in friendrequests %}
+		<div class="news-list-content trigger" tabindex="0" id="{{ fr.unique_id }}" data-href="{% url "main:user-view" fr.source.username %}">
+		{% user_icon_container fr.source %}
+			<div class="body">
+				<a href="{% url "main:user-view" fr.source.username %}" class="nick-name">{{ fr.source.nickname }}</a><br><span class="timestamp"> {% time fr.created %}</span>
+				<button class="button received-request-button" type="button">View friend request</button>
+			</div>
+		</div>
+		{% fr_accept fr %}
+		{% endfor %}
+	{% else %}
+		{% nocontent "No friend requests yet." %}
+	{% endif %}
+	</div>
+
+  </div>
+</div>
+{% endblock %}
