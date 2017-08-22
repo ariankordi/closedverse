@@ -1,12 +1,19 @@
-{% load closedverse_community %}<form id="post-form" method="post" action="{% url "main:post-create" community.id %}" class="folded" data-post-subtype="default" name="test-post-default-form">
+{% load closedverse_community %}<form id="post-form" method="post" action="{% url "main:post-create" community.id %}" class="folded for-identified-user" data-post-subtype="default" name="test-post-default-form">
 	{% csrf_token %}
 	<input type="hidden" name="community" value="{{ community.unique_id }}">
 
     {% feeling_selector %}
 
   <div class="textarea-container">
-    <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Share your thoughts in a post to {{ community.name }}." data-open-folded-form="" data-required=""></textarea>
+    <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Share your thoughts in a post to {{ community.name }}" data-open-folded-form="" data-required=""></textarea>
   </div>
+  
+  <input type="text" class="textarea-line url-form" name="url" placeholder="URL/YT video" maxlength="1024">
+  <label class="file-button-container">
+      <span class="input-label">Image <span>PNG, JPG, BMP and GIF are allowed.</span></span>
+      <input type="file" class="file-button" accept="image/png, image/jpeg, image/svg+xml,  image/bmp, image/gif">
+      <input type="hidden" name="screenshot" value="">
+    </label>
 
 
   <div class="post-form-footer-options">

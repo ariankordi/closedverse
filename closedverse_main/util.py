@@ -4,6 +4,12 @@ import json
 import time
 from datetime import datetime
 from math import floor
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import imghdr
+import base64
+from closedverse import settings
 
 def HumanTime(date, full=False):
 	now = time.time()
@@ -33,6 +39,7 @@ def get_mii(nnid):
 	screenname = ftree.xpath('//*[@id="sidebar-profile-body"]/a/text()')[0]
 	
 	return [miihash, screenname, nnid]
+
 def recaptcha_verify(request, key):
 	if not request.POST['g-recaptcha-response']:
 		return False
@@ -41,3 +48,21 @@ def recaptcha_verify(request, key):
 	if not jsond['success']:
 		return False
 	return True
+
+
+
+def image_upload(img):
+	try:
+		decodedimg = base64.b64decode(img)
+	except binascii.Error:
+		return 1
+	what = imghdr.what('', decodedimg)
+	if not what:
+		return 1
+	cloudinary.config( 
+		cloud_name = settings.cloudinary_name, 
+		api_key = settings.cloudinary_key, 
+		api_secret = settings.cloudinary_secret
+	)
+	up = cloudinary.uploader.upload('data:image'+ what +';base64,' + img)
+	return up['secure_url']

@@ -22,7 +22,11 @@
         </div>
       </div>
       <div class="body">
-            <p class="reply-content-text">{{ comment.body|linebreaksbr }}</p>
+            {% if comment.drawing %}
+			<p class="reply-content-memo"><img src="{{ comment.drawing }}" class="post-memo"></p>
+			{% else %}
+			<p class="reply-content-text">{{ comment.body|linebreaksbr }}</p>
+			{% endif %}
 		{% if comment.screenshot %}
 		<div class="screenshot-container still-image"><img src="{{ comment.screenshot }}"></div>
 		{% endif %}

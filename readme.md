@@ -10,6 +10,9 @@ Meant to be a random out-of-the-blue parody of Openverse that's supposed to be u
 	* passlib
 	* bcrypt
 	* mysqlclient if you're using mysql
+	* cloudinary if you're going to be using that
+	* imghdr?
+	* markdown
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 

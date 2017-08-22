@@ -1,7 +1,0 @@
-tested and run on python 3.6.2
-django
-urllib
-lxml
-passlib
-bcrypt
-mysqlclient if you're going to use mysql

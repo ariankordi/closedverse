@@ -27,6 +27,10 @@ if(a !== undefined) {
 		$("li#global-menu-" + a).addClass("selected");
 	}
 }
+function prlinkConf() {
+$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class=black-button type=button onclick="go(\''+ass+'\');$(\'.linkconfirmsuck\').remove();">Yes</button></div></div></div></div></div>');
+var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
+}
 function lights() {
 $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
@@ -1544,7 +1548,7 @@ var Olv = Olv || {};
             k.off("change", h),
             l.off("change", g),
             m.off("change", f),
-            c.off("olv:entryform:post:done", resetForm)
+            c.off("olv:entryform:post:done", b.Form.reset(c))
         })
     }
     ,
@@ -1784,11 +1788,10 @@ var Olv = Olv || {};
         b.User.setupFollowButton(a, {
             container: "#sidebar"
         })
-		$('.link-confirm').on('click', function(sssss) {
-		ass = $('.link-confirm').html();
-		sssss.preventDefault();
-		$('#sidebar').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class=black-button type=button onclick="go(\''+ass+'\');$(\'.linkconfirmsuck\').remove();">Yes</button></div></div></div></div></div>');
-		var g = new b.ModalWindow($('.linkconfirmsuck'));g.open();
+		$('.link-confirm').on('click', function(a) {
+		ass = $('.link-confirm').attr('href');
+		a.preventDefault();
+		prlinkConf()
 		});
     }
     ,
@@ -2192,6 +2195,11 @@ var Olv = Olv || {};
             a(document).off("olv:entryform:post:done", f),
             a(document).off("olv:report:done", g)
         })
+		$('.link-confirm').on('click', function(a) {
+		ass = $('.link-confirm').attr('href');
+		a.preventDefault();
+		prlinkConf()
+		});
     }),
     b.router.connect(/^\/comments\/([0-9A-Za-z\-_]+)$/, function(c, d, e) {
         function f(c, d) {

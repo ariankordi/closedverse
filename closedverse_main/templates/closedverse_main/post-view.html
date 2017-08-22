@@ -22,7 +22,17 @@
   </div>
   <div class="body">
 		  {% if post.screenshot %}<div class="screenshot-container still-image"><img src="{{ post.screenshot }}"></div>{% endif %}
+		  {% if post.drawing %}
+		  <p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
+		  {% else %}
           <p class="post-content-text">{{ post.body|linebreaksbr }}</p>
+	      {% endif %}
+
+			{% if post.yt_vid %}
+			<div class="screenshot-container video"><iframe class="youtube-player" type="text/html" width="490" height="276" src="https://www.youtube.com/embed/{{ post.yt_vid }}?rel=0&modestbranding=1&iv_load_policy=3" frameborder="0"></iframe></div>
+			{% elif post.url %}
+			<p class="url-link"><a class="link-confirm" href="{{ post.url }}" target="_blank">{{ post.url }}</a></p>
+			{% endif %}
 
     <div class="post-meta">
           <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit empathy-button

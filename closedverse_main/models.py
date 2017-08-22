@@ -6,8 +6,10 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
+from . import util
 import uuid, json
 from django.urls import reverse
+import re
 
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
@@ -275,7 +277,13 @@ class Community(models.Model):
 	def create_post(self, request):
 		if len(request.POST['body']) > 2200:
 			return 1
-		new_post = self.post_set.create(body=request.POST['body'], creator=request.user, community=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')))
+		upload = None
+		if request.POST.get('screenshot'):
+			upload = util.image_upload(request.POST['screenshot'])
+			if upload == 1:
+				return 2
+		url = request.POST.get('url')
+		new_post = self.post_set.create(body=request.POST['body'], creator=request.user, community=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, url=url)
 		new_post.is_mine = True
 		return new_post
 	class Meta:
@@ -301,7 +309,7 @@ class Post(models.Model):
 	feeling = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused')))
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
-	screenshot = models.URLField(max_length=1200, blank=True, default="")
+	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
 	url = models.URLField(max_length=1200, blank=True, default="")
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
@@ -318,6 +326,12 @@ class Post(models.Model):
 			return 'drawing'
 		else:
 			return self.body
+	def yt_vid(self):
+		try:
+			thing = re.search('^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$', self.url).group(0).split('v=')[1]
+		except:
+			return False
+		return thing
 	def is_mine(self, request):
 		if request.user.is_authenticated:
 			return (self.creator.unique_id == request.user.unique_id)
@@ -367,7 +381,12 @@ class Post(models.Model):
 	def create_comment(self, request):
 		if len(request.POST['body']) > 2200:
 			return 1
-		new_post = self.comment_set.create(body=request.POST['body'], creator=request.user, community=self.community, original_post=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')))
+		upload = None
+		if request.POST.get('screenshot'):
+			upload = util.image_upload(request.POST['screenshot'])
+			if upload == 1:
+				return 2
+		new_post = self.comment_set.create(body=request.POST['body'], creator=request.user, community=self.community, original_post=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload)
 		new_post.is_mine = True
 		return new_post
 	def recent_comment(self):
@@ -383,7 +402,7 @@ class Comment(models.Model):
 	community = models.ForeignKey(Community)
 	feeling = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused')))
 	body = models.TextField(null=True)
-	screenshot = models.URLField(max_length=1200, blank=True, default="")
+	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
 	drawing = models.CharField(max_length=200, null=True, blank=True)
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)

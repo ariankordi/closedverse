@@ -1,4 +1,4 @@
-{% load closedverse_community %}<form id="reply-form" method="post" action="{% url "main:post-comments" post.id %}">
+{% load closedverse_community %}<form id="reply-form" class="for-identified-user" method="post" action="{% url "main:post-comments" post.id %}">
   {% csrf_token %}
 
   {% feeling_selector %}
@@ -6,6 +6,12 @@
   <div class="textarea-container">
       <textarea name="body" class="textarea-text textarea" maxlength="2200" placeholder="Add a comment here." data-required></textarea>
   </div>
+
+  	  <label class="file-button-container">
+			<span class="input-label">Image <span>PNG, JPG, BMP and GIF are allowed.</span></span>
+			<input type="file" class="file-button" accept="image/png, image/jpeg, image/svg+xml,  image/bmp, image/gif">
+			<input type="hidden" name="screenshot" value="">
+    </label>
 
   <div class="post-form-footer-options">
     <div class="post-form-footer-option-inner post-form-spoiler">
@@ -15,6 +21,7 @@
       </label>
     </div>
   </div>
+
 
   <div class="form-buttons">
     <input type="submit" class="black-button reply-button disabled" value="Send" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}" data-post-content-type="text" data-post-with-screenshot="nodata" disabled="">

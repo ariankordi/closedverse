@@ -398,6 +398,7 @@ def post_create(request, community):
 		if isinstance(new_post, int):
 			return json_response({
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
+			2: "The image you've uploaded is invalid.",
 			}.get(new_post))
 		return render(request, 'closedverse_main/elements/community_post.html', { 'post': new_post })
 	else:
@@ -447,6 +448,7 @@ def post_comments(request, post):
 		if isinstance(new_post, int):
 			return json_response({
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
+			2: "The image you've uploaded is invalid.",
 			}.get(new_post))
 		# Give the notification!
 		if post.is_mine(request):
