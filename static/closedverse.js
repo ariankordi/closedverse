@@ -2071,7 +2071,6 @@ var Olv = Olv || {};
 	$('input[type=checkbox]').on('click', function() {
 		go(d.pathname + "?&my=" + $(this).attr('value'))
 	})
-	
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {
 		changesel("community");
@@ -2181,6 +2180,12 @@ var Olv = Olv || {};
 							})
 					})
 			})
+	}),
+	b.router.connect("/messages(\/)?$", function(a, c, d) {
+	   changesel("message");
+	   if($('div.notify').length) {
+			b.Form.get("/message_set_read")
+	   }
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
 		changesel("community");

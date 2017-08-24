@@ -619,6 +619,9 @@ def activity_feed(request):
 			'posts': posts,
 			'next': next_offset,
 	})
+@login_required
+def messages(request):
+	return HttpResponse('Todo: messages models')
 
 def set_lighting(request):
 	if not request.session.get('lights', False):

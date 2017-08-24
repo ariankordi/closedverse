@@ -19,3 +19,4 @@ local_settings.py
 closedverse_main/migrations
 migrations
 migrations-old
+gitignore-this
