@@ -1,7 +1,7 @@
 {% load closedverse_tags %}{% load closedverse_community %}<div class="list post-list js-post-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
 {% if posts %}
 {% for post in posts %}
-{% community_post post %}
+{% community_post post type %}
 {% endfor %}
 {% else %}
 {% if nf %}{% nocontent nf %}{% else %}{% nocontent "The posts couldn't be loaded." %}{% endif %}

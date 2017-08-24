@@ -139,3 +139,8 @@ STATIC_URL = '/s/'
 # Invisible reCAPTCHA keys, None for no reCAPTCHA
 recaptcha_pub = None
 recaptcha_priv = None
+
+# Cloudinary environment, because we're using that
+cloudinary_key = None
+cloudinary_secret = None
+cloudinary_name = None

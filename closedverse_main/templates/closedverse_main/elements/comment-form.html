@@ -3,10 +3,24 @@
 
   {% feeling_selector %}
 
-  <div class="textarea-container">
-      <textarea name="body" class="textarea-text textarea" maxlength="2200" placeholder="Add a comment here." data-required></textarea>
-  </div>
+  	<div class="textarea-with-menu active-text">
+		<menu class="textarea-menu">
+			<li><label class="textarea-menu-text">
+				<input type="radio" name="_post_type" value="body">
+			</label></li>
+			<li><label class="textarea-menu-memo checked" data-modal-open="#memo-drawboard-page">
+			<input type="radio" name="_post_type" value="painting">
+			</label></li>
+		</menu>
+	  <div class="textarea-container">
+		  <textarea name="body" class="textarea-text textarea" maxlength="2200" placeholder="Add a comment here." data-required></textarea>
+	  </div>
+	    <div class="textarea-memo none">
+			<br>
+		</div>
+  {% memo_drawboard %}
 
+  </div>
   	  <label class="file-button-container">
 			<span class="input-label">Image <span>PNG, JPG, BMP and GIF are allowed.</span></span>
 			<input type="file" class="file-button" accept="image/png, image/jpeg, image/svg+xml,  image/bmp, image/gif">

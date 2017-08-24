@@ -48,3 +48,8 @@ def comment_form(post, myself=None):
 		'post': post,
 		'myself': myself,
 	}
+@register.inclusion_tag('closedverse_main/elements/memo-drawboard.html')
+def memo_drawboard():
+	return {
+		
+	}

@@ -465,8 +465,18 @@ background-color: #191818 !important;
 	background-color: #333 !important;
 	}
 }
-/*::-webkit-scrollbar {
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html::-webkit-scrollbar-thumb {
 background-color: #3c3c3c;
-}*/
+}
+html::-webkit-scrollbar-track {
+background: #000;
+}
+html::-webkit-scrollbar-corner {
+background: transparent;
+}
 
 /*--------Mostly all of the dark theme was made by CodyMKW, please make sure he's noticed--------*/

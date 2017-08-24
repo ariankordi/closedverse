@@ -38,11 +38,13 @@ def u_post_list(posts, next_offset=None, type=0, nf_text=''):
 	text = {
 	0: "This user hasn't made any posts yet.",
 	1: "This user hasn't given a Yeah to any posts yet.",
+	2: "No posts yet.",
 	}.get(type, nf_text)
 	return {
 		'posts': posts,
 		'nf': text,
 		'next': next_offset,
+		'type': type,
 	}
 @register.inclusion_tag('closedverse_main/elements/profile-post.html')
 def profile_post(post):

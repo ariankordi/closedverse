@@ -8,6 +8,7 @@ urlpatterns = [
 	url(r'^login/$', views.login_page, name='login'),
 	url(r'^signup/$', views.signup_page, name='signup'),
 	url(r'^logout/$', views.logout_page, name='logout'),
+	url(r'^activity/?$', views.activity_feed, name='activity'),
 	url(r'^settings/profile$', views.profile_settings, name='profile-settings'),
 	url(r'^users/(?P<username>[A-Za-z0-9-._]+)\.follow\.json$', views.user_follow, name='user-follow'),
 	url(r'^users/(?P<username>[A-Za-z0-9-._]+)\.unfollow\.json$', views.user_unfollow, name='user-unfollow'),

@@ -3,11 +3,25 @@
 	<input type="hidden" name="community" value="{{ community.unique_id }}">
 
     {% feeling_selector %}
-
+	<div class="textarea-with-menu active-text">
+		<menu class="textarea-menu">
+			<li><label class="textarea-menu-text">
+				<input type="radio" name="_post_type" value="body">
+			</label></li>
+			<li><label class="textarea-menu-memo checked" data-modal-open="#memo-drawboard-page">
+			<input type="radio" name="_post_type" value="painting">
+			</label></li>
+		</menu>
   <div class="textarea-container">
     <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Share your thoughts in a post to {{ community.name }}" data-open-folded-form="" data-required=""></textarea>
   </div>
+  <div class="textarea-memo none">
+	<br>
+  </div>
+  {% memo_drawboard %}
   
+	</div>
+
   <input type="text" class="textarea-line url-form" name="url" placeholder="URL/YT video" maxlength="1024">
   <label class="file-button-container">
       <span class="input-label">Image <span>PNG, JPG, BMP and GIF are allowed.</span></span>

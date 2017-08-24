@@ -14,7 +14,7 @@ f@charset 'UTF-8';
   font-style: normal;
 }
 html.os-mac::-webkit-scrollbar { 
-display: none; 
+display: none !important; 
 }
 body {
   position: relative;
@@ -1017,8 +1017,9 @@ h2.reply-label {
   vertical-align: middle;
   padding: 3px 10px 0 0;
 }
-.headline .post-filter {
+.post-filter {
   display: inline-block;
+margin-top: 4px;
 }
 .headline form.search {
   position: absolute;
@@ -5425,6 +5426,20 @@ div#activity-feed-tutorial.no-content p.tleft {
 .reply-meta .played:before {
   content: "D";
 }
+.post-meta .link-confirm {
+  width: 20px;
+  height: 25px;
+  float: right;
+  margin-left: 10px;
+  padding: 5px 5px 5px;
+  margin-bottom: -10px;
+  margin-top: -10px;
+}
+.post-meta .link-confirm:before {
+  content: "o";
+  font-size: 18px;
+  color: #0080ff;
+}
 .empathy-button {
   float: left;
   display: inline-block;
@@ -5648,6 +5663,7 @@ div#activity-feed-tutorial.no-content p.tleft {
 .post-list .post-content-memo img {
   width: 100%;
   max-width: 320px;
+  background-color: white;
 }
 .post-list .post-tag + .post-content-text,
 .post-list .multi-language-post + .post-content-text,
@@ -5731,6 +5747,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   max-height: 80px;
   width: auto;
   max-width: 100%;
+  background-color: white;
 }
 .post-list .post.hidden .recent-reply-content,
 .post-list .post.hidden .screenshot-container {
@@ -6193,6 +6210,7 @@ h2.label-topic_post .label-topic_post-msgid {
 #post-content .post-content-memo img {
 /*width: 320px; */
   width: 100%;
+  background-color: white;
 }
 #post-content .video {
   margin-top: 10px;
@@ -6419,6 +6437,7 @@ h2.label-topic_post .label-topic_post-msgid {
 .reply-list .reply-content-memo img {
   width: 100%;
   max-width: 320px;
+  background-color: white;
 }
 .reply-list .reply-meta {
   padding-top: 10px;
@@ -6480,6 +6499,7 @@ h2.label-topic_post .label-topic_post-msgid {
 .reply-permalink-post .reply-content-memo .post-memo {
 /*width: 320px; */
   width: 100%;
+  background-color: white;
 }
 .main-column-hatebu-entries {
   margin-top: 30px;
@@ -9498,7 +9518,6 @@ body.search .search-content p.note {
 .textarea-with-menu {
   position: relative;
   clear: both;
-  padding-top: 5px;
 }
 .textarea-with-menu .textarea-menu {
   float: left;
@@ -9529,7 +9548,7 @@ body.search .search-content p.note {
 .textarea-with-menu .textarea-menu-text:before,
 .textarea-with-menu .textarea-menu-memo:before {
   content: "";
-  background: url('https://d1akpag8su1p2e.cloudfront.net/img/form-icons.png');
+  background: url('/s/img/form-icons.png');
   position: absolute;
   top: 3px;
   left: 50%;

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt_sha256
@@ -62,7 +62,7 @@ class User(models.Model):
 	password = models.CharField(max_length=128)
 	email = models.CharField(max_length=255, blank=True)
 	avatar = models.CharField(max_length=1200, blank=True)
-	level = models.SmallIntegerField(default=0)
+	level = models.SmallIntegerField(default=0, choices=((1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.GenericIPAddressField(null=True)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
@@ -109,6 +109,8 @@ class User(models.Model):
 		return self.profile_set.get(user=self)
 	def get_class(self):
 			first = {
+			1: 'Moderator',
+			2: 'Admin',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
@@ -216,6 +218,27 @@ class User(models.Model):
 		fr = Friendship.find_friendship(self, target)
 		if fr:
 			fr[0].delete()
+	def get_activity(self, limit=20, offset=0, distinct=False, friends_only=False, request=None):
+		friends = Friendship.get_friendships(self, 0)
+		friend_ids = []
+		for friend in friends:
+			friend_ids.append(friend.other(self))
+		follows = self.follow_source.filter().values_list('target')
+		if not friends_only:
+				friend_ids.append(self.id)
+		posts = Post.objects.filter(
+			Q(creator__in=follows)
+			| Q(creator__in=friend_ids)
+
+			).order_by('-created')[offset:offset + limit]
+		if request:
+				for post in posts:
+					post.has_yeah = post.has_yeah(request)
+					post.can_yeah = post.can_yeah(request)
+					post.is_mine = post.is_mine(request)
+					post.recent_comment = post.recent_comment()
+					post.comment_count = post.get_comments().count()
+		return posts
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -275,15 +298,19 @@ class Community(models.Model):
 		return posts
 		
 	def create_post(self, request):
-		if len(request.POST['body']) > 2200:
+		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
+		drawing = None
 		if request.POST.get('screenshot'):
 			upload = util.image_upload(request.POST['screenshot'])
 			if upload == 1:
 				return 2
-		url = request.POST.get('url')
-		new_post = self.post_set.create(body=request.POST['body'], creator=request.user, community=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, url=url)
+		if request.POST.get('painting'):
+			drawing = util.image_upload(request.POST['painting'])
+			if drawing == 1:
+				return 2
+		new_post = self.post_set.create(body=request.POST.get('body'), creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'))
 		new_post.is_mine = True
 		return new_post
 	class Meta:
@@ -379,14 +406,19 @@ class Post(models.Model):
 				post.is_mine = post.is_mine(request)
 		return comments
 	def create_comment(self, request):
-		if len(request.POST['body']) > 2200:
+		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
+		drawing = None
 		if request.POST.get('screenshot'):
 			upload = util.image_upload(request.POST['screenshot'])
 			if upload == 1:
 				return 2
-		new_post = self.comment_set.create(body=request.POST['body'], creator=request.user, community=self.community, original_post=self, feeling=int(request.POST['feeling_id']), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload)
+		if request.POST.get('painting'):
+			drawing = util.image_upload(request.POST['painting'])
+			if drawing == 1:
+				return 2
+		new_post = self.comment_set.create(body=request.POST.get('body'), creator=request.user, community=self.community, original_post=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), drawing=drawing, screenshot=upload)
 		new_post.is_mine = True
 		return new_post
 	def recent_comment(self):
@@ -623,6 +655,8 @@ class Friendship(models.Model):
 		return self.source
 
 	def get_friendships(user, limit=50, offset=0):
+		if not limit:
+			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')
 		return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
 	def find_friendship(first, second):
 		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created')

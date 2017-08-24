@@ -41,7 +41,7 @@ def get_mii(nnid):
 	return [miihash, screenname, nnid]
 
 def recaptcha_verify(request, key):
-	if not request.POST['g-recaptcha-response']:
+	if not request.POST.get('g-recaptcha-response'):
 		return False
 	re_request = urllib.request.urlopen('https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}'.format(key, request.POST['g-recaptcha-response']))
 	jsond = json.loads(re_request.read().decode())
@@ -64,5 +64,5 @@ def image_upload(img):
 		api_key = settings.cloudinary_key, 
 		api_secret = settings.cloudinary_secret
 	)
-	up = cloudinary.uploader.upload('data:image'+ what +';base64,' + img)
-	return up['secure_url']
+	up = cloudinary.uploader.upload('data:image/'+ what +';base64,' + img)
+	return up.get('secure_url')

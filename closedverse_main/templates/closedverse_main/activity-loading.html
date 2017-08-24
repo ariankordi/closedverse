@@ -1,0 +1,36 @@
+{% extends "closedverse_main/layout.html" %}
+{% load static %}{% load closedverse_user %}
+{% block main-body %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column">
+  <div class="headline">
+    <h2 class="headline-text">
+      <span class="symbol activity-headline">Activity Feed</span>
+    </h2>
+	<div class="post-filter">
+		<input type="checkbox" value="{% if request.session.activity_no_my %}n{% else %}1{% endif %}"{% if not request.session.activity_no_my %} checked{% endif %}> Show my own posts
+	</div>
+
+<form class="search" action="/users" method="GET"><!--
+  --><input type="text" name="query" title="Search Users" placeholder="Search users" minlength="1" maxlength="16"><!--
+  --><input type="submit" value="q" title="Search">
+</form>
+
+  </div>
+  <div id="js-main">
+    <div class="activity-feed content-loading-window">
+      <div>
+        <img src="{% static "img/loading-image-blue.gif" %}" alt=""></img>
+        <p class="tleft"><span>Loading activity feed...</span></p>
+      </div>
+    </div>
+    <div class="activity-feed content-load-error-window none">
+      <div>
+        <p>The activity feed couldn't be loaded. Check your Internet connection, wait a moment, and then try reloading.</p>
+        <div class="buttons-content"><a href="{% url "main:activity" %}" class="button">Reload</a></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

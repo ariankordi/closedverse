@@ -385,7 +385,8 @@ def community_view(request, community):
 @login_required
 def post_create(request, community):
 	if request.method == 'POST':
-		if not (request.POST['community'] and request.POST['body'] and request.POST['feeling_id']):
+		# Required
+		if not (request.POST.get('community')):
 			return HttpResponseBadRequest()
 		try:
 			community = Community.objects.get(id=community, unique_id=request.POST['community'])
@@ -439,8 +440,6 @@ def post_delete_yeah(request, post):
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
 	if request.method == 'POST':
-		if not (request.POST['body'] and request.POST['feeling_id']):
-			return HttpResponseBadRequest()
 		# Method of Post
 		new_post = post.create_comment(request)
 		if not new_post:
@@ -587,6 +586,38 @@ def friend_requests(request):
 		'title': 'My friend requests',
 		'friendrequests': friendrequests,
 		'notifs': notifs,
+	})
+
+@login_required
+def activity_feed(request):
+	if request.GET.get('my'):
+		if request.GET['my'] == 'n':
+			request.session['activity_no_my'] = False
+		else:
+			request.session['activity_no_my'] = True
+	if not request.META.get('HTTP_X_REQUESTED_WITH') or request.META.get('HTTP_X_PJAX'):
+		return render(request, 'closedverse_main/activity-loading.html', {
+			'title': 'Activity Feed',
+		})
+	if request.session.get('activity_no_my'):
+		has_friend = True
+	else:
+		has_friend = False
+	if request.GET.get('offset'):
+		posts = request.user.get_activity(20, int(request.GET['offset']), False, has_friend, request)
+	else:
+		posts = request.user.get_activity(20, 0, False, has_friend, request)
+	if posts.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+
+	return render(request, 'closedverse_main/activity.html', {
+			'posts': posts,
+			'next': next_offset,
 	})
 
 def set_lighting(request):

@@ -35,6 +35,99 @@ function lights() {
 $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
 }
+function setupDrawboard() {
+        var canvas, ctx, flag = false,
+        prevX = 0,
+        currX = 0,
+        prevY = 0,
+        currY = 0,
+        dot_flag = false;
+
+    var x = "black",
+        y = 2;
+    
+    function init() {
+        canvas = $("#can")[0];
+        ctx = canvas.getContext("2d");
+        w = canvas.width;
+        h = canvas.height;
+        canvas.addEventListener("mousedown",function(e) {findxy("down", e);canvas.addEventListener("mousemove",function(e){findxy("move",e);}, false);},false);canvas.addEventListener("mouseup",function (e){findxy("up", e);},false);canvas.addEventListener("mouseout",function(e){findxy("out",e);},false);
+    }
+    
+    function color(col,size) {
+        x = col;
+        y = size;
+    }
+    
+    function draw() {
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(currX, currY);
+        ctx.strokeStyle = x;
+        ctx.lineWidth = y;
+        ctx.stroke();
+        ctx.closePath();
+    }
+    
+    function erase() {
+        ctx.clearRect(0, 0, w, h);
+        save();
+    }
+    
+    function save() {
+        var dataURL = canvas.toDataURL();
+        if(typeof dataURL !== undefined) {
+        $("input[type=hidden][name=painting]").attr("value", dataURL.split(",")[1]);
+        }
+	}
+    
+    function findxy(res, e) {
+        if (res == "down") {
+            prevX = currX;
+            prevY = currY;
+            currX = e.clientX - canvas.offsetLeft;
+            currY = e.clientY - canvas.offsetTop;
+    
+            flag = true;
+            dot_flag = true;
+            if (dot_flag) {
+                ctx.beginPath();
+                ctx.fillStyle = x;
+                ctx.fillRect(currX, currY, 2, 2);
+                ctx.closePath();
+                dot_flag = false;
+            }
+        }
+        if (res == "up" || res == "out") {
+            flag = false;
+        }
+        if (res == "move") {
+            if (flag) {
+                prevX = currX;
+                prevY = currY;
+                currX = e.clientX - canvas.offsetLeft;
+                currY = e.clientY - canvas.offsetTop;
+                draw();
+            }
+        }
+    }
+init();
+$("canvas").on("mousedown mouseup",function(e){e.type=="mouseup"?save():"";})
+// save into a new element when save button is clicked
+$(".memo-finish-btn").on("click", function() {
+save();
+$("#drawing").remove();
+var val = $("input[type=hidden][name=painting]").attr("value");
+$(".textarea-memo").append("<img id=\"drawing\" src=\"data:image/png;base64," + val + "\" style=\"background:white;\"></img>");
+});
+$("#setpen1").on("click", function() { color("black", 1); });
+$("#setpen2").on("click", function() { color("black", 2); });
+$("#setpen3").on("click", function() { color("black", 8); });
+$("#seter1").on("click", function() { color("white", 2); });
+$("#seter2").on("click", function() { color("white", 5); });
+$("#seter3").on("click", function() { color("white", 15); });
+$("#clear-can").on("click",  function() { erase(); });
+}
 var Olv = Olv || {};
 (function(a, b) {
     b.init || (b.init = a.Deferred(function() {
@@ -1091,6 +1184,11 @@ var Olv = Olv || {};
         b.done(function() {
             a(document).off("click", ".hidden-content-button", c)
         })
+		$('.link-confirm').on('click', function(b) {
+		ass = a(this).attr('href');
+		b.preventDefault();
+		prlinkConf()
+		});
     }
     ,
     b.Entry.toggleEmpathy = function(a) {
@@ -1788,11 +1886,6 @@ var Olv = Olv || {};
         b.User.setupFollowButton(a, {
             container: "#sidebar"
         })
-		$('.link-confirm').on('click', function(a) {
-		ass = $('.link-confirm').attr('href');
-		a.preventDefault();
-		prlinkConf()
-		});
     }
     ,
     b.Global = {},
@@ -1931,14 +2024,13 @@ var Olv = Olv || {};
             k && (k = "&" + k),
             h = b.Net.ajax({
                 type: "GET",
+				url: window.location.href,/*
                 url: d.pathname + "?" + a.param({
                     fragment: "activityfeed"
-                }) + k,
-                silent: !0
+                }) + k,*/
+                silent: !0, beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()},
             }).done(function(b) {
-                var c = a.parseHTML(b)
-                  , d = a(c).find("#main-body").children();
-                a("#js-main").html(d),
+                a("#js-main").html(b),
                 a(document).trigger("olv:activity:success", [b, c, d])
             }).fail(function() {
                 setTimeout(function() {
@@ -1946,19 +2038,22 @@ var Olv = Olv || {};
                     a(".content-load-error-window").removeClass("none")
                 }, 5e3)
             });
+			/* G
             var l = "friend" !== b.Cookie.get("view_activity_filter");
-            i = l ? b.Net.ajax({
+			i = l ? b.Net.ajax({
                 type: "GET",
                 url: "/my/latest_following_related_profile_posts",
                 silent: !0
             }) : a.Deferred().resolve().promise()
+			*/
         } else
             h = a.Deferred().resolve().promise(),
             i = a.Deferred().resolve().promise();
         h.then(function() {
             f()
         }),
-        a.when(h, i).done(function(b, c) {
+		//a.when(h, i).done(function(b, c)) {
+        a.when(h).done(function(b, c) {
             var d = a(a.parseHTML(a.trim(c[0])))
               , e = a("[data-latest-following-relation-profile-post-placeholder]")
               , f = [];
@@ -1972,6 +2067,11 @@ var Olv = Olv || {};
         e.done(function() {
             h.abort && h.abort()
         })
+	
+	$('input[type=checkbox]').on('click', function() {
+		go(d.pathname + "?&my=" + $(this).attr('value'))
+	})
+	
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {
 		changesel("community");
@@ -2195,11 +2295,41 @@ var Olv = Olv || {};
             a(document).off("olv:entryform:post:done", f),
             a(document).off("olv:report:done", g)
         })
-		$('.link-confirm').on('click', function(a) {
-		ass = $('.link-confirm').attr('href');
-		a.preventDefault();
-		prlinkConf()
-		});
+if($("#reply-form").length) {
+var mode_post = 0;
+$("label.textarea-menu-memo").on("click", function() {
+var menu = $("div.textarea-with-menu");
+var memo = $("div.textarea-memo");
+var text = $("div.textarea-container");
+    if(menu.hasClass("active-text")) {
+        menu.removeClass("active-text");
+        menu.addClass("active-memo");
+        memo.removeClass("none");
+        text.addClass("none");
+    }
+b.Form.toggleDisabled($("input.reply-button"), false);
+mode_post = 1;
+
+setupDrawboard();
+});
+$("label.textarea-menu-text").on("click", function() {
+    if($("input[name=\"painting\"]").val()) {
+    $("input[name=\"painting\"]").attr("value", "");
+    }
+switchtext();
+});
+
+$(".reply-button").on("click", function() { switchtext(); $("#can")[0].getContext("2d").clearRect(0, 0, 320, 120); $("input[name=\"painting\"]").attr("value", ""); $("img[id=\"drawing\"]").attr("src", ""); });
+
+function switchtext() {
+var menu = $("div.textarea-with-menu");
+        menu.removeClass("active-memo");
+        menu.addClass("active-text");
+        $("div.textarea-container").removeClass("none");
+        $("div.textarea-memo").addClass("none");
+mode_post = 0;
+    }
+}
     }),
     b.router.connect(/^\/comments\/([0-9A-Za-z\-_]+)$/, function(c, d, e) {
         function f(c, d) {
@@ -2476,100 +2606,10 @@ var text = $("div.textarea-container");
         memo.removeClass("none");
         text.addClass("none");
     }
-Olv.Form.toggleDisabled($("input.post-button"), false);
+b.Form.toggleDisabled($("input.post-button"), false);
 mode_post = 1;
 
-        var canvas, ctx, flag = false,
-        prevX = 0,
-        currX = 0,
-        prevY = 0,
-        currY = 0,
-        dot_flag = false;
-
-    var x = "black",
-        y = 2;
-    
-    function init() {
-        canvas = $("#can")[0];
-        ctx = canvas.getContext("2d");
-        w = canvas.width;
-        h = canvas.height;
-        canvas.addEventListener("mousedown",function(e) {findxy("down", e);canvas.addEventListener("mousemove",function(e){findxy("move",e);}, false);},false);canvas.addEventListener("mouseup",function (e){findxy("up", e);},false);canvas.addEventListener("mouseout",function(e){findxy("out",e);},false);
-    }
-    
-    function color(col,size) {
-        x = col;
-        y = size;
-    }
-    
-    function draw() {
-        ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(currX, currY);
-        ctx.strokeStyle = x;
-        ctx.lineWidth = y;
-        ctx.stroke();
-        ctx.closePath();
-    }
-    
-    function erase() {
-        ctx.clearRect(0, 0, w, h);
-        save();
-    }
-    
-    function save() {
-        var dataURL = canvas.toDataURL();
-        if(typeof dataURL !== undefined) {
-        $("input[type=hidden][name=painting]").attr("value", dataURL.split(",")[1]);
-        }
-	}
-    
-    function findxy(res, e) {
-        if (res == "down") {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
-    
-            flag = true;
-            dot_flag = true;
-            if (dot_flag) {
-                ctx.beginPath();
-                ctx.fillStyle = x;
-                ctx.fillRect(currX, currY, 2, 2);
-                ctx.closePath();
-                dot_flag = false;
-            }
-        }
-        if (res == "up" || res == "out") {
-            flag = false;
-        }
-        if (res == "move") {
-            if (flag) {
-                prevX = currX;
-                prevY = currY;
-                currX = e.clientX - canvas.offsetLeft;
-                currY = e.clientY - canvas.offsetTop;
-                draw();
-            }
-        }
-    }
-init();
-$("canvas").on("mousedown mouseup",function(e){e.type=="mouseup"?save():"";})
-// save into a new element when save button is clicked
-$(".memo-finish-btn").on("click", function() {
-save();
-$("#drawing").remove();
-var val = $("input[type=hidden][name=painting]").attr("value");
-$(".textarea-memo").append("<img id=\"drawing\" src=\"data:image/png;base64," + val + "\" style=\"background:white;\"></img>");
-});
-$("#setpen1").on("click", function() { color("black", 1); });
-$("#setpen2").on("click", function() { color("black", 2); });
-$("#setpen3").on("click", function() { color("black", 8); });
-$("#seter1").on("click", function() { color("white", 2); });
-$("#seter2").on("click", function() { color("white", 5); });
-$("#seter3").on("click", function() { color("white", 15); });
-$("#clear-can").on("click",  function() { erase(); });
+setupDrawboard();
 });
 $("label.textarea-menu-text").on("click", function() {
     if($("input[name=\"painting\"]").val()) {
