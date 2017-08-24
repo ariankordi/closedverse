@@ -11,9 +11,9 @@
 		<input type="checkbox" value="{% if request.session.activity_no_my %}n{% else %}1{% endif %}"{% if not request.session.activity_no_my %} checked{% endif %}> Show my own posts
 	</div>
 
-<form class="search" action="/users" method="GET"><!--
-  --><input type="text" name="query" title="Search Users" placeholder="Search users" minlength="1" maxlength="16"><!--
-  --><input type="submit" value="q" title="Search">
+<form class="search" action="{% url "main:user-search" %}">
+  <input type="text" name="query" title="Search users" placeholder="Search users" minlength="1" maxlength="16">
+  <input type="submit" value="q" title="Search">
 </form>
 
   </div>

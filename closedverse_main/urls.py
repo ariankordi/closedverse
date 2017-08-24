@@ -44,6 +44,7 @@ urlpatterns = [
 	url(r'notifications/(?P<notification>[0-9a-f\-]+)\.rm', views.notification_delete, name='notification-delete'),
 	
 	url(r'^activity/?$', views.activity_feed, name='activity'),
+	url(r'users\.search', views.user_search, name='user-search'),
 	url(r'^messages/?$', views.messages, name='messages'),
 	
 	url(r'lights', views.set_lighting, name='set-lighting'),

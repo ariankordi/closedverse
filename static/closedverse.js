@@ -2014,6 +2014,9 @@ var Olv = Olv || {};
             var f = a(window);
             f.scrollTop(e.offset().top + e.outerHeight() / 2 - f.height() / 2)
         }
+		$('form.search').on('submit', function() {
+			go($(this).attr('action') + '?'+$(this).serialize())
+		})
         b.Content.autopagerize(".js-post-list", e),
         b.Entry.setupEmpathyButtons(e),
         b.Entry.setupHiddenContents(e),
@@ -2353,11 +2356,14 @@ mode_post = 0;
             a(document).off("olv:report:done", f)
         })
     }),
-    b.router.connect("^/users$", function(c, d, e) {
+    b.router.connect("^/users\.search$", function(c, d, e) {
 		changesel("feed");
         b.Content.autopagerize("#searched-user-list", e),
         b.Guest.isGuest() || b.User.setupFollowButton(e),
-        a("form.search").on("submit", b.Form.validateValueLength),
+        a("form.search").on("submit", function() {
+		b.Form.validateValueLength,
+		go($(this).attr('action') + '?'+$(this).serialize())
+		}),
         e.done(function() {
             a("form.search").off("submit", b.Form.validateValueLength)
         })

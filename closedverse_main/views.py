@@ -587,6 +587,28 @@ def friend_requests(request):
 		'friendrequests': friendrequests,
 		'notifs': notifs,
 	})
+@login_required
+def user_search(request):
+	query = request.GET.get('query')
+	if not query or len(query) < 2:
+		raise Http404()
+	if request.GET.get('offset'):
+		users = User.search(query, 50, int(request.GET['offset']), request)
+	else:
+		users = User.search(query, 50, 0, request)
+	if users.count() > 49:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 50
+		else:
+			next_offset = 50
+	else:
+		next_offset = None
+	return render(request, 'closedverse_main/user-search.html', {
+		'classes': ['search'],
+		'query': query,
+		'users': users,
+		'next': next_offset,
+	})
 
 @login_required
 def activity_feed(request):

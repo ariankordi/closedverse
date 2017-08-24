@@ -1,0 +1,25 @@
+{% extends "closedverse_main/layout.html" %}
+{% load static %}{% load closedverse_user %}
+{% block main-body %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column"><div class="post-list-outline">
+  <h2 class="label">Search Users</h2>
+  <form class="search user-search" action="{% url "main:user-search" %}">
+  <input type="text" name="query" value="{{ query }}" placeholder="Arian K, PF2M, etc." minlength="1" maxlength="16">
+	<input type="submit" value="q" title="Search">
+  </form>
+  {% if users %}
+  <div class="search-user-content search-content">
+      <p class="user-found note">{{ users|length }} result{% if not users|length == 1 %}s{% endif %} found for for "{{ query }}"</p>
+	  {% profile_user_list users next request %}
+  </div>
+  {% else %}
+  <div class="search-user-content no-content search-content">
+    <div class="search-content no-title-content">
+      <p>"{{ query }}" could not be found.<br>
+Try searching for something different.</p>
+    </div>
+  </div>
+  {% endif %}
+</div></div>
+{% endblock %}

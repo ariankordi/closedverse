@@ -17,8 +17,11 @@
 			{% if post.screenshot %}
 			<a href="{% url "main:post-view" post.id %}" class="screenshot-container still-image"><img src="{{ post.screenshot }}"></a>
 			{% endif %}
-
-            <p class="post-content-text">{{ post.body|truncatechars:100 }}</p>
+			{% if post.drawing %}
+			<p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
+			{% else %}
+            <p class="post-content-text">{{ post.body|truncatechars:100|linebreaksbr }}</p>
+			{% endif %}
 			{% if post.spoils and not post.is_mine %}
 			<div class="hidden-content"><p>This post contains spoilers.
                 <button type="button" class="hidden-content-button">View Post</button>
@@ -29,7 +32,10 @@
 		  {% if post.has_yeah %}empathy-added{% endif %}
 		  {% if not post.can_yeah %}disabled{% endif %}
 		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="empathy-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
-          <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
+          {% if post.url %}
+		  <a class="link-confirm symbol button" href="{{ post.url }}"></a>
+		  {% endif %}
+		  <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
           <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
         </div>
 

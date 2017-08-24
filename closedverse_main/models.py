@@ -240,6 +240,9 @@ class User(models.Model):
 					post.comment_count = post.get_comments().count()
 		return posts
 
+	def search(query='', limit=50, offset=0, request=None):
+		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
+
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)

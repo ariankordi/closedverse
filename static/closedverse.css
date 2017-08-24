@@ -1,4 +1,4 @@
-f@charset 'UTF-8';
+@charset 'UTF-8';
 @font-face {
   font-family: 'MiiverseSymbols';
   src: url('/s/img/font/Symbols.eot');
@@ -5814,6 +5814,7 @@ div#activity-feed-tutorial.no-content p.tleft {
 .multi-timeline-post-list .post .post-content-memo img {
   width: 100%;
   max-width: 320px;
+  background-color: white;
 }
 .multi-timeline-post-list .post .topic-body {
   overflow: hidden;
@@ -6569,11 +6570,11 @@ h2.label-topic_post .label-topic_post-msgid {
   font-size: 12px;
   color: #0080ff;
 }
-body.search form.search {
+.search form.search {
   margin: 15px auto;
   width: 95%;
 }
-body.search .search-content p.note {
+.search .search-content p.note {
   margin: 5px 10px 10px;
 }
 .album-content .album-list {
@@ -8064,7 +8065,7 @@ body.search .search-content p.note {
   form.search {
     margin: 0 0 10px;
   }
-  body.search .search-content p.note {
+  .search .search-content p.note {
     margin: 0;
     padding: 0 10px 15px;
   }
@@ -8856,12 +8857,12 @@ body.search .search-content p.note {
   .open-topic-post-existing-warning .window-bottom-buttons {
     margin-top: 8px;
   }
-  body.search .search-content p.note {
+  .search .search-content p.note {
     padding: 5px 5px 10px;
     line-height: 1.2em;
     font-size: 12px;
   }
-  body.search .no-title-content {
+  .search .no-title-content {
     min-height: 120px;
     text-align: left;
     width: auto;
@@ -8871,7 +8872,7 @@ body.search .search-content p.note {
     -o-box-align: start;
     box-align: start;
   }
-  body.search .no-title-content p {
+  .search .no-title-content p {
     padding: 0 10px;
   }
   .post-form-album-content {
