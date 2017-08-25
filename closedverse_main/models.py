@@ -11,6 +11,8 @@ import uuid, json
 from django.urls import reverse
 import re
 
+feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'))
+
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
 		#if not email:
@@ -219,6 +221,7 @@ class User(models.Model):
 		if fr:
 			fr[0].delete()
 	def get_activity(self, limit=20, offset=0, distinct=False, friends_only=False, request=None):
+		#Todo: make distinct work; combine friends and following, but then get posts from them
 		friends = Friendship.get_friendships(self, 0)
 		friend_ids = []
 		for friend in friends:
@@ -336,7 +339,7 @@ class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	community = models.ForeignKey(Community)
-	feeling = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused')))
+	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
 	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
@@ -435,7 +438,7 @@ class Comment(models.Model):
 	id = models.AutoField(primary_key=True)
 	original_post = models.ForeignKey(Post)
 	community = models.ForeignKey(Community)
-	feeling = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused')))
+	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
 	drawing = models.CharField(max_length=200, null=True, blank=True)
@@ -663,3 +666,35 @@ class Friendship(models.Model):
 		return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
 	def find_friendship(first, second):
 		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created')
+
+class Conversation(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	source = models.ForeignKey(User, related_name='conv_source')
+	target = models.ForeignKey(User, related_name='conv_target')
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "conversation with " + str(self.source) + " and " + str(self.target)
+	def latest_message(self, request):
+		message = Message.objects.filter(conversation=self).order_by('-created')[:5][1]
+		message.mine = message.mine(request.user)
+		return message
+class Message(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	conversation = models.ForeignKey(Conversation)
+	feeling = models.SmallIntegerField(default=0, choices=feelings)
+	body = models.TextField(null=True)
+	drawing = models.CharField(max_length=200, null=True, blank=True)
+	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
+	url = models.URLField(max_length=1200, blank=True, default="")
+	created = models.DateTimeField(auto_now_add=True)
+	creator = models.ForeignKey(User)
+
+	def __str__(self):
+		return self.body[:50] + "..."
+	def mine(self, user):
+		if request.creator == user:
+			return True
+		return False

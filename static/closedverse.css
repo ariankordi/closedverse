@@ -2484,6 +2484,22 @@ content: "F";
   display: block;
   height: 1.6em;
 }
+.list-content-with-icon-and-text .text.placeholder {
+  color: #999 !important;
+}
+.list-content-with-icon-and-text .text.type-memo {
+  font-style: italic;
+}
+.list-content-with-icon-and-text .text.my:before {
+content: "b";
+font-family: "MiiverseSymbols";
+margin-right: 5px;
+}
+.list-content-with-icon-and-text .timestamp {
+  float: right;
+  margin: 0 5px;
+  color: #969696;
+}
 .list-content-with-icon-and-text .body {
   margin-left: 66px;
 }

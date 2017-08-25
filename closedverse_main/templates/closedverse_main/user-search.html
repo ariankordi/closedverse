@@ -10,7 +10,7 @@
   </form>
   {% if users %}
   <div class="search-user-content search-content">
-      <p class="user-found note">{{ users|length }} result{% if not users|length == 1 %}s{% endif %} found for for "{{ query }}"</p>
+      <p class="user-found note">{{ users|length }} result{% if not users|length == 1 %}s{% endif %} found for "{{ query }}"</p>
 	  {% profile_user_list users next request %}
   </div>
   {% else %}

@@ -1,0 +1,34 @@
+{% extends "closedverse_main/layout.html" %}
+{% load static %}{% load closedverse_tags %}{% load closedverse_user %}
+{% block main-body %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column">
+  <div class="post-list-outline">
+
+    <h2 class="label">Messages</h2>
+	<div class="list">
+		{% if friends %}
+				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="">
+		{% for friend in friends %}
+					<li class="trigger" data-href="">
+						{% user_icon_container friend %}
+
+					  <div class="body">
+						<p class="title">
+						  <span class="nick-name"><a href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
+						  <span class="id-name">{{ friend.username }}</span>
+						</p>
+						<p class="text placeholder">You haven't exchanged messages with this user yet.</p>
+
+					  </div>
+					</li>
+		{% endfor %}
+			</ul>
+	{% else %}
+		{% nocontent "You don't have any friends yet." %}
+	{% endif %}
+
+	</div>
+  </div>
+</div>
+{% endblock %}

@@ -306,6 +306,7 @@ def user_friends(request, username):
 	friends = []
 	for friend in friends_list:
 		friends.append(friend.other(user))
+	del(friends_list)
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': friends,
@@ -643,7 +644,15 @@ def activity_feed(request):
 	})
 @login_required
 def messages(request):
-	return HttpResponse('Todo: messages models')
+	friends_list = Friendship.get_friendships(request.user, 0)
+	friends = []
+	for friend in friends_list:
+		friends.append(friend.other(request.user))
+	del(friends_list)
+	return render(request, 'closedverse_main/messages.html', {
+		'title': 'Messages',
+		'friends': friends,
+	})
 
 def set_lighting(request):
 	if not request.session.get('lights', False):
