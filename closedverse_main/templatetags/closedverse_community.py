@@ -53,3 +53,8 @@ def memo_drawboard():
 	return {
 		
 	}
+@register.inclusion_tag('closedverse_main/elements/file-button.html')
+def file_button():
+	return {
+		
+	}

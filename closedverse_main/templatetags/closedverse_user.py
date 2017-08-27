@@ -72,3 +72,20 @@ def user_notification(notification, request):
 	return {
 		'notification': notification,
 	}
+@register.inclusion_tag('closedverse_main/elements/message.html')
+def message(message):
+	return {
+		'message': message,
+	}
+@register.inclusion_tag('closedverse_main/elements/message-form.html')
+def message_form(request, friend):
+	return {
+		'user': request.user,
+		'friend': friend,
+	}
+@register.inclusion_tag('closedverse_main/elements/message-list.html')
+def message_list(messages, next=0):
+	return {
+		'messages': messages,
+		'next': next,
+	}

@@ -127,7 +127,7 @@ def user_view(request, username):
 	if request.user.is_authenticated:
 		user.friend_state = user.friend_state(request.user)
 		if user.friend_state == 2:
-			fr = user.get_fr(request.user)[0]
+			fr = user.get_fr(request.user).first()
 
 	return render(request, 'closedverse_main/user_view.html', {
 		'title': title,
@@ -551,8 +551,9 @@ def check_notifications(request):
 		return JsonResponse({'success': True})
 	n_count = request.user.notification_count()
 	all_count = request.user.get_frs_notif() + n_count
+	msg_count = request.user.msg_count()
 	# n for notifications icon, msg for messages icon
-	return JsonResponse({'success': True, 'n': all_count, 'msg': 0})
+	return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
 @login_required
 def notification_setread(request):
 	update = request.user.notification_read()
@@ -644,15 +645,63 @@ def activity_feed(request):
 	})
 @login_required
 def messages(request):
-	friends_list = Friendship.get_friendships(request.user, 0)
-	friends = []
-	for friend in friends_list:
-		friends.append(friend.other(request.user))
-	del(friends_list)
+	friends = Friendship.get_friendships_message(request.user)
 	return render(request, 'closedverse_main/messages.html', {
 		'title': 'Messages',
 		'friends': friends,
 	})
+@login_required
+def messages_view(request, username):
+	user = get_object_or_404(User, username=username)
+	friendship = Friendship.find_friendship(request.user, user)
+	if not friendship:
+		return HttpResponseForbidden()
+	other = friendship.other(request.user)
+	conversation = friendship.conversation()
+	if request.method == 'POST':
+		new_post = conversation.make_message(request)
+		if not new_post:
+			return HttpResponseBadRequest()
+		if isinstance(new_post, int):
+			return json_response({
+			1: "Your message is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
+			2: "The image you've uploaded is invalid.",
+			}.get(new_post))
+		friendship.update()
+		return render(request, 'closedverse_main/elements/message.html', { 'message': new_post })
+	else:
+		if request.GET.get('offset'):
+			messages = conversation.messages(request, 20, int(request.GET['offset']))
+		else:
+			messages = conversation.messages(request, 20, 0)
+		if messages.count() > 19:
+			if request.GET.get('offset'):
+				next_offset = int(request.GET['offset']) + 20
+			else:
+				next_offset = 20
+		else:
+			next_offset = None
+		if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			return render(request, 'closedverse_main/elements/message-list.html', {
+				'messages': messages,
+				'next': next_offset,
+			})
+		return render(request, 'closedverse_main/messages-view.html', {
+			'title': 'Conversation with {0} ({1})'.format(other.nickname, other.username),
+			'other': other,
+			'conversation': conversation,
+			'messages': messages,
+			'next': next_offset,
+		})
+@login_required
+def messages_read(request, username):
+	user = get_object_or_404(User, username=username)
+	friendship = Friendship.find_friendship(request.user, user)
+	if not friendship:
+		return HttpResponse()
+	conversation = friendship.conversation()
+	conversation.set_read(request.user)
+	return HttpResponse()
 
 def set_lighting(request):
 	if not request.session.get('lights', False):

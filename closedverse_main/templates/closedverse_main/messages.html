@@ -10,7 +10,7 @@
 		{% if friends %}
 				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="">
 		{% for friend in friends %}
-					<li class="trigger" data-href="">
+					<li class="trigger{% if not friend.get_latest_msg.mine and friend.get_latest_msg.read == False %} notify{% endif %}" data-href="{% url "main:messages-view" friend.username %}">
 						{% user_icon_container friend %}
 
 					  <div class="body">
@@ -18,7 +18,12 @@
 						  <span class="nick-name"><a href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
 						  <span class="id-name">{{ friend.username }}</span>
 						</p>
+						{% if friend.get_latest_msg %}
+						<span class="timestamp">{% time friend.get_latest_msg.created %}</span>
+						<p class="text {% if friend.get_latest_msg.drawing %}type-memo {% endif %}{% if friend.get_latest_msg.mine %}my{% else %}other{% endif %}">{{ friend.get_latest_msg.trun }}</p>
+						{% else %}
 						<p class="text placeholder">You haven't exchanged messages with this user yet.</p>
+						{% endif %}
 
 					  </div>
 					</li>

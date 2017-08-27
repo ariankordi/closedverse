@@ -1,0 +1,7 @@
+{% load closedverse_user %}  <div class="list messages" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
+      
+	  {% for post in messages %}
+		{% message post %}
+	 {% endfor %}
+
+  </div>

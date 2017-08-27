@@ -429,6 +429,7 @@ border-top: 1px solid #222;
 #reply-content button.more-button {
     border: #000;
 }
+.messages .post.my,
 #reply-content .list .my {
     background-color: #191818;
 }

@@ -2184,11 +2184,66 @@ var Olv = Olv || {};
 					})
 			})
 	}),
-	b.router.connect("/messages(\/)?$", function(a, c, d) {
+	b.router.connect("^/messages(\/)?$", function(a, c, d) {
 	   changesel("message");
-	   if($('div.notify').length) {
-			b.Form.get("/message_set_read")
-	   }
+	}),
+	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
+		changesel("message");
+		b.Form.post($('input[type=hidden][message-read]').attr('message-read'))
+		b.Content.autopagerize(".list.messages", d)
+			var ff = $('#post-form')
+		    b.EntryForm.setupSubmission(ff, d),
+            b.EntryForm.setupFormStatus(ff, d),
+            b.EntryForm.setupFoldedForm(ff, d),
+            b.EntryForm.setupIdentifiedUserForm(ff, d)
+			ff.on("olv:entryform:post:done", g)
+        function g(k, c) {
+            var p = $(".list.messages");
+            p.length || (p = $("<div>", {
+                "class": "list post-list js-post-list"
+            }).replaceAll(".no-content"));
+            var e = $($.parseHTML(c)).filter("*");
+            e.hide().fadeIn(400).prependTo(p);
+            var f = $(window);
+            f.scrollTop(e.offset().top + e.outerHeight() / 2 - f.height() / 2)
+        }
+
+			        if($("#post-form").length) {
+var mode_post = 0;
+$("label.textarea-menu-memo").on("click", function() {
+var menu = $("div.textarea-with-menu");
+var memo = $("div.textarea-memo");
+var text = $("div.textarea-container");
+    if(menu.hasClass("active-text")) {
+        menu.removeClass("active-text");
+        menu.addClass("active-memo");
+        memo.removeClass("none");
+        text.addClass("none");
+    }
+b.Form.toggleDisabled($("input.post-button"), false);
+mode_post = 1;
+
+setupDrawboard();
+});
+$("label.textarea-menu-text").on("click", function() {
+    if($("input[name=\"painting\"]").val()) {
+    $("input[name=\"painting\"]").attr("value", "");
+    }
+switchtext();
+});
+
+$(".post-button").on("click", function() { switchtext(); $("#can")[0].getContext("2d").clearRect(0, 0, 320, 120); $("input[name=\"painting\"]").attr("value", ""); $("img[id=\"drawing\"]").attr("src", ""); });
+
+function switchtext() {
+var menu = $("div.textarea-with-menu");
+        menu.removeClass("active-memo");
+        menu.addClass("active-text");
+        $("div.textarea-container").removeClass("none");
+        $("div.textarea-memo").addClass("none");
+mode_post = 0;
+    }
+}
+			
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
 		changesel("community");

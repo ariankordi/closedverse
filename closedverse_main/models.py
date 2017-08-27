@@ -198,28 +198,28 @@ class User(models.Model):
 	def reject_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr[0].finished = True
-			fr[0].save()
+			fr.first().finished = True
+			fr.first().save()
 	def send_fr(self, source, body=None):
 		if not self.get_fr(source):
 			return FriendRequest.objects.create(source=source, target=self, body=body)
 	def accept_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr[0].finished = True
-			fr[0].save()
+			fr.first().finished = True
+			fr.first().save()
 			return Friendship.objects.create(source=self, target=target)
 	def cancel_fr(self, target):
 		fr = target.get_fr(self)
 		if fr:
-			fr[0].finished = True
-			return fr[0].save()
+			fr.first().finished = True
+			return fr.first().save()
 	def read_fr(self):
 		return self.get_frs_target().update(read=True)
 	def delete_friend(self, target):
 		fr = Friendship.find_friendship(self, target)
 		if fr:
-			fr[0].delete()
+			fr.delete()
 	def get_activity(self, limit=20, offset=0, distinct=False, friends_only=False, request=None):
 		#Todo: make distinct work; combine friends and following, but then get posts from them
 		friends = Friendship.get_friendships(self, 0)
@@ -242,6 +242,21 @@ class User(models.Model):
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
+
+	def get_latest_msg(self, me):
+		conversation = Conversation.objects.filter(Q(source=self) & Q(target=me) | Q(target=self) & Q(source=me)).order_by('-created')[:1].first()
+		if not conversation:
+			return False
+		return conversation.latest_message(me)
+	def conversations(self):
+		return Conversation.objects.filter(Q(source=self) | Q(target=self)).order_by('-created')
+	def msg_count(self):
+		conversations = self.conversations()
+		count = 0
+		for conversation in conversations:
+			count += conversation.unread(self).count()
+		return count
+
 
 	def search(query='', limit=50, offset=0, request=None):
 		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
@@ -431,7 +446,7 @@ class Post(models.Model):
 		comments = self.comment_set.filter(spoils=False).exclude(creator=self.creator).order_by('-created')[:1]
 		if comments.count() < 1:
 			return False
-		return comments[0]
+		return comments.first()
 
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -604,15 +619,15 @@ class Notification(models.Model):
 		merge_own = user.notification_sender.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
 		if merge_own:
 			# If it's merged, don't unread that one, but unread what it's merging.
-			if merge_own[0].merged_with:
-				return merge_own[0].merged_with.set_unread()
+			if merge_own.first().merged_with:
+				return merge_own.first().merged_with.set_unread()
 			else:
-				return merge_own[0].set_unread()
+				return merge_own.first().set_unread()
 		# Search for a notification already there so we can merge with it if it exists
 		merge_s = Notification.objects.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment, merged_with=None)
 		# If it exists, merge with it. Else, create a new notification.
 		if merge_s:
-			return merge_s[0].merge(user)
+			return merge_s.first().merge(user)
 		else:
 			return user.notification_sender.create(source=user, type=type, to=to, context_post=post, context_comment=comment)
 
@@ -652,20 +667,37 @@ class Friendship(models.Model):
 	source = models.ForeignKey(User, related_name='friend_source')
 	target = models.ForeignKey(User, related_name='friend_target')
 	created = models.DateTimeField(auto_now_add=True)
+	latest = models.DateTimeField(auto_now=True)
 	
 	def __str__(self):
 		return "friendship with " + str(self.source) + " and " + str(self.target)
+	def update(self):
+		return self.save()
 	def other(self, user):
 		if self.source == user:
 			return self.target
 		return self.source
+	def conversation(self):
+		conv = Conversation.objects.filter(Q(source=self.source) & Q(target=self.target) | Q(target=self.source) & Q(source=self.target)).order_by('-created')
+		if not conv:
+			return Conversation.objects.create(source=self.source, target=self.target)
+		return conv.first()
 
 	def get_friendships(user, limit=50, offset=0):
 		if not limit:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')
 		return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
 	def find_friendship(first, second):
-		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created')
+		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created').first()
+	def get_friendships_message(user):
+		friends_list = Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')
+		friends = []
+		for friend in friends_list:
+			friends.append(friend.other(user))
+		del(friends_list)
+		for friend in friends:
+			friend.get_latest_msg = friend.get_latest_msg(user)
+		return friends
 
 class Conversation(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -676,10 +708,38 @@ class Conversation(models.Model):
 	
 	def __str__(self):
 		return "conversation with " + str(self.source) + " and " + str(self.target)
-	def latest_message(self, request):
-		message = Message.objects.filter(conversation=self).order_by('-created')[:5][1]
-		message.mine = message.mine(request.user)
+	def latest_message(self, user):
+		msgs = Message.objects.filter(conversation=self).order_by('-created')[:5]
+		if not msgs:
+			return False
+		message = msgs.first()
+		message.mine = message.mine(user)
 		return message
+	def unread(self, user):
+		return self.message_set.filter(read=False).exclude(creator=user).order_by('-created')
+	def set_read(self, user):
+		return self.unread(user).update(read=True)
+	def messages(self, request, limit=50, offset=0):
+		msgs = self.message_set.filter().order_by('-created')[offset:offset + limit]
+		for msg in msgs:
+			msg.mine = msg.mine(request.user)
+		return msgs
+	def make_message(self, request):
+		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
+			return 1
+		upload = None
+		drawing = None
+		if request.POST.get('screenshot'):
+			upload = util.image_upload(request.POST['screenshot'])
+			if upload == 1:
+				return 2
+		if request.POST.get('painting'):
+			drawing = util.image_upload(request.POST['painting'])
+			if drawing == 1:
+				return 2
+		new_post = self.message_set.create(body=request.POST.get('body'), creator=request.user, feeling=int(request.POST.get('feeling_id', 0)), drawing=drawing, screenshot=upload)
+		new_post.mine = True
+		return new_post
 class Message(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -690,11 +750,17 @@ class Message(models.Model):
 	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
 	url = models.URLField(max_length=1200, blank=True, default="")
 	created = models.DateTimeField(auto_now_add=True)
+	read = models.BooleanField(default=False)
 	creator = models.ForeignKey(User)
 
 	def __str__(self):
 		return self.body[:50] + "..."
+	def trun(self):
+		if self.drawing:
+			return '(drawing)'
+		else:
+			return self.body
 	def mine(self, user):
-		if request.creator == user:
+		if self.creator == user:
 			return True
 		return False
