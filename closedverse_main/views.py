@@ -35,7 +35,7 @@ def community_list(request):
 		'general': obj.filter(type=0).order_by('-created')[0:6],
 		'game': obj.filter(type=1).order_by('-created')[0:6],
 		'special': obj.filter(type=2).order_by('-created')[0:6],
-		'PROD': settings.PROD,
+		'settings': settings,
 	})
 
 def login_page(request):

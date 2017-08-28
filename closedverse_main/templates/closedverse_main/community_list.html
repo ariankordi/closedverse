@@ -10,10 +10,12 @@
 		<div id="identified-user-banner">
 			<a class="list-button" href="/identified_user_posts"><span class="title">Get the latest news here!</span><span class="text">Posts from Verified Users</span></a>
 		</div>-->
+		{% if settings.memo_title and settings.memo_msg %}
 		<div class="post-list-outline index-memo">
-			<h2 class="label">Closedverse</h2>
-			<p>How are you seeing this?<!--This is something I made in a week. Good projects don't have to be or take 6 months in the making. Is it better than Openverse? I don't know, but you can check it out for yourself.--></p>
+			<h2 class="label">{{ settings.memo_title }}</h2>
+			<p>{{ settings.memo_msg }}<!--This is something I made in a week. Good projects don't have to be or take 6 months in the making. Is it better than Openverse? I don't know, but you can check it out for yourself.--></p>
 		</div>
+		{% endif %}
 	</div>
 	<div class="community-main">
 		{% community_page_element general "General Communities" %}
@@ -24,7 +26,7 @@
 		<div id="guide-menu">
 			<a class="arrow-button" href="/help/"><span>Closedverse Rules</span></a>
 			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
-			{% if PROD %}
+			{% if settings.PROD %}
 			<a class="arrow-button" href="{% url "main:help-legal" %}"><span>Legal information</span></a>
 			{% endif %}
 			<a class="arrow-button" href="https://www.pf2m.com/openverse/"><span>Info about Openverse</span></a>

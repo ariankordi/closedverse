@@ -3,16 +3,16 @@ This isn't finished yet.
 Meant to be a random out-of-the-blue parody of Openverse that's supposed to be unironically better than Openverse, before Openverse even has hosting.
 
 # Requirements
-	* Python 3.6.2?
-	* Django
-	* urllib
-	* lxml
-	* passlib
-	* bcrypt
-	* mysqlclient if you're using mysql
-	* cloudinary if you're going to be using that
-	* imghdr?
-	* markdown
+  * Python 3.6.2?
+  * Django
+  * urllib
+  * lxml
+  * passlib
+  * bcrypt
+  * mysqlclient if you're using mysql
+  * cloudinary if you're going to be using that
+  * imghdr?
+  * markdown
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 

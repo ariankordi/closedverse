@@ -140,6 +140,10 @@ STATIC_URL = '/s/'
 recaptcha_pub = None
 recaptcha_priv = None
 
+# Memo title and message on communities list
+memo_title = "Closedverse demo"
+memo_msg = "Heyyyy!"
+
 # Cloudinary environment, because we're using that
 cloudinary_key = None
 cloudinary_secret = None
