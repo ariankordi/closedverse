@@ -45,7 +45,7 @@
 {% endif %}
 
       </div>
-		{% elif user.is_me %}
+		{% elif user.is_me and not general %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
 		<!--<div><a class="button" href="#" onclick="event.preventDefault();lights()">Turn the lights on/off</a></div>-->
 		{% endif %}
@@ -72,6 +72,7 @@
       </a>
     </div>
   </div>
+  {% if not general %}
   <div class="sidebar-container sidebar-profile">
 	{% if profile.comment %}
       <div class="profile-comment">
@@ -92,7 +93,7 @@
 		<div class="data-content">
 			<h4><span>NNID</span></h4>
 			<div class="note">
-				<span>{% if profile.origin_id %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id }}">{{ profile.origin_id }}</a>{% elif profile.origin_id == 0 %}Private{% else %}None{% endif %}</span>
+				<span>{% if profile.origin_id == 1 %}Private{% elif not profile.origin_id %}None{% else %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id }}">{{ profile.origin_id }}</a>{% endif %}</span>
 			</div>
 		</div>
 		<div class="data-content">
@@ -115,6 +116,7 @@
 		</div>
 	</div>
   </div>
+  {% endif %}
 
     
 </div>

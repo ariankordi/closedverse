@@ -3,7 +3,7 @@
 {% user_sidebar request user profile 0 %}
 <div class="main-column"><div class="post-list-outline">
 <h2 class="label">{{ title }}</h2>
-<form class="setting-form" method="post" action="{% url "main:user-view" user.username %}">
+<form class="setting-form" method="post">
 <ul class="settings-list">
       <li class="setting-nickname">
         <p class="settings-label">Nickname</p>
@@ -18,6 +18,7 @@
 
         <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="/help/rules">Closedverse's rules</a>.</p>
       </li>
+	  <!--
       <li>
         <p class="settings-label"><label for="relationship_visibility">Who should be able to see your friends, followers and following lists?</label></p>
         <div class="select-content">
@@ -30,6 +31,7 @@
           </div>
         </div>
       </li>
+	  -->
       <li class="setting-country">
         <p class="settings-label">Region</p>
         <div class="center center-input">

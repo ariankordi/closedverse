@@ -128,6 +128,7 @@ $("#seter2").on("click", function() { color("white", 5); });
 $("#seter3").on("click", function() { color("white", 15); });
 $("#clear-can").on("click",  function() { erase(); });
 }
+var blank = /^[\s\u00A0\u3000]*$/
 var Olv = Olv || {};
 (function(a, b) {
     b.init || (b.init = a.Deferred(function() {
@@ -1531,9 +1532,8 @@ var Olv = Olv || {};
     ,
     b.EntryForm.setupFormStatus = function(c, d) {
         function e(b) {
-            var c = /^[\s\u00A0\u3000]*$/
-              , d = b.filter(function() {
-                return !c.test(a(this).val())
+            var d = b.filter(function() {
+                return !blank.test(a(this).val())
             });
             return d.length === b.length
         }
@@ -1907,10 +1907,10 @@ var Olv = Olv || {};
 		// Thing
 		a('.my-menu-white-power').on('click', function(e) {
 		e.preventDefault()
-				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
+				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div><p>What are you?<br><input type=radio name=c value=1>Male<input type=radio name=c value=0>Female<input type=radio name=c value=2>Please don\'t ask me</p></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
 		var g = new b.ModalWindow($('.feedback-dialog'));g.open();
 		$('#feedbackbody').on('input', function() {
-				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (/^[\s\u00A0\u3000]*$/.test($(this).val())))
+				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (blank.test($(this).val())))
         });
 		$('.d-send').on('click', function() {
 			b.Form.post('/complaints', $('#feedback-form').serializeArray()).done(function() { 
@@ -2077,6 +2077,7 @@ var Olv = Olv || {};
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {
 		changesel("community");
+		/*
 			if(a("#header-news").length) {
 			o = a("#header-news");
 			l = a(".header-news-button").attr("href") + "/read.json";
@@ -2092,6 +2093,7 @@ var Olv = Olv || {};
 				go(o.attr("href"));
 				});
 			}
+		*/
         function f(b) {
             a(".tab-body").addClass("none"),
             a("#tab-" + b + "-body").removeClass("none"),
@@ -2358,6 +2360,103 @@ mode_post = 0;
             a(document).off("olv:entryform:post:done", f),
             a(document).off("olv:report:done", g)
         })
+		
+function add(a, b){
+	return a + b;
+}
+function recalculateVotes(pollOptions){
+	var voteArray = [];
+	for(var j = 0; j < pollOptions.length; j++) {
+		var votes = parseInt(pollOptions.eq(j).attr('votes'));
+		if(pollOptions.eq(j).hasClass('selected')) {
+    	voteArray.push(votes + 1);
+    }	else {
+    	voteArray.push(votes);
+    }
+  }
+	pollOptions.siblings('.poll-votes').text(voteArray.reduce(add, 0) + ' votes');
+	for(var i = 0; i < pollOptions.length; i++) {
+		var voteArrayCopy = voteArray;
+		voteArrayCopy.slice(i, 1);
+		var otherNumbers = voteArrayCopy.reduce(add, 0);
+		var percentage = Math.abs(100 - (((otherNumbers - voteArray[i]) / otherNumbers) * 100));
+		pollOptions.eq(i).children('.poll-background').attr('style', 'width:' + percentage + '%');
+		pollOptions.eq(i).children('.percentage').text(Math.round(percentage) + '%');
+  }
+}
+
+function pollSuccess(response) {
+	var pollOptions = $('.post-poll[post-id=114] .poll-option');
+	for(i = 0; i < response.votes.length; i++) {
+		pollOptions.eq(i).attr('votes', response.votes[i]);
+  }
+	recalculateVotes(pollOptions);
+}
+function pollError(response) {
+	Olv.showMessage("Error", "There was an error trying to update your vote. Please try again.");
+}
+
+$('.post-poll .poll-option').on('click', function() {
+	if(!$(this).hasClass('selected')) {
+		$(this).siblings('.poll-option').removeClass('selected');
+		$(this).addClass('selected');
+		recalculateVotes($(this).siblings('.poll-option').addBack());
+		$(this).parent().addClass('selected');	
+    $.ajax('/posts/' + $(this).parent().attr('post-id') + '/vote/' + parseInt($(this).index()), {
+			method: 'post',
+			dataType: 'json',
+    	success: pollSuccess,
+			error: pollError
+    });
+  } else {
+  	$(this).parent().removeClass('selected');
+		$(this).removeClass('selected');
+		recalculateVotes($(this).siblings('.poll-option').addBack());
+		$.ajax('/posts/' + $(this).parent().attr('post-id') + '/vote/0', {
+			method: 'post',
+    	dataType: 'json',
+    	success: pollSuccess,
+			error: pollError
+		});
+  }
+});
+$('.post-poll .poll-votes').on('click', function() {
+	b.showMessage("Poll Voters", "Insert list of poll voters here.");
+});
+
+
+	if($('.edit-post-button').length) {
+		var t = $("#edit-form");
+		var submit_btn = $('#edit-form div.form-buttons button.post-button.black-button')
+		function et() {
+						$('#post-edit').toggleClass('none')
+						$('#the-post').toggleClass('none')
+					}
+		$('.cancel-button').click(function(){et()})
+				b.EntryForm.setupFormStatus(t, e);
+		$('.edit-post-button').click(function(){
+			if($('.post-content-memo').length) {
+				b.showMessage("", "You can't edit a drawing at this time.")
+			} else {
+					et();
+					b.Form.toggleDisabled(submit_btn, true)
+			}
+		})
+		submit_btn.click(function(a) {
+			a.preventDefault()
+			b.Form.toggleDisabled($(this), true)
+			cereal = t.serializeArray()
+			b.Form.post(t.attr('data-action'), cereal).done(function() {
+				$('.post-content-text').html(cereal.body); reload()
+			})
+		})
+	}
+	if($('.rm-post-button').length) {
+		$('.rm-post-button').click(function(){
+			alert('Delete post!')
+		})
+	}
+		
 if($("#reply-form").length) {
 var mode_post = 0;
 $("label.textarea-menu-memo").on("click", function() {
@@ -2604,7 +2703,7 @@ mode_post = 0;
               , e = d.closest("form");
             b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
             b.Form.submit(e, d).done(function(a) {
-                b.showMessage("", b.loc("olv.portal.dialog.apply_settings_done"))
+                reload()
             }))
         }
         function g(c) {

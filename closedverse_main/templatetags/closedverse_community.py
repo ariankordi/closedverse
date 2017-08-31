@@ -40,8 +40,10 @@ def post_comments(comments):
 		'comments': comments,
 	}
 @register.inclusion_tag('closedverse_main/elements/feeling-selector.html')
-def feeling_selector():
-	return {}
+def feeling_selector(val=0):
+	return {
+		'val': val,
+	}
 @register.inclusion_tag('closedverse_main/elements/comment-form.html')
 def comment_form(post, myself=None):
 	return {

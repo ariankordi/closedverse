@@ -8,6 +8,14 @@
       <a href="{% url "main:community-view" post.community.id %}"><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
     </h1>
   </header>
+  {% if post.is_mine %}
+	<div class="edit-buttons-content">
+	  <!--<button type="button" class="symbol button edit-button rm-post-button"><span class="symbol-label">Delete</span></button>-->
+	  {% if not post.has_edit %}
+	  <button type="button" class="symbol button edit-button edit-post-button"><span class="symbol-label">Edit</span></button>
+	  {% endif %}
+    </div>
+{% endif %}
 
   <div class="user-content">
     {% user_icon_container post.creator post.feeling %}
@@ -17,10 +25,29 @@
       <p class="timestamp-container">
         <span class="timestamp">{% time post.created %}</span>
         <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">·Spoilers</span>
+		{% if post.has_edit %}
+		· <span class="spoiler">Edited ({% time post.edited %})</span>
+		{% endif %}
       </p>
     </div>
   </div>
   <div class="body">
+		<div id="post-edit" class="none">
+			<form data-action="{% url "main:post-change" post.id %}" id="edit-form" method="post">
+			{% feeling_selector post.feeling %}
+			<div class="textarea-container">
+				<textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Edit your post." data-required="">{{ post.body }}</textarea>
+			</div>
+				<div class="post-form-footer-options">
+					<label class="spoiler-button symbol"><input id="is_spoiler" name="is_spoiler" type="checkbox" value="1">Spoilers</label>
+				</div>
+				<div class="form-buttons">
+					<button type="button" class="cancel-button gray-button">Cancel</button>
+					<button type="submit" class="post-button black-button">Submit</button>
+				</div>
+			</form>
+		</div>
+		<div id="the-post">
 		  {% if post.screenshot %}<div class="screenshot-container still-image"><img src="{{ post.screenshot }}"></div>{% endif %}
 		  {% if post.drawing %}
 		  <p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
@@ -50,8 +77,7 @@
   
   
 
-<div class="buttons-content">  
-</div>
+
 
 <div id="reply-content">
   <h2 class="reply-label">Comment</h2>
@@ -74,7 +100,37 @@
 {% else %}
 {% comment_form post request.user %}
 {% endif %}
+
+	</div>
+
 </div>
 
       </div>
+{% if post.is_mine %}
+<div id="edit-post-page" class="dialog none" data-modal-types="edit-post">
+<div class="dialog-inner">
+  <div class="window">
+    <h1 class="window-title">Edit Post</h1>
+    <div class="window-body">
+      <form method="post" class="edit-post-form" action="">
+        <input type="hidden" name="token" value="jD8clpGvJVMxgeiEZ3uFtA">
+        <p class="select-button-label">Select an action:</p>
+        <select name="edit-type">
+          <option value="" selected="">Select an option.</option>
+          <option value="spoiler" data-action="/posts/AYMHAAADAAADV44Mnfq1Ug.set_spoiler">Set as Spoiler</option>
+          <option value="delete" data-action="/posts/AYMHAAADAAADV44Mnfq1Ug.delete" data-community-id="14866558073038702637" data-url-id="AYMHAAADAAADV44Mnfq1Ug" data-track-label="default" data-title-id="14866558072985245728" data-track-action="deletePost" data-track-category="post">
+            Delete
+          </option>
+        </select>
+        <div class="form-buttons">
+          <input type="button" class="olv-modal-close-button gray-button" value="Cancel">
+          <input type="submit" class="post-button black-button disabled" value="Submit" <="" div="" disabled="">
+      
+    </div></form>
+  </div>
+</div>
+</div>
+
+</div>
+{% endif %}
 {% endblock %}

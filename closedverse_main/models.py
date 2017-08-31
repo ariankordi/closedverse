@@ -198,22 +198,19 @@ class User(models.Model):
 	def reject_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr.first().finished = True
-			fr.first().save()
+			fr.first().finish()
 	def send_fr(self, source, body=None):
 		if not self.get_fr(source):
 			return FriendRequest.objects.create(source=source, target=self, body=body)
 	def accept_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr.first().finished = True
-			fr.first().save()
+			fr.first().finish()
 			return Friendship.objects.create(source=self, target=target)
 	def cancel_fr(self, target):
 		fr = target.get_fr(self)
 		if fr:
-			fr.first().finished = True
-			return fr.first().save()
+			fr.first().finish()
 	def read_fr(self):
 		return self.get_frs_target().update(read=True)
 	def delete_friend(self, target):
@@ -362,6 +359,7 @@ class Post(models.Model):
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
+	has_edit = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User)
 
@@ -447,6 +445,16 @@ class Post(models.Model):
 		if comments.count() < 1:
 			return False
 		return comments.first()
+	def change(self, request):
+		if not self.is_mine(request) or self.has_edit:
+			return 1
+		if not request.POST.get('body') or len(request.POST['body']) > 2200:
+			return 1
+		print('aa')
+		self.body = request.POST['body']
+		self.spoils = request.POST.get('is_spoiler', False)
+		self.feeling = request.POST.get('feeling_id', 0)
+		return self.save()
 
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -460,6 +468,7 @@ class Comment(models.Model):
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
+	has_edit = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User, blank=True, null=True)
 	
@@ -537,13 +546,20 @@ class Profile(models.Model):
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
-	def origin_id(self):
-		# TODO friends only here
-		if not self.id_visibility == 0:
-			return 0
-		if not self.user.origin_id:
+	def origin_id(self, user=None):
+		if user == self.user:
+			return self.user.origin_id
+		if self.id_visibility == 2:
+			return 1
+		elif self.id_visibility == 1:
+			if not Friendship.find_friendship(self.user, user):
+				return 1
+			return self.user.origin_id
+		elif not self.user.origin_id:
 			return None
 		return self.user.origin_id
+	def setup(self, request):
+		self.origin_id = self.origin_id(request.user)
 
 class Follow(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -641,10 +657,12 @@ class Complaint(models.Model):
 	(2, 'Want'),
 	))
 	body = models.TextField(blank=True, default="")
+	sex = models.SmallIntegerField(null=True, choices=((0, 'girl'), (1, 'privileged one'), (2, '(none)'),
+	))
 	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
-		return "Complaint from " + str(self.creator) + " at " + str(self.created)
+		return "\"" + str(self.body) + "\" from " + str(self.creator) + " as a " + str(self.get_sex_display())
 	def has_past_sent(user):
 		return user.complaint_set.filter(created__gt=timezone.now() - timedelta(minutes=5))
 
@@ -660,6 +678,9 @@ class FriendRequest(models.Model):
 	
 	def __str__(self):
 		return "friend request ("+str(self.finished)+"): from " + str(self.source) + " to " + str(self.target)
+	def finish(self):
+		self.finished = True
+		self.save()
 
 class Friendship(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

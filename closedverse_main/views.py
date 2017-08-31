@@ -71,8 +71,8 @@ def signup_page(request):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
 		if not (request.POST['username'] and request.POST['password'] and request.POST['password_again']):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
-		if not re.compile(r'^[A-Za-z0-9-._]{4,32}$').match(request.POST['username']):
-			return HttpResponseBadRequest("Your username either contains invalid characters or is too long.")
+		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
+			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (tried to match with r'^[A-Za-z0-9-._]{1,32}$')")
 		try:
 			al_exist = User.objects.get(username=request.POST['username'])
 		except User.DoesNotExist:
@@ -84,7 +84,7 @@ def signup_page(request):
 		if not (request.POST['nickname'] or request.POST['origin_id']):
 			return HttpResponseBadRequest("You didn't fill in an NNID, so you need a nickname.")
 		if request.POST['nickname'] and len(request.POST['nickname']) > 32:
-			return HttpResponseBadRequest("Your nickname is either too long or too short (4-16 characters)")
+			return HttpResponseBadRequest("Your nickname is either too long or too short (1-32 characters)")
 		if request.POST['origin_id'] and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
 		if request.POST['origin_id']:
@@ -119,6 +119,28 @@ def user_view(request, username):
 	else:
 		title = '{0}\'s profile'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
+	if request.method == 'POST':
+		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
+			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
+		if len(request.POST.get('profile_comment')) > 2200:
+			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
+		if len(request.POST.get('country')) > 255:
+			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
+		if len(request.POST.get('website')) > 255:
+			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		if len(request.POST.get('avatar')) > 255:
+			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		profile.avatar = request.POST.get('avatar')
+		profile.country = request.POST.get('country')
+		profile.weblink = request.POST.get('website')
+		profile.comment = request.POST.get('profile_comment')
+		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
+		profile.id_visibility = (request.POST.get('id_visibility') or 0)
+		user.nickname = request.POST.get('screen_name')
+		profile.save()
+		user.save()
+		return HttpResponse()
 	posts = user.get_posts(3, 0, request)
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
@@ -146,6 +168,7 @@ def user_posts(request, username):
 	else:
 		title = '{0}\'s posts'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
 	
 	if request.GET.get('offset'):
 		posts = user.get_posts(50, int(request.GET['offset']), request)
@@ -179,6 +202,7 @@ def user_yeahs(request, username):
 	else:
 		title = '{0}\'s yeahs'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
 	
 	if request.GET.get('offset'):
 		yeahs = user.get_yeahed(2, 20, int(request.GET['offset']))
@@ -220,6 +244,7 @@ def user_following(request, username):
 	else:
 		title = '{0}\'s follows'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
 
 	if request.GET.get('offset'):
 		following_list = user.get_following(20, int(request.GET['offset']))
@@ -255,6 +280,7 @@ def user_followers(request, username):
 	else:
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
 
 	if request.GET.get('offset'):
 		followers_list = user.get_followers(20, int(request.GET['offset']))
@@ -291,6 +317,7 @@ def user_friends(request, username):
 	else:
 		title = '{0}\'s friends'.format(user.nickname)
 	profile = user.profile()
+	profile.setup(request)
 
 	if request.GET.get('offset'):
 		friends_list = Friendship.get_friendships(user, 20, int(request.GET['offset']))
@@ -324,28 +351,8 @@ def user_friends(request, username):
 @login_required
 def profile_settings(request):
 	profile = request.user.profile()
+	profile.setup(request)
 	user = request.user
-	if request.method == 'POST':
-		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
-			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
-		if len(request.POST.get('profile_comment')) > 2200:
-			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
-		if len(request.POST.get('country')) > 255:
-			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
-		if len(request.POST.get('website')) > 255:
-			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
-		if len(request.POST.get('avatar')) > 255:
-			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		profile.avatar = request.POST.get('avatar')
-		profile.country = request.POST.get('country')
-		profile.weblink = request.POST.get('website')
-		profile.comment = request.POST.get('profile_comment')
-		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
-		profile.id_visibility = (request.POST.get('id_visibility') or 0)
-		user.nickname = request.POST.get('screen_name')
-		profile.save()
-		user.save()
-		return HttpResponse()
 	return render(request, 'closedverse_main/profile-settings.html', {
 		'title': 'Profile settings',
 		'user': user,
@@ -420,6 +427,7 @@ def post_view(request, post):
 		comments = post.get_comments(request)
 	return render(request, 'closedverse_main/post-view.html', {
 		'title': title,
+		'classes': ['post-permlink'],
 		'post': post,
 		'yeahs': post.get_yeahs(request),
 		'comments': comments,
@@ -436,6 +444,11 @@ def post_add_yeah(request, post):
 def post_delete_yeah(request, post):
 	the_post = get_object_or_404(Post, id=post)
 	the_post.remove_yeah(request)
+	return HttpResponse()
+@login_required
+def post_change(request, post):
+	the_post = get_object_or_404(Post, id=post)
+	the_post.change(request)
 	return HttpResponse()
 @login_required
 def post_comments(request, post):
@@ -487,6 +500,7 @@ def comment_view(request, comment):
 		title += ' on {0}\'s post'.format(comment.original_post.creator.nickname)
 	return render(request, 'closedverse_main/comment-view.html', {
 		'title': title,
+		'classes': ['post-permlink'],
 		'comment': comment,
 		'yeahs': comment.get_yeahs(request),
 	})
@@ -718,8 +732,7 @@ def help_complaint(request):
 		return json_response('Please do not send that many characters ('+str(len(request.POST['b']))+' characters)')
 	if Complaint.has_past_sent(request.user):
 		return json_response('Please do not send complaints that quickly (very very sorry, but there\'s a 5 minute wait to prevent spam)')
-	save = request.user.complaint_set.create(type=int(request.POST['a']), body=request.POST['b'])
-	print(save)
+	save = request.user.complaint_set.create(type=int(request.POST['a']), body=request.POST['b'], sex=request.POST.get('c', 2))
 	return HttpResponse()
 
 def help_faq(request):

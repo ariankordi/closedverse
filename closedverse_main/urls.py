@@ -33,6 +33,7 @@ urlpatterns = [
 	url(r'posts/(?P<post>[0-9]+)/yeah\.delete$', views.post_delete_yeah, name='post-delete-yeah'),
 	url(r'posts/(?P<post>[0-9]+)/comments$', views.post_comments, name='post-comments'),
 	url(r'posts/(?P<post>[0-9]+)/comments$', views.post_comments, name='post-comments'),
+	url(r'posts/(?P<post>[0-9]+)/change$', views.post_change, name='post-change'),
 	url(r'comments/(?P<comment>[0-9]+)$', views.comment_view, name='comment-view'),
 	url(r'comments/(?P<comment>[0-9]+)/yeah$', views.comment_add_yeah, name='comment-add-yeah'),
 	url(r'comments/(?P<comment>[0-9]+)/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),

@@ -258,13 +258,19 @@ body {
 }
 #footer {
   background: #e2e2e2;
-  position: absolute;
+  /*position: absolute;*/
   bottom: 0;
   left: 0;
   width: 100%;
 }
+#wrapper.post-permlink #footer {
+  position: bottom !important;
+}
+#wrapper.guest #footer {
+  bottom: -60px !important;
+}
 #wrapper.guest-top #footer {
-  bottom: -40px;
+  bottom: -60px !important;
 }
 #footer-inner {
   max-width: 960px;
@@ -1578,6 +1584,12 @@ content: "F";
   margin: 0 0 10px 10px;
   padding: 4px 0 3px;
 }
+.button.edit-post-button:before {
+  content: "J" !important;
+}
+.button.rm-post-button:before {
+  content: "d" !important;
+}
 .button.edit-button:hover {
   text-decoration: none;
 }
@@ -1655,7 +1667,7 @@ content: "F";
 }
 .sidebar-container .button {
   margin: 5px auto 20px;
-  width: 60%;
+  width: 80%;
 }
 .sidebar-container .title-settings-button:before {
 content: "y";
@@ -4278,7 +4290,7 @@ p.note-jasrac {
 p.note-jasrac span {
   white-space: nowrap;
 }
-.guest#post-permlink #footer {
+.guest.post-permlink #footer {
   text-align: center;
 }
 .guest .guest-message p {
@@ -5215,7 +5227,7 @@ div#activity-feed-tutorial.no-content p.tleft {
 .post .post-subtype-label.post-subtype-label-via-api {
   border-bottom: 2px solid #0080ff;
 }
-.post #post-permlink .post-subtype-label {
+.post .post-permlink .post-subtype-label {
   margin-right: -15px;
 }
 .post .community-container {
@@ -6189,20 +6201,20 @@ h2.label-topic_post .label-topic_post-msgid {
 .before-renewal .post-body .button {
   max-width: 380px;
 }
-#post-permlink .buttons-content {
+.post-permlink .buttons-content {
   padding: 15px;
   *zoom: 1;
 }
-#post-permlink .buttons-content:after {
+.post-permlink .buttons-content:after {
   content: "";
   display: block;
   clear: both;
 }
-#post-permlink .buttons-content .embed-link-button {
+.post-permlink .buttons-content .embed-link-button {
   margin: 10px 0 0;
   float: left;
 }
-#post-permlink .buttons-content .report-buttons-content {
+.post-permlink .buttons-content .report-buttons-content {
   margin: 10px 0;
   float: right;
 }
@@ -9506,14 +9518,14 @@ h2.label-topic_post .label-topic_post-msgid {
     margin: 0 -5px 10px;
     padding: 5px 0 10px;
   }
-  #post-permlink #main-body {
+  .post-permlink #main-body {
     padding: 56px 0 170px 0;
   }
-  #post-permlink .main-column {
+  .post-permlink .main-column {
     padding: 0;
     border-bottom: 1px solid #dddddd;
   }
-  #post-permlink .post-list-outline {
+  .post-permlink .post-list-outline {
     border: none;
     margin: 0;
     -webkit-box-shadow: none;
@@ -9559,10 +9571,10 @@ h2.label-topic_post .label-topic_post-msgid {
   #post-form.folded {
     min-height: 0;
   }
-  #post-permlink .main-column-hatebu-entries {
+  .post-permlink .main-column-hatebu-entries {
     margin-top: 15px;
   }
-  #post-permlink .main-column-hatebu-entries .post-list-outline {
+  .post-permlink .main-column-hatebu-entries .post-list-outline {
     -webkit-border-radius: 0 0 0 0;
     -moz-border-radius: 0 0 0 0;
     -ms-border-radius: 0 0 0 0;
@@ -9693,12 +9705,54 @@ display:inline-block;
 padding-top:10px;
 padding-bottom:10px;
 }
-#empathy-content {
-margin-bottom: 30px;
-}
 #empathy-content .post-permalink-feeling-icon img {
 border: 1px solid #dddddd;
 }
+
+.post-poll {
+  position: relative;
+  margin: 0 10px;
+}
+.post-poll .poll-option {
+  border-radius: 5px;
+  position: relative;
+  display: block;
+  padding: 12px;
+  margin: 5px 0px;
+  color: white;
+  width: auto;
+}
+.post-poll:not(.selected) .poll-option {
+  background: #0080ff;
+}
+.post-poll:not(.selected) .poll-option .percentage, .post-poll:not(.selected) .poll-option .poll-background {
+  display: none;
+}
+.post-poll.selected .poll-option {
+  background: #212121;
+  z-index: 0;
+}
+.post-poll.selected .poll-option.selected:before {
+  font-family: 'MiiverseSymbols';
+  content: 'v';
+  margin-right: 3px;
+}
+.post-poll.selected .poll-option .percentage {
+  font-weight: bold;
+  font-size: 16px;
+  float: right;
+}
+.post-poll.selected .poll-option .poll-background {
+  border-radius: 5px;
+  background: #0080ff;
+  position: absolute;
+  z-index: -1;
+  height: 100%;
+  float: left;
+  left: 0px;
+  top: 0px;
+}
+
 code,
 pre {
     display: block;

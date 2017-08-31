@@ -13,6 +13,9 @@
   <p class="user-name"><a href="{% url "main:user-view" post.creator.username %}">{{ post.creator.nickname }}</a></p>
     <p class="timestamp-container">
 	  <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">Spoilers·</span>
+	  {% if post.has_edit %}
+		<span class="spoiler">Edited</span>·
+		{% endif %}
       <a class="timestamp" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}">{% time post.created %}</a>
 	</p>
     <div class="body post-content">
