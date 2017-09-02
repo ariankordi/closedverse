@@ -17,6 +17,7 @@ local_settings.py
 .DS_Store
 .python-version
 closedverse_main/migrations
+closederse_main/migrations-old
 migrations
 migrations-old
 gitignore-this
