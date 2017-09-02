@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship
 from .util import get_mii, recaptcha_verify
 from closedverse import settings
@@ -144,7 +145,7 @@ def user_view(request, username):
 	posts = user.get_posts(3, 0, request)
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
-		yeah.post.has_yeah, yeah.post.can_yeah, yeah.post.is_mine = yeah.post.has_yeah(request), yeah.post.can_yeah(request), yeah.post.is_mine(request)
+		yeah.post.setup(request)
 	fr = None
 	if request.user.is_authenticated:
 		user.friend_state = user.friend_state(request.user)
@@ -222,7 +223,7 @@ def user_yeahs(request, username):
 		else:
 			posts.append(yeah.post)
 	for post in posts:
-		post.has_yeah, post.can_yeah, post.is_mine = post.has_yeah(request), post.can_yeah(request), post.is_mine(request)
+		post.setup(request)
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/u-post-list.html', {
 			'posts': posts,
@@ -390,6 +391,7 @@ def community_view(request, community):
 			'posts': posts,
 			'next': next_offset,
 		})
+@require_http_methods(['POST'])
 @login_required
 def post_create(request, community):
 	if request.method == 'POST':
@@ -415,7 +417,8 @@ def post_create(request, community):
 
 def post_view(request, post):
 	post = get_object_or_404(Post, id=post)
-	post.has_yeah, post.can_yeah, post.is_mine = post.has_yeah(request), post.can_yeah(request), post.is_mine(request)
+	post.setup(request)
+	post.can_rm = post.can_rm(request)
 	if post.is_mine:
 		title = 'Your post'
 	else:
@@ -427,12 +430,13 @@ def post_view(request, post):
 		comments = post.get_comments(request)
 	return render(request, 'closedverse_main/post-view.html', {
 		'title': title,
-		'classes': ['post-permlink'],
+		#CSS might not be that friendly with this / 'classes': ['post-permlink'],
 		'post': post,
 		'yeahs': post.get_yeahs(request),
 		'comments': comments,
 		'all_comment_count': all_comment_count,
 	})
+@require_http_methods(['POST'])
 @login_required
 def post_add_yeah(request, post):
 	the_post = get_object_or_404(Post, id=post)
@@ -440,16 +444,37 @@ def post_add_yeah(request, post):
 	# Give the notification!
 	Notification.give_notification(request.user, 0, the_post.creator, the_post)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def post_delete_yeah(request, post):
 	the_post = get_object_or_404(Post, id=post)
 	the_post.remove_yeah(request)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def post_change(request, post):
 	the_post = get_object_or_404(Post, id=post)
 	the_post.change(request)
 	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def post_rm(request, post):
+	the_post = get_object_or_404(Post, id=post)
+	the_post.archive(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def comment_change(request, comment):
+	the_post = get_object_or_404(Comment, id=comment)
+	the_post.change(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def comment_rm(request, comment):
+	the_post = get_object_or_404(Comment, id=comment)
+	the_post.archive(request)
+	return HttpResponse()
+@require_http_methods(['GET', 'POST'])
 @login_required
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
@@ -489,7 +514,7 @@ def post_comments(request, post):
 
 def comment_view(request, comment):
 	comment = get_object_or_404(Comment, id=comment)
-	comment.has_yeah, comment.can_yeah, comment.is_mine = comment.has_yeah(request), comment.can_yeah(request), comment.is_mine(request)
+	comment.setup(request)
 	if comment.is_mine:
 		title = 'Your comment'
 	else:
@@ -500,10 +525,11 @@ def comment_view(request, comment):
 		title += ' on {0}\'s post'.format(comment.original_post.creator.nickname)
 	return render(request, 'closedverse_main/comment-view.html', {
 		'title': title,
-		'classes': ['post-permlink'],
+		#CSS might not be that friendly with this / 'classes': ['post-permlink'],
 		'comment': comment,
 		'yeahs': comment.get_yeahs(request),
 	})
+@require_http_methods(['POST'])
 @login_required
 def comment_add_yeah(request, comment):
 	the_post = get_object_or_404(Comment, id=comment)
@@ -511,11 +537,13 @@ def comment_add_yeah(request, comment):
 	# Give the notification!
 	Notification.give_notification(request.user, 1, the_post.creator, None, the_post)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def comment_delete_yeah(request, comment):
 	the_post = get_object_or_404(Comment, id=comment)
 	the_post.remove_yeah(request)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
@@ -523,11 +551,13 @@ def user_follow(request, username):
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_unfollow(request, username):
 	user = get_object_or_404(User, username=username)
 	user.unfollow(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_friendrequest_create(request, username):
 	user = get_object_or_404(User, username=username)
@@ -539,21 +569,25 @@ def user_friendrequest_create(request, username):
 		else:
 			user.send_fr(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_friendrequest_accept(request, username):
 	user = get_object_or_404(User, username=username)
 	user.accept_fr(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_friendrequest_reject(request, username):
 	user = get_object_or_404(User, username=username)
 	user.reject_fr(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_friendrequest_cancel(request, username):
 	user = get_object_or_404(User, username=username)
 	user.cancel_fr(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def user_friendrequest_delete(request, username):
 	user = get_object_or_404(User, username=username)
@@ -568,12 +602,14 @@ def check_notifications(request):
 	msg_count = request.user.msg_count()
 	# n for notifications icon, msg for messages icon
 	return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
+@require_http_methods(['POST'])
 @login_required
 def notification_setread(request):
 	update = request.user.notification_read()
 	if request.GET.get('fr'):
 		request.user.read_fr()
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def notification_delete(request, notification):
 	if not request.method == 'POST':
@@ -707,6 +743,7 @@ def messages_view(request, username):
 			'messages': messages,
 			'next': next_offset,
 		})
+@require_http_methods(['POST'])
 @login_required
 def messages_read(request, username):
 	user = get_object_or_404(User, username=username)
@@ -723,6 +760,7 @@ def set_lighting(request):
 	else:
 		request.session['lights'] = False
 	return HttpResponse()
+@require_http_methods(['POST'])
 @login_required
 def help_complaint(request):
 	if not request.POST.get('b'):

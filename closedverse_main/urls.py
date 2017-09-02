@@ -34,9 +34,12 @@ urlpatterns = [
 	url(r'posts/(?P<post>[0-9]+)/comments$', views.post_comments, name='post-comments'),
 	url(r'posts/(?P<post>[0-9]+)/comments$', views.post_comments, name='post-comments'),
 	url(r'posts/(?P<post>[0-9]+)/change$', views.post_change, name='post-change'),
+	url(r'posts/(?P<post>[0-9]+)\.rm$', views.post_rm, name='post-rm'),
 	url(r'comments/(?P<comment>[0-9]+)$', views.comment_view, name='comment-view'),
 	url(r'comments/(?P<comment>[0-9]+)/yeah$', views.comment_add_yeah, name='comment-add-yeah'),
 	url(r'comments/(?P<comment>[0-9]+)/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
+	url(r'comments/(?P<comment>[0-9]+)/change$', views.comment_change, name='comment-change'),
+	url(r'comments/(?P<comment>[0-9]+)\.rm$', views.comment_rm, name='comment-rm'),
 
 	url(r'notif_count\.json$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),

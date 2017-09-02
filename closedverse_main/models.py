@@ -64,7 +64,7 @@ class User(models.Model):
 	password = models.CharField(max_length=128)
 	email = models.CharField(max_length=255, blank=True)
 	avatar = models.CharField(max_length=1200, blank=True)
-	level = models.SmallIntegerField(default=0, choices=((1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
+	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.GenericIPAddressField(null=True)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
@@ -111,12 +111,14 @@ class User(models.Model):
 		return self.profile_set.get(user=self)
 	def get_class(self):
 			first = {
-			1: 'Moderator',
-			2: 'Admin',
+			1: 'moderator',
+			2: 'admin',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
 			second = {
+			1: "Moderator",
+			2: "Admin",
 			5: "O-PHP-enverse Man",
 			10: "Friendship ended with PHP / Now PYTHON is my best friend",
 			}.get(self.level, '')
@@ -154,9 +156,7 @@ class User(models.Model):
 		posts = self.post_set.filter().order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
-					post.has_yeah = post.has_yeah(request)
-					post.can_yeah = post.can_yeah(request)
-					post.is_mine = post.is_mine(request)
+					post.setup(request)
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
@@ -233,9 +233,7 @@ class User(models.Model):
 			).order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
-					post.has_yeah = post.has_yeah(request)
-					post.can_yeah = post.can_yeah(request)
-					post.is_mine = post.is_mine(request)
+					post.setup(request)
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
@@ -308,9 +306,7 @@ class Community(models.Model):
 		posts = Post.objects.filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
 			for post in posts:
-				post.has_yeah = post.has_yeah(request)
-				post.can_yeah = post.can_yeah(request)
-				post.is_mine = post.is_mine(request)
+				post.setup(request)
 				post.recent_comment = post.recent_comment()
 				post.comment_count = post.get_comments().count()
 		return posts
@@ -343,14 +339,14 @@ class CommunityClink(models.Model):
 	# type: related (f) / sub (t)
 	kind = models.BooleanField(default=False)
 
-# Do this
+# Do this, or not
 #class CommunityFavorite(models.Model):
 #
 
 class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	community = models.ForeignKey(Community)
+	community = models.ForeignKey(Community, null=True)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
@@ -359,8 +355,9 @@ class Post(models.Model):
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
+	befores = models.TextField(null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
-	status = models.SmallIntegerField(default=0)
+	status = models.SmallIntegerField(default=0, choices=((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin')))
 	creator = models.ForeignKey(User)
 
 	def __str__(self):
@@ -397,6 +394,8 @@ class Post(models.Model):
 			return not self.is_mine(request)
 		else:
 			return False
+	def can_rm(self, request):
+		return request.user.level > 0
 	def give_yeah(self, request):
 		if self.has_yeah(request):
 			return True
@@ -420,9 +419,7 @@ class Post(models.Model):
 			comments = self.comment_set.filter(original_post=self).order_by('created')
 		if request:
 			for post in comments:
-				post.has_yeah = post.has_yeah(request)
-				post.can_yeah = post.can_yeah(request)
-				post.is_mine = post.is_mine(request)
+				post.setup(request)
 		return comments
 	def create_comment(self, request):
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
@@ -450,12 +447,39 @@ class Post(models.Model):
 			return 1
 		if not request.POST.get('body') or len(request.POST['body']) > 2200:
 			return 1
-		print('aa')
+		if not self.befores:
+			befores_json = []
+		else:
+			befores_json = json.loads(self.befores)
+		befores_json.append(self.body)
+		self.befores = json.dumps(befores_json)
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
+		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
+			self.has_edit = True
 		return self.save()
+	def archive(self, request):
+		if request and not self.is_mine(request) and not self.can_rm(request):
+			return False
+		PostArchive.objects.create(**Post.objects.filter(id=self.id).values().first())
+		comments = self.get_comments()
+		for comment in comments:
+			comment.archive()
+		return self.delete()
+	def setup(self, request):
+		self.has_yeah = self.has_yeah(request)
+		self.can_yeah = self.can_yeah(request)
+		self.is_mine = self.is_mine(request)
 
+class PostArchive(Post):
+	archived = models.DateField(auto_now_add=True)
+	def __str__(self):
+		return "\"" + self.trun()  + "\", archived on " + str(self.archived)
+	def move_back(self):
+		Post.objects.create(**self.objects.filter(id=self.id).values().first())
+		return self.delete()
+	
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -468,10 +492,11 @@ class Comment(models.Model):
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
+	befores = models.TextField(null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User, blank=True, null=True)
-	
+
 	def __str__(self):
 		return self.body[:50] + "..."
 	def is_reply(self):
@@ -498,6 +523,8 @@ class Comment(models.Model):
 			return not self.is_mine(request)
 		else:
 			return False
+	def can_rm(self, request):
+		return request.user.level > 0
 	def give_yeah(self, request):
 		if self.has_yeah(request):
 			return True
@@ -512,7 +539,41 @@ class Comment(models.Model):
 		return Yeah.objects.filter(type=1, comment=self).order_by('-created')[0:30]
 	def owner_post(self):
 		return (self.creator == self.original_post.creator)
-	
+	def change(self, request):
+		if not self.is_mine(request) or self.has_edit:
+			return 1
+		if not request.POST.get('body') or len(request.POST['body']) > 2200:
+			return 1
+		if not self.befores:
+			befores_json = []
+		else:
+			befores_json = json.loads(self.befores)
+		befores_json.append(self.body)
+		self.befores = json.dumps(befores_json)
+		self.body = request.POST['body']
+		self.spoils = request.POST.get('is_spoiler', False)
+		self.feeling = request.POST.get('feeling_id', 0)
+		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
+			self.has_edit = True
+		return self.save()
+	def archive(self, request=None):
+		if request and not self.is_mine(request) and not self.can_rm(request):
+			return False
+		CommentArchive.objects.create(**Comment.objects.filter(id=self.id).values().first())
+		return self.delete()
+	def setup(self, request):
+		self.has_yeah = self.has_yeah(request)
+		self.can_yeah = self.can_yeah(request)
+		self.is_mine = self.is_mine(request)
+
+class CommentArchive(Comment):
+	archived = models.DateField(auto_now_add=True)
+	def __str__(self):
+		return "\"" + self.trun()  + "\", archived on " + str(self.archived)
+	def move_back(self):
+		Comment.objects.create(**CommentArchive.objects.filter(id=self.id).values().first())
+		return self.delete()
+
 class Yeah(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 	by = models.ForeignKey(User)

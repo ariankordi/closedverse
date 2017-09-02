@@ -1,11 +1,14 @@
-{% load closedverse_tags %}<li id="{{ comment.unique_id }}" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:comment-view" comment.id %}" class="post {% if comment.owner_post %}my{% else %}other{% endif %}{% if comment.spoils and not comment.is_mine %} hidden{% endif %} trigger">
+{% load closedverse_tags %}<li id="{{ comment.unique_id }}" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:comment-view" comment.id %}" class="post {% if comment.owner_post %}my{% else %}other{% endif %}{% if comment.spoils and not comment.is_mine %} hidden{% endif %} trigger">
   {% user_icon_container comment.creator comment.feeling %}
   <div class="body">
     <div class="header">
       <p class="user-name"><a href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
       <p class="timestamp-container">
-        <a class="timestamp" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}href{% endif %}="{% url "main:comment-view" comment.id %}">{% time comment.created %}</a>
-        <span class="spoiler-status{% if comment.spoils %} spoiler{% endif %}"> ·Spoilers</span>
+        <a class="timestamp" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}href{% endif %}="{% url "main:comment-view" comment.id %}">{% time comment.created %}</a>
+		{% if comment.has_edit %}
+			<span class="spoiler">· Edited</span>
+		{% endif %}
+        <span class="spoiler-status{% if comment.spoils %} spoiler{% endif %}"> · Spoilers</span>
       </p>
     </div>
 

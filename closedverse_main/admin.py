@@ -14,6 +14,9 @@ admin.site.register(models.Comment)
 admin.site.register(models.Complaint)
 admin.site.register(models.Message)
 
+admin.site.register(models.PostArchive)
+admin.site.register(models.CommentArchive)
+
 admin.site.register(models.Yeah)
 admin.site.register(models.Follow)
 admin.site.register(models.FriendRequest)

@@ -1,6 +1,6 @@
 {% extends "closedverse_main/layout.html" %}
 {% load closedverse_tags %}{% load closedverse_community %}{% block main-body %}
-<div class="main-column"><div class="post-list-outline">
+<div class="main-column replyform-bottom"><div class="post-list-outline">
 <section id="post-content" class="post post-subtype-default">
 
   <header class="community-container">    
@@ -8,9 +8,11 @@
       <a href="{% url "main:community-view" post.community.id %}"><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
     </h1>
   </header>
-  {% if post.is_mine %}
+  {% if post.is_mine or post.del_perm %}
 	<div class="edit-buttons-content">
-	  <!--<button type="button" class="symbol button edit-button rm-post-button"><span class="symbol-label">Delete</span></button>-->
+	  {% if post.is_mine and not post.del_perm %}
+	  <button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:post-rm" post.id %}"><span class="symbol-label">Delete</span></button>
+	  {% endif %}
 	  {% if not post.has_edit %}
 	  <button type="button" class="symbol button edit-button edit-post-button"><span class="symbol-label">Edit</span></button>
 	  {% endif %}
@@ -32,6 +34,7 @@
     </div>
   </div>
   <div class="body">
+		{% if post.is_mine %}
 		<div id="post-edit" class="none">
 			<form data-action="{% url "main:post-change" post.id %}" id="edit-form" method="post">
 			{% feeling_selector post.feeling %}
@@ -47,6 +50,7 @@
 				</div>
 			</form>
 		</div>
+		{% endif %}
 		<div id="the-post">
 		  {% if post.screenshot %}<div class="screenshot-container still-image"><img src="{{ post.screenshot }}"></div>{% endif %}
 		  {% if post.drawing %}
@@ -69,6 +73,8 @@
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
           <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
   </div>
+</div>
+
 </section>
 
 
@@ -80,7 +86,7 @@
 
 
 <div id="reply-content">
-  <h2 class="reply-label">Comment</h2>
+  <h2 class="reply-label">Comments</h2>
   <div class="no-reply-content{% if all_comment_count %} none{% endif %}"><div>
     <p>This post has no comments.</p>
   </div></div>
@@ -103,34 +109,7 @@
 
 	</div>
 
-</div>
 
       </div>
-{% if post.is_mine %}
-<div id="edit-post-page" class="dialog none" data-modal-types="edit-post">
-<div class="dialog-inner">
-  <div class="window">
-    <h1 class="window-title">Edit Post</h1>
-    <div class="window-body">
-      <form method="post" class="edit-post-form" action="">
-        <input type="hidden" name="token" value="jD8clpGvJVMxgeiEZ3uFtA">
-        <p class="select-button-label">Select an action:</p>
-        <select name="edit-type">
-          <option value="" selected="">Select an option.</option>
-          <option value="spoiler" data-action="/posts/AYMHAAADAAADV44Mnfq1Ug.set_spoiler">Set as Spoiler</option>
-          <option value="delete" data-action="/posts/AYMHAAADAAADV44Mnfq1Ug.delete" data-community-id="14866558073038702637" data-url-id="AYMHAAADAAADV44Mnfq1Ug" data-track-label="default" data-title-id="14866558072985245728" data-track-action="deletePost" data-track-category="post">
-            Delete
-          </option>
-        </select>
-        <div class="form-buttons">
-          <input type="button" class="olv-modal-close-button gray-button" value="Cancel">
-          <input type="submit" class="post-button black-button disabled" value="Submit" <="" div="" disabled="">
-      
-    </div></form>
-  </div>
-</div>
-</div>
 
-</div>
-{% endif %}
 {% endblock %}
