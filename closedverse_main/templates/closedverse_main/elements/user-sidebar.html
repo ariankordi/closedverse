@@ -1,8 +1,12 @@
 {% load closedverse_tags %}{% load closedverse_user %}
 {% if user.is_authenticated %}<div id="sidebar" class="{% if general %}general{% else %}user{% endif %}-sidebar">
   <div class="sidebar-container">
-      
-	{% user_sidebar_info user %}
+      {% if profile.favorite.screenshot %}
+	  <a href="{% url "main:post-view" profile.favorite.id %}" id="sidebar-cover" style="background-image:url({{ profile.favorite.screenshot }})">
+        <img src="{{ profile.favorite.screenshot }}" class="sidebar-cover-image">
+      </a>
+	  {% endif %}
+	{% user_sidebar_info user profile %}
 {% if request.user.is_authenticated and not user.is_me %}
       <div class="user-action-content">
 <div class="toggle-button">
@@ -47,7 +51,8 @@
       </div>
 		{% elif user.is_me and not general %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
-		<!--<div><a class="button" href="#" onclick="event.preventDefault();lights()">Turn the lights on/off</a></div>-->
+		{% endif %}{% if user.is_me %}
+		<button class="button" onclick="lights()">Toggle dark mode</button>
 		{% endif %}
 
     <ul id="sidebar-profile-status">
@@ -56,6 +61,7 @@
       <li><a href="{% url "main:user-followers" user.username %}" class="{% if selection == 5 %}selected{% endif %}"><span><span class="number test-follower-count">{{ user.num_followers }}</span>Followers</span></a></li>
     </ul>
   </div>
+  {% if not general %}
   <div class="sidebar-setting sidebar-container">
     <div class="sidebar-post-menu">
       <a href="{% url "main:user-posts" user.username %}" class="sidebar-menu-post with-count symbol{% if selection == 1 %} selected{% endif %}">
@@ -72,7 +78,7 @@
       </a>
     </div>
   </div>
-  {% if not general %}
+  
   <div class="sidebar-container sidebar-profile">
 	{% if profile.comment %}
       <div class="profile-comment">

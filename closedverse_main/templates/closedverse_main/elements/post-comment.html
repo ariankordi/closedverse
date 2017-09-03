@@ -1,4 +1,4 @@
-{% load closedverse_tags %}<li id="{{ comment.unique_id }}" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:comment-view" comment.id %}" class="post {% if comment.owner_post %}my{% else %}other{% endif %}{% if comment.spoils and not comment.is_mine %} hidden{% endif %} trigger">
+{% if not comment.is_rm %}{% load closedverse_tags %}<li id="{{ comment.unique_id }}" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:comment-view" comment.id %}" class="post {% if comment.owner_post %}my{% else %}other{% endif %}{% if comment.spoils and not comment.is_mine %} hidden{% endif %} trigger">
   {% user_icon_container comment.creator comment.feeling %}
   <div class="body">
     <div class="header">
@@ -35,3 +35,4 @@
     </div>
   </div>
 </li>
+{% endif %}

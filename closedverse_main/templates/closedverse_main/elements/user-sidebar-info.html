@@ -1,4 +1,4 @@
-{% load closedverse_tags %}<div id="sidebar-profile-body">
+{% load closedverse_tags %}<div id="sidebar-profile-body"{% if profile.favorite %} class="with-profile-post-image"{% endif %}>
 	<div class="icon-container {% user_class user %}">
 		<a href="{% url "main:user-view" user.username %}">
 			<img src="{% avatar user.avatar %}" alt="{{ user.nickname }}" class="icon">

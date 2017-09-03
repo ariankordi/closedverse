@@ -8,13 +8,14 @@
       <a href="{% url "main:community-view" post.community.id %}"><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
     </h1>
   </header>
-  {% if post.is_mine or post.del_perm %}
+  {% if post.is_mine or post.can_rm %}
 	<div class="edit-buttons-content">
-	  {% if post.is_mine and not post.del_perm %}
 	  <button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:post-rm" post.id %}"><span class="symbol-label">Delete</span></button>
-	  {% endif %}
-	  {% if not post.has_edit %}
+	  {% if post.is_mine and not post.has_edit %}
 	  <button type="button" class="symbol button edit-button edit-post-button"><span class="symbol-label">Edit</span></button>
+	  {% endif %}
+	  {% if post.is_mine and post.screenshot %}
+	  <button type="button" class="symbol button edit-button profile-post-button{% if post.is_favorite %} done {% endif %}" data-action="{% if post.is_favorite %}{% url "main:post-unset-profile" post.id %}{% else %}{% url "main:post-set-profile" post.id %}{% endif %}"><span class="symbol-label">Set as profile post</span></button>
 	  {% endif %}
     </div>
 {% endif %}

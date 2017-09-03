@@ -1590,6 +1590,12 @@ content: "F";
 .button.rm-post-button:before {
   content: "d" !important;
 }
+.button.profile-post-button:before {
+  content: "P" !important;
+}
+.button.profile-post-button.done:before {
+  content: "s" !important;
+}
 .button.edit-button:hover {
   text-decoration: none;
 }

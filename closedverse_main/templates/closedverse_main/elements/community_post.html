@@ -1,3 +1,4 @@
+{% if not post.is_rm %}
 {% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}" class="post post-subtype-default trigger{% if post.spoils and not post.is_mine %} hidden test-hidden{% endif %}{% if type == 2 %} post-list-outline{% endif %}" tabindex="0">
   {% if with_community_container %}
   <p class="community-container">
@@ -73,3 +74,4 @@
 {% endif %}
     </div>
 </div>
+{% endif %}

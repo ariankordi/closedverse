@@ -16,9 +16,10 @@ def user_sidebar(request, user, profile, selection=0, general=False, fr=None):
 		'fr': fr,
 	}
 @register.inclusion_tag('closedverse_main/elements/user-sidebar-info.html')
-def user_sidebar_info(user):
+def user_sidebar_info(user, profile=None):
 	return {
 		'user': user,
+		'profile': profile,
 	}
 @register.inclusion_tag('closedverse_main/elements/fr-accept.html')
 def fr_accept(fr):

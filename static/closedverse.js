@@ -1895,6 +1895,7 @@ var Olv = Olv || {};
         b.User.setupFollowButton(a, {
             container: "#sidebar"
         })
+
     }
     ,
     b.Global = {},
@@ -2369,7 +2370,7 @@ mode_post = 0;
             a(document).off("olv:entryform:post:done", f),
             a(document).off("olv:report:done", g)
         })
-		
+/*
 function add(a, b){
 	return a + b;
 }
@@ -2432,7 +2433,7 @@ $('.post-poll .poll-option').on('click', function() {
 $('.post-poll .poll-votes').on('click', function() {
 	b.showMessage("Poll Voters", "Insert list of poll voters here.");
 });
-
+*/
 
 	if($('.edit-post-button').length) {
 		var t = $("#edit-form");
@@ -2468,6 +2469,25 @@ $('.post-poll .poll-votes').on('click', function() {
 					b.Form.post(rm_btn.attr('data-action')).done(b.showMessage("", "Deleted."))
 				})
 		})
+	}
+	fav_btn = $('.profile-post-button')
+	if(fav_btn.length) {
+			if(fav_btn.hasClass('done')) {
+				fav_btn.click(function(){
+					b.showConfirm("Profile post unset", "Unset your profile picture?")
+						$('.ok-button').click(function(){
+							b.Form.post(fav_btn.attr('data-action')).done(reload())
+						})
+				})
+			}
+			else {
+				fav_btn.click(function(){
+					b.showConfirm("Profile post", "Set this as your profile picture?")
+						$('.ok-button').click(function(){
+							b.Form.post(fav_btn.attr('data-action')).done(reload())
+						})
+				})
+			}
 	}
 		
 if($("#reply-form").length) {

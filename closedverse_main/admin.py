@@ -4,18 +4,26 @@ from django.contrib.auth.models import Group
 
 from . import models
 
+class PostAdmin(admin.ModelAdmin):
+	def get_queryset(self, request):
+		return models.Post.real.get_queryset()
+
+class CommentAdmin(admin.ModelAdmin):
+	def get_queryset(self, request):
+		return models.Comment.real.get_queryset()
+
 admin.site.unregister(Group)
 
 admin.site.register(models.User)
 admin.site.register(models.Profile)
 admin.site.register(models.Community)
-admin.site.register(models.Post)
-admin.site.register(models.Comment)
 admin.site.register(models.Complaint)
 admin.site.register(models.Message)
 
-admin.site.register(models.PostArchive)
-admin.site.register(models.CommentArchive)
+
+admin.site.register(models.Post, PostAdmin)
+admin.site.register(models.Comment, CommentAdmin)
+
 
 admin.site.register(models.Yeah)
 admin.site.register(models.Follow)

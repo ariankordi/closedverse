@@ -418,7 +418,9 @@ def post_create(request, community):
 def post_view(request, post):
 	post = get_object_or_404(Post, id=post)
 	post.setup(request)
-	post.can_rm = post.can_rm(request)
+	if request.user.is_authenticated:
+		post.can_rm = post.can_rm(request)
+		post.is_favorite = post.is_favorite(request)
 	if post.is_mine:
 		title = 'Your post'
 	else:
@@ -458,9 +460,21 @@ def post_change(request, post):
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
+def post_setprofile(request, post):
+	the_post = get_object_or_404(Post, id=post)
+	the_post.favorite(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def post_unsetprofile(request, post):
+	the_post = get_object_or_404(Post, id=post)
+	the_post.unfavorite(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
 def post_rm(request, post):
 	the_post = get_object_or_404(Post, id=post)
-	the_post.archive(request)
+	the_post.rm(request)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -472,7 +486,7 @@ def comment_change(request, comment):
 @login_required
 def comment_rm(request, comment):
 	the_post = get_object_or_404(Comment, id=comment)
-	the_post.archive(request)
+	the_post.rm(request)
 	return HttpResponse()
 @require_http_methods(['GET', 'POST'])
 @login_required
@@ -515,6 +529,8 @@ def post_comments(request, post):
 def comment_view(request, comment):
 	comment = get_object_or_404(Comment, id=comment)
 	comment.setup(request)
+	if request.user.is_authenticated:
+		comment.can_rm = comment.can_rm(request)
 	if comment.is_mine:
 		title = 'Your comment'
 	else:

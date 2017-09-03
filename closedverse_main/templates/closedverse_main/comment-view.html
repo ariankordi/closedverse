@@ -12,12 +12,10 @@
   <div id="post-content" class="post reply-permalink-post">
     <div id="{{ comment.unique_id }}" class="other">
       <p class="community-container"><a href="{% url "main:community-view" comment.community.id %}"><img src="{{ comment.community.icon }}" class="community-icon">{{ comment.community.name }}</a></p>
-	    {% if comment.is_mine or post.del_perm %}
+	    {% if comment.is_mine or comment.can_rm %}
 		<div class="edit-buttons-content">
-				  {% if comment.is_mine and not comment.del_perm %}
-					<button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:comment-rm" comment.id %}"><span class="symbol-label">Delete</span></button>
-					{% endif %}
-			{% if not comment.has_edit %}
+				<button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:comment-rm" comment.id %}"><span class="symbol-label">Delete</span></button>
+			{% if comment.is_mine and not comment.has_edit %}
 			<button type="button" class="symbol button edit-button edit-post-button"><span class="symbol-label">Edit</span></button>
 		{% endif %}
 		</div>

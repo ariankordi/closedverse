@@ -56,6 +56,10 @@ class UserManager(BaseUserManager):
 			return None
 		return user
 
+class PostManager(models.Manager):
+	def get_queryset(self):
+		return super(PostManager, self).get_queryset().filter(is_rm=False)
+
 class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -357,8 +361,12 @@ class Post(models.Model):
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
+	is_rm = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0, choices=((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin')))
 	creator = models.ForeignKey(User)
+
+	objects = PostManager()
+	real = models.Manager()
 
 	def __str__(self):
 		return self.body[:50] + "..."
@@ -456,29 +464,43 @@ class Post(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
+		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
 			self.has_edit = True
 		return self.save()
-	def archive(self, request):
+	def rm(self, request):
 		if request and not self.is_mine(request) and not self.can_rm(request):
 			return False
-		PostArchive.objects.create(**Post.objects.filter(id=self.id).values().first())
-		comments = self.get_comments()
-		for comment in comments:
-			comment.archive()
-		return self.delete()
+		self.is_rm = True
+		if self.is_mine(request):
+			self.status = 1
+		else:
+			self.status = 2
+		return self.save()
+	def is_favorite(self, request):
+		profile = request.user.profile()
+		if profile.favorite == self:
+			return True
+		else:
+			return False
+	def favorite(self, request):
+		if not self.is_mine(request):
+			return False
+		profile = request.user.profile()
+		if profile.favorite == self:
+			return False
+		profile.favorite = self
+		return profile.save()
+	def unfavorite(self, request):
+		if not self.is_mine(request):
+			return False
+		profile = request.user.profile()
+		if profile.favorite == self:
+			profile.favorite = None
+		return profile.save()
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request)
-
-class PostArchive(Post):
-	archived = models.DateField(auto_now_add=True)
-	def __str__(self):
-		return "\"" + self.trun()  + "\", archived on " + str(self.archived)
-	def move_back(self):
-		Post.objects.create(**self.objects.filter(id=self.id).values().first())
-		return self.delete()
 	
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -494,8 +516,12 @@ class Comment(models.Model):
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
+	is_rm = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	creator = models.ForeignKey(User, blank=True, null=True)
+
+	objects = PostManager()
+	real = models.Manager()
 
 	def __str__(self):
 		return self.body[:50] + "..."
@@ -553,26 +579,22 @@ class Comment(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
+		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
 			self.has_edit = True
 		return self.save()
-	def archive(self, request=None):
+	def rm(self, request):
 		if request and not self.is_mine(request) and not self.can_rm(request):
 			return False
-		CommentArchive.objects.create(**Comment.objects.filter(id=self.id).values().first())
-		return self.delete()
+		self.is_rm = True
+		if self.is_mine(request):
+			self.status = 1
+		else:
+			self.status = 2
+		return self.save()
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request)
-
-class CommentArchive(Comment):
-	archived = models.DateField(auto_now_add=True)
-	def __str__(self):
-		return "\"" + self.trun()  + "\", archived on " + str(self.archived)
-	def move_back(self):
-		Comment.objects.create(**CommentArchive.objects.filter(id=self.id).values().first())
-		return self.delete()
 
 class Yeah(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
