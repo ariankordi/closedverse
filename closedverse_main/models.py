@@ -69,7 +69,7 @@ class User(models.Model):
 	email = models.CharField(max_length=255, blank=True)
 	avatar = models.CharField(max_length=1200, blank=True)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
-	addr = models.GenericIPAddressField(null=True)
+	addr = models.CharField(max_length=64, null=True, blank=True)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
 	origin_info = models.CharField(max_length=255, null=True, blank=True)
@@ -324,7 +324,7 @@ class Community(models.Model):
 			upload = util.image_upload(request.POST['screenshot'])
 			if upload == 1:
 				return 2
-		if request.POST.get('painting'):
+		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
@@ -438,7 +438,7 @@ class Post(models.Model):
 			upload = util.image_upload(request.POST['screenshot'])
 			if upload == 1:
 				return 2
-		if request.POST.get('painting'):
+		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
@@ -837,7 +837,7 @@ class Conversation(models.Model):
 			upload = util.image_upload(request.POST['screenshot'])
 			if upload == 1:
 				return 2
-		if request.POST.get('painting'):
+		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2

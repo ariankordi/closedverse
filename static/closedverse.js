@@ -43,98 +43,197 @@ function lights() {
 $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
 }
-function setupDrawboard() {
-        var canvas, ctx, flag = false,
-        prevX = 0,
-        currX = 0,
-        prevY = 0,
-        currY = 0,
-        dot_flag = false;
-
-    var x = "black",
-        y = 2;
-    
-    function init() {
-        canvas = $("#can")[0];
-        ctx = canvas.getContext("2d");
-        w = canvas.width;
-        h = canvas.height;
-        canvas.addEventListener("mousedown",function(e) {findxy("down", e);canvas.addEventListener("mousemove",function(e){findxy("move",e);}, false);},false);canvas.addEventListener("mouseup",function (e){findxy("up", e);},false);canvas.addEventListener("mouseout",function(e){findxy("out",e);},false);
-    }
-    
-    function color(col,size) {
-        x = col;
-        y = size;
-    }
-    
-    function draw() {
-        ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(currX, currY);
-        ctx.strokeStyle = x;
-        ctx.lineWidth = y;
-        ctx.stroke();
-        ctx.closePath();
-    }
-    
-    function erase() {
-        ctx.clearRect(0, 0, w, h);
-        save();
-    }
-    
-    function save() {
-        var dataURL = canvas.toDataURL();
-        if(typeof dataURL !== undefined) {
-        $("input[type=hidden][name=painting]").attr("value", dataURL.split(",")[1]);
-        }
+function openDrawboardModal() {
+	if(innerWidth <= 400) {
+		Olv.showMessage("", "It appears the device you're using right now doesn't support drawing, sorry.\n\nIf you were able to draw right now, you'd only be able to put dots on the drawboard. (if anyone knows the cause of this, let me know)");
+		return false;
+	} else {
+		var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
+		return true;
 	}
-    
-    function findxy(res, e) {
-        if (res == "down") {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
-    
-            flag = true;
-            dot_flag = true;
-            if (dot_flag) {
-                ctx.beginPath();
-                ctx.fillStyle = x;
-                ctx.fillRect(currX, currY, 2, 2);
-                ctx.closePath();
-                dot_flag = false;
-            }
-        }
-        if (res == "up" || res == "out") {
-            flag = false;
-        }
-        if (res == "move") {
-            if (flag) {
-                prevX = currX;
-                prevY = currY;
-                currX = e.clientX - canvas.offsetLeft;
-                currY = e.clientY - canvas.offsetTop;
-                draw();
-            }
-        }
+}
+// God damn PF2M, you could've made this object-oriented
+// Or maybe I could, but it's not commented, hmm? hmmmm??
+function setupDrawboard() {
+var canvas = document.getElementById("artwork-canvas");
+var ctx = canvas.getContext('2d');
+		var haval = $("input[type=hidden][name=painting]")
+		if(haval.length) {
+			dds = new Image();
+			dds.src = "data:image/png;base64," + haval.val();
+			dds.onload = function() {
+			   ctx.drawImage(dds,0,0);
+			};
+		}
+var undoCanvas = document.getElementById('artwork-canvas-undo');
+var undoCtx = undoCanvas.getContext('2d');
+var redoCanvas = document.getElementById('artwork-canvas-redo');
+var redoCtx = redoCanvas.getContext('2d');
+var mousePosOld = 0;
+var artworkTool = {type: 0, size: 1};
+var sizeSmall = 1;
+var sizeMedium = 2;
+var sizeLarge = 4;
+var artworkColors = [["black", "#000"], ["gray", "#808080"], ["red", "#ff0000"], ["brown", "#804000"], ["orange", "#ff8000"], ["darkorange", "#c08000"], ["yellow", "#ffff00"], ["beige", "#fff8dc"], ["green", "#00c700"], ["darkgreen", "#008000"], ["skyblue", "#00ffff"], ["darkaqua", "#00a0a0"], ["blue", "#0000ff"], ["openverse", "#0080ff"], ["pink", "#ff00ff"], ["purple", "#800080"]];
+var artworkColorOffset = 0;
+var artworkZoomFactor = 1;
+function getMousePos(evt) {
+	var rect = canvas.getBoundingClientRect();
+  return {
+		x: (evt.clientX - rect.left) / artworkZoomFactor,
+		y: (evt.clientY - rect.top) / artworkZoomFactor
+  };
+}
+function drawLineNoAliasing(ctx, sx, sy, tx, ty) {
+    var dist = Math.sqrt((tx-sx)*(tx-sx)+(ty-sy)*(ty-sy));
+		var ang = Math.atan((ty-sy)/((tx-sx)==0?0.01:(tx-sx)))+((tx-sx)<0?Math.PI:0);
+    for(var i=0;i<dist;i++) {
+        ctx.fillRect(Math.round(sx + Math.cos(ang)*i),
+                     Math.round(sy + Math.sin(ang)*i),
+                     artworkTool.size, artworkTool.size);
     }
-init();
-$("canvas").on("mousedown mouseup",function(e){e.type=="mouseup"?save():"";})
-// save into a new element when save button is clicked
-$(".memo-finish-btn").on("click", function() {
-save();
-$("#drawing").remove();
-var val = $("input[type=hidden][name=painting]").attr("value");
-$(".textarea-memo").append("<img id=\"drawing\" src=\"data:image/png;base64," + val + "\" style=\"background:white;\"></img>");
-});
-$("#setpen1").on("click", function() { color("black", 1); });
-$("#setpen2").on("click", function() { color("black", 2); });
-$("#setpen3").on("click", function() { color("black", 8); });
-$("#seter1").on("click", function() { color("white", 2); });
-$("#seter2").on("click", function() { color("white", 5); });
-$("#seter3").on("click", function() { color("white", 15); });
-$("#clear-can").on("click",  function() { erase(); });
+}
+function artworkUpdate(evt) {
+	var mousePos = getMousePos(evt);
+	if(artworkTool.type < 2) {
+	if(mousePosOld == 0) mousePosOld = mousePos;
+	if(evt.which == 1) {
+		if(artworkTool.type == 0) {
+			ctx.fillStyle = artworkColors[artworkColorOffset][1];
+		} else {
+    	ctx.fillStyle = "#fff";
+    }
+  	drawLineNoAliasing(ctx, mousePosOld.x,mousePosOld.y,mousePos.x,mousePos.y);
+  }
+	mousePosOld = mousePos;
+	}
+}
+function artworkDrawOnce(evt) {
+	var mousePos = getMousePos(evt);
+	if(artworkTool.type < 2) {
+	if(evt.which == 1) {
+		if(artworkTool.type == 0) {
+			ctx.fillStyle = artworkColors[artworkColorOffset][1];
+		} else {
+    	ctx.fillStyle = "#fff";
+    }
+		ctx.fillRect(Math.round(mousePos.x), Math.round(mousePos.y), artworkTool.size, artworkTool.size);
+  }
+	} else {
+  	ctx.fillStyle = ctx.fillStyle = artworkColors[artworkColorOffset][1];
+    ctx.fillFlood(mousePos.x, mousePos.y, 0);
+  }
+}
+function artworkClear() {
+artworkUndoDown();
+ctx.fillStyle = "#fff";
+ctx.fillRect(0, 0, 320, 120);
+}
+function artworkUndoDown() {
+undoCtx.drawImage(canvas, 0, 0);
+}
+function artworkUndo() {
+redoCtx.drawImage(canvas, 0, 0);
+ctx.drawImage(undoCanvas, 0, 0);
+undoCtx.drawImage(redoCanvas, 0, 0);
+}
+function artworkToolUpdate() {
+	if($(this).hasClass('artwork-eraser')) {
+		var toolType = 1;
+	} else if($(this).hasClass('artwork-fill')) {
+		var toolType = 2;
+	} else {
+		var toolType = 0;
+	}
+	if($(this).hasClass('selected')) {
+		if($(this).hasClass('small')) {
+			artworkTool = {type: toolType, size: sizeMedium};
+			$(this).removeClass('small');
+			$(this).addClass('medium');
+		} else if ($(this).hasClass('medium')) {
+artworkTool = {type: toolType, size: sizeLarge};
+$(this).removeClass('medium');
+$(this).addClass('large');
+} else if ($(this).hasClass('large')) {
+artworkTool = {type: toolType, size: sizeSmall};
+$(this).removeClass('large');
+$(this).addClass('small');
+} else {
+artworkTool = {type: toolType};
+}
+} else {
+$('.memo-buttons button').removeClass('selected');
+$(this).addClass('selected');
+if($(this).hasClass('small')) {
+artworkTool = {type: toolType, size: sizeSmall};
+} else if ($(this).hasClass('medium')) {
+artworkTool = {type: toolType, size: sizeMedium};
+} else if ($(this).hasClass('large')) {
+artworkTool = {type: toolType, size: sizeLarge};
+} else {
+artworkTool = {type: toolType};
+}
+}
+}
+
+function artworkColorUpdate(evt) {
+$(this).removeClass(artworkColors[artworkColorOffset][0]);
+if(artworkColorOffset > 0 && artworkColorOffset < 15) {
+	if(evt.which == 1) {
+		artworkColorOffset = artworkColorOffset + 1;
+	} else {
+		artworkColorOffset = artworkColorOffset - 1;
+	}
+} else if(artworkColorOffset == 0) {
+	if(evt.which == 1) {
+		artworkColorOffset = artworkColorOffset + 1;
+	} else {
+		artworkColorOffset = 15;
+	}
+} else {
+	if(evt.which == 1) {
+  	artworkColorOffset = 0;
+  } else {
+  	artworkColorOffset = artworkColorOffset - 1;
+  }
+}
+$(this).addClass(artworkColors[artworkColorOffset][0]);
+}
+function artworkZoomUpdate(evt) {
+	if(artworkZoomFactor == 1) {
+  	artworkZoomFactor = 2;
+		$('#artwork-canvas').css('width', '640px');
+		$('.memo-canvas').addClass('zoom')
+  } else if(artworkZoomFactor == 2) {
+  	artworkZoomFactor = 4;
+		$('#artwork-canvas').css('width', '1280px');
+		$(this).addClass('out');
+  } else {
+  	artworkZoomFactor = 1;
+		$('#artwork-canvas').css('width', '320px');
+		$(this).removeClass('out');
+		$('.memo-canvas').removeClass('zoom')
+  }
+}
+artworkClear();
+$(document).on('mousemove', artworkUpdate);
+$('#artwork-canvas').on('mousedown', artworkDrawOnce);
+$('#artwork-canvas').on('mousedown', artworkUndoDown);
+$('button').contextmenu(function() { $(this).click(); return false });
+$('.artwork-clear').click(artworkClear);
+$('.artwork-undo').click(artworkUndo);
+$('.artwork-pencil, .artwork-eraser, .artwork-fill').click(artworkToolUpdate);
+$('.artwork-color').click(artworkColorUpdate);
+$('.artwork-zoom').click(artworkZoomUpdate);
+$('.memo-finish-btn').click(function(){
+	var dataURL = canvas.toDataURL();
+        if(typeof dataURL !== undefined) {
+        $("input[type=hidden][name=painting]").val(dataURL.split(",")[1]);
+		}
+	$("#drawing").remove();
+	$(".textarea-memo").append("<img id=\"drawing\" src=\"" + dataURL + "\" style=\"background:white;\"></img>");
+
+})
 }
 var blank = /^[\s\u00A0\u3000]*$/
 //!© Nintendo/Hatena 2012-2017 copyright@hatena.com
@@ -1629,8 +1728,8 @@ var Olv = Olv || {};
             var g = new FileReader;
             g.onload = function(a) {
                 var b = a.target.result.split(",")[1];
-                e.val(b),
-                e.trigger("olv:entryform:fileselect", c),
+                e.val(b);
+                e.trigger("olv:entryform:fileselect", c);
                 c.find('textarea[name="body"]').trigger("input")
             }
             ,
@@ -1645,7 +1744,7 @@ var Olv = Olv || {};
           , k = c.find(".file-button")
           , l = c.find('input[name="language_ids"]')
           , m = c.find('input[name="is_multi_language"]');
-        "undefined" == typeof FileReader && b.Form.toggleDisabled(k, !0),
+        "undefined" == typeof FileReader && //b.Form.toggleDisabled(k, !0),
         k.on("change", h),
         l.on("change", g),
         m.on("change", f),
@@ -2223,6 +2322,7 @@ var Olv = Olv || {};
 			        if($("#post-form").length) {
 var mode_post = 0;
 $("label.textarea-menu-memo").on("click", function() {
+	if(openDrawboardModal()) {
 var menu = $("div.textarea-with-menu");
 var memo = $("div.textarea-memo");
 var text = $("div.textarea-container");
@@ -2236,15 +2336,11 @@ b.Form.toggleDisabled($("input.post-button"), false);
 mode_post = 1;
 
 setupDrawboard();
+	}
 });
-$("label.textarea-menu-text").on("click", function() {
-    if($("input[name=\"painting\"]").val()) {
-    $("input[name=\"painting\"]").attr("value", "");
-    }
-switchtext();
-});
+$("label.textarea-menu-text").on("click", switchtext);
 
-$(".post-button").on("click", function() { switchtext(); $("#can")[0].getContext("2d").clearRect(0, 0, 320, 120); $("input[name=\"painting\"]").attr("value", ""); $("img[id=\"drawing\"]").attr("src", ""); });
+$(".post-button").on("click", switchtext);
 
 function switchtext() {
 var menu = $("div.textarea-with-menu");
@@ -2493,6 +2589,7 @@ $('.post-poll .poll-votes').on('click', function() {
 if($("#reply-form").length) {
 var mode_post = 0;
 $("label.textarea-menu-memo").on("click", function() {
+		if(openDrawboardModal()) {
 var menu = $("div.textarea-with-menu");
 var memo = $("div.textarea-memo");
 var text = $("div.textarea-container");
@@ -2506,15 +2603,11 @@ b.Form.toggleDisabled($("input.reply-button"), false);
 mode_post = 1;
 
 setupDrawboard();
+}
 });
-$("label.textarea-menu-text").on("click", function() {
-    if($("input[name=\"painting\"]").val()) {
-    $("input[name=\"painting\"]").attr("value", "");
-    }
-switchtext();
-});
+$("label.textarea-menu-text").on("click", );
 
-$(".reply-button").on("click", function() { switchtext(); $("#can")[0].getContext("2d").clearRect(0, 0, 320, 120); $("input[name=\"painting\"]").attr("value", ""); $("img[id=\"drawing\"]").attr("src", ""); });
+$(".reply-button").on("click", switchtext);
 
 function switchtext() {
 var menu = $("div.textarea-with-menu");
@@ -2831,6 +2924,7 @@ mode_post = 0;
         if($("#post-form").length) {
 var mode_post = 0;
 $("label.textarea-menu-memo").on("click", function() {
+	if(openDrawboardModal()) {
 var menu = $("div.textarea-with-menu");
 var memo = $("div.textarea-memo");
 var text = $("div.textarea-container");
@@ -2844,15 +2938,11 @@ b.Form.toggleDisabled($("input.post-button"), false);
 mode_post = 1;
 
 setupDrawboard();
+}
 });
-$("label.textarea-menu-text").on("click", function() {
-    if($("input[name=\"painting\"]").val()) {
-    $("input[name=\"painting\"]").attr("value", "");
-    }
-switchtext();
-});
+$("label.textarea-menu-text").on("click", switchtext);
 
-$(".post-button").on("click", function() { switchtext(); $("#can")[0].getContext("2d").clearRect(0, 0, 320, 120); $("input[name=\"painting\"]").attr("value", ""); $("img[id=\"drawing\"]").attr("src", ""); });
+$(".post-button").on("click", switchtext);
 
 function switchtext() {
 var menu = $("div.textarea-with-menu");
@@ -2912,6 +3002,10 @@ mode_post = 0;
             setTimeout(function() {
                 c(d)
             }, 0)
+			    if($("input[name=painting]").val()) {
+				$("#drawing").remove();
+				$("input[name=painting]").attr("value", "");
+					}
         })
     }))
 }

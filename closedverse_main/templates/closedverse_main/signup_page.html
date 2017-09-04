@@ -13,11 +13,12 @@
 			<h3 class="label"><label><span class="red">*</span> Password: <input type="password" class="auth-input" name="password" maxlength="32" minlength="6" placeholder="Password"></label></h3>
 			<h3 class="label"><label><span class="red">*</span> Confirm password: <input type="password" class="auth-input" name="password_again" maxlength="32" minlength="6" placeholder="Password again"></label></h3>
 			{% csrf_token %}
+			<div class="g-recaptcha" data-sitekey="{{ recaptcha }}" data-theme="dark"></div>
+			<script src='https://www.google.com/recaptcha/api.js'></script>
 			
 			<p class="red" style="margin-bottom:6px"></p>
 			{% if recaptcha %}
-			<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-			<button type="submit" class="button g-recaptcha" data-sitekey="{{ recaptcha }}" data-callback="cac">Create account</button>
+			<button type="submit" class="button" onclick="event.preventDefault();cac();">Create account</button>
 			{% else %}
 			<button type="submit" class="button" onclick="event.preventDefault();cac();">Create account</button>
 			{% endif %}

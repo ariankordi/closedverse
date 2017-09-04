@@ -136,7 +136,7 @@ STATIC_URL = '/s/'
 
 
 # Closedverse settings
-# Invisible reCAPTCHA keys, None for no reCAPTCHA
+# reCAPTCHA v2 keys, None for no reCAPTCHA
 recaptcha_pub = None
 recaptcha_priv = None
 

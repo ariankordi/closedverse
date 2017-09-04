@@ -1,19 +1,21 @@
-  <div id="memo-drawboard-page" class="dialog none">
+    <div id="memo-drawboard-page" class="dialog none">
 	<div class="dialog-inner">
 	  <div class="window">
 		<h1 class="window-title">Drawing</h1>
 		<div class="window-body">
-			<div class="memo-canvas">
-			Drawings are currently in beta and work only on PC.<br>
-			Pencil:
-			<button type="button" id="setpen1">Small</button> 
-			<button type="button" id="setpen2">Medium</button> <button type="button" id="setpen3">Large</button><br>
-			Eraser:
-			<button type="button" id="seter1">Small</button> 
-			<button type="button" id="seter2">Medium</button> 
-			<button type="button" id="seter3">Large</button><br>
-			<button type="button" id="clear-can">Clear</button> <br>
-			<canvas id="can" width="320" height="120" style="background:white;border:1px solid #0080ff;user-select:none;"></canvas><br>
+      <div class="memo-buttons">
+      <button type="button" class="artwork-clear"></button>
+      <button type="button" class="artwork-undo"></button>
+      <button type="button" class="artwork-pencil small selected"></button>
+      <button type="button" class="artwork-eraser small"></button>
+      <button type="button" class="artwork-fill"></button>
+      <button type="button" class="artwork-color black"></button>
+      <button type="button" class="artwork-zoom"></button>
+      </div>
+      <div class="memo-canvas">
+			<canvas id="artwork-canvas" width="320" height="120" zoom="2"></canvas>
+      <canvas id="artwork-canvas-undo" width="320" height="120"></canvas>
+      <canvas id="artwork-canvas-redo" width="320" height="120"></canvas>
 			<input type="hidden" name="painting" value="">
 			</div>
 			<div class="form-buttons">
