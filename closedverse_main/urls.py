@@ -62,6 +62,7 @@ urlpatterns = [
 	
 	url(r'lights$', views.set_lighting, name='set-lighting'),
 	url(r'complaints$', views.help_complaint, name='complaints'),
-	url(r'help/faq/?$', views.help_faq, name='help-faq'),
-	url(r'help/legal/?$', views.help_legal, name='help-legal'),
+	url(r'meta/rules/?$', views.help_rules, name='help-rules'),
+	url(r'meta/faq/?$', views.help_faq, name='help-faq'),
+	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
 ]

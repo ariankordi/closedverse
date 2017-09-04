@@ -789,6 +789,8 @@ def help_complaint(request):
 	save = request.user.complaint_set.create(type=int(request.POST['a']), body=request.POST['b'], sex=request.POST.get('c', 2))
 	return HttpResponse()
 
+def help_rules(request):
+	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
 def help_legal(request):

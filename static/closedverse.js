@@ -1917,7 +1917,7 @@ var Olv = Olv || {};
 		// Thing
 		a('.my-menu-white-power').on('click', function(e) {
 		e.preventDefault()
-				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div><p>What are you?<br><input type=radio name=c value=1>Male<input type=radio name=c value=0>Female<input type=radio name=c value=2>Please don\'t ask me</p></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
+				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div><p></p></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
 		var g = new b.ModalWindow($('.feedback-dialog'));g.open();
 		$('#feedbackbody').on('input', function() {
 				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (blank.test($(this).val())))
@@ -2476,7 +2476,7 @@ $('.post-poll .poll-votes').on('click', function() {
 				fav_btn.click(function(){
 					b.showConfirm("Profile post unset", "Unset your profile picture?")
 						$('.ok-button').click(function(){
-							b.Form.post(fav_btn.attr('data-action')).done(reload())
+							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.removeClass('done',reload()))
 						})
 				})
 			}
@@ -2484,7 +2484,7 @@ $('.post-poll .poll-votes').on('click', function() {
 				fav_btn.click(function(){
 					b.showConfirm("Profile post", "Set this as your profile picture?")
 						$('.ok-button').click(function(){
-							b.Form.post(fav_btn.attr('data-action')).done(reload())
+							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.addClass('done'),reload())
 						})
 				})
 			}
