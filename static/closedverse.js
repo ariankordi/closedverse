@@ -1,3 +1,4 @@
+//! Modifications by Arian K and Lane B
 var splatoon = true
 if(innerWidth <= 480) {
    splatoon = false;
@@ -647,9 +648,6 @@ var Olv = Olv || {};
     ,
     b.Form = {
         toggleDisabled: function(c, d) {
-            if(typeof mode_post !== 'undefined' && mode_post == 1) {
-            d = false;
-            }
             var e = void 0 === d;
             return c.each(function() {
                 var c = a(this)
@@ -731,6 +729,10 @@ var Olv = Olv || {};
             return null === b.Form._csrfmiddlewaretoken && (b.Form._csrfmiddlewaretoken = a("#main-body").attr("csrf-token")),
             b.Form._csrfmiddlewaretoken
         },
+		csrftoken: function(a) {
+			a.csrfmiddlewaretoken = b.Form.csrfmiddlewaretoken()
+			return a
+		},
         post: function(c, d, e) {
             d || (d = {}),
             a.isArray(d) ? d.push({
@@ -1652,7 +1654,7 @@ var Olv = Olv || {};
                 return !a(this).val()
             }).length > 0;
             //Olv.Form.toggleDisabled will make the disabled button disabled IF parameter #2 equals true, will make it un-disabled if it's false (first parameter is the send button)
-            b.Form.toggleDisabled(k, !f && !j.val() || g)
+            b.Form.toggleDisabled(k, !f && !j.val() && !$('label.textarea-menu-memo').hasClass('checked') || g)
         }
         function g(a) {
             c.trigger("olv:entryform:reset")
@@ -1711,7 +1713,7 @@ var Olv = Olv || {};
             c.find(".language-bodies").toggleClass("none", !d),
             c.find('input[name="painting"]').parent().toggleClass("none", d),
             c.find('textarea[name="body"]').toggleClass("none", d),
-            g(),
+            g();
             e()
         }
         function g(b) {
@@ -1744,7 +1746,7 @@ var Olv = Olv || {};
           , k = c.find(".file-button")
           , l = c.find('input[name="language_ids"]')
           , m = c.find('input[name="is_multi_language"]');
-        "undefined" == typeof FileReader && //b.Form.toggleDisabled(k, !0),
+        "undefined" == typeof FileReader && b.Form.toggleDisabled(k, !0),
         k.on("change", h),
         l.on("change", g),
         m.on("change", f),
@@ -2106,10 +2108,8 @@ var Olv = Olv || {};
             b.EntryForm.setupFoldedForm(c, e),
             b.User.setupFollowButton(e),
             c.hasClass("for-identified-user") && b.EntryForm.setupIdentifiedUserForm(c, e),
-            b.Content.autopagerize(".js-post-list", e),
             c.on("olv:entryform:post:done", g),
             e.done(function() {
-                c.off("olv:entryform:post:done", g),
                 a("form.search").off("submit", b.Form.validateValueLength)
             })
         }
@@ -2123,7 +2123,8 @@ var Olv = Olv || {};
             var f = a(window);
             f.scrollTop(e.offset().top + e.outerHeight() / 2 - f.height() / 2)
         }
-		$('form.search').on('submit', function() {
+		$('form.search').on('submit', function(s) {
+			s.preventDefault();
 			go($(this).attr('action') + '?'+$(this).serialize())
 		})
         b.Content.autopagerize(".js-post-list", e),
@@ -2144,6 +2145,12 @@ var Olv = Olv || {};
             }).done(function(b) {
                 a("#js-main").html(b),
                 a(document).trigger("olv:activity:success", [b, c, d])
+					pf = $('div.post-form')
+					if(pf.length) {
+						$('#js-main').prepend($('div.post-form'))
+						pf.removeClass('none')
+						f()
+					}
             }).fail(function() {
                 setTimeout(function() {
                     j.remove(),
@@ -2162,13 +2169,11 @@ var Olv = Olv || {};
             h = a.Deferred().resolve().promise(),
             i = a.Deferred().resolve().promise();
         h.then(function() {
-            f()
+            //f()
         }),
 		//a.when(h, i).done(function(b, c)) {
         a.when(h).done(function(b, c) {
-            var d = a(a.parseHTML(a.trim(c[0])))
-              , e = a("[data-latest-following-relation-profile-post-placeholder]")
-              , f = [];
+            var d = a(a.parseHTML(a.trim(c[0])));
             e.each(function(b, c) {
                 var e = d.get(b);
                 e && (a(c).html(e),
@@ -2605,7 +2610,7 @@ mode_post = 1;
 setupDrawboard();
 }
 });
-$("label.textarea-menu-text").on("click", );
+$("label.textarea-menu-text").on("click", switchtext);
 
 $(".reply-button").on("click", switchtext);
 
@@ -2676,8 +2681,9 @@ mode_post = 0;
 		changesel("feed");
         b.Content.autopagerize("#searched-user-list", e),
         b.Guest.isGuest() || b.User.setupFollowButton(e),
-        a("form.search").on("submit", function() {
-		b.Form.validateValueLength,
+        a("form.search").on("submit", function(s) {
+		b.Form.validateValueLength(s),
+			s.preventDefault();
 		go($(this).attr('action') + '?'+$(this).serialize())
 		}),
         e.done(function() {
@@ -2858,7 +2864,44 @@ mode_post = 0;
 						}
 					})
 				})
-			}
+//			if($('.setting-nnid').length) {
+				
+				inp = $('input[type=text][name=origin_id]')
+					function getmiim() {
+						if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
+							$('p.error').html('The NNID provided is invalid.')
+							return false
+						}
+							$.ajax({
+								url: inp.attr('data-action').replace('nil', inp.val()),
+								type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
+								success: function(a) {
+									$('.nnid-icon.mii').attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_normal_face.png')
+									$('input[name=mh]').val(a)
+								}, error: function(a) {
+									$('p.error').html(a.responseText)
+								},
+								beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
+							})
+					}
+						var timer;
+				inp.on('input', function() {
+				    clearTimeout(timer);
+					if(inp.val()) {
+						timer = setTimeout(getmiim, 500);
+					}
+				})
+				
+				$('input[name=avatar][value=0]').change(function() {
+						$('.setting-avatar > .icon-container > .nnid-icon.mii').removeClass('none');
+						$('.nnid-icon.gravatar').addClass('none');
+				})
+				$('input[name=avatar][value=1]').change(function() {
+						$('.setting-avatar > .icon-container > .nnid-icon.mii').addClass('none');
+						$('.nnid-icon.gravatar').removeClass('none');
+				})
+//			}
+	}
 		b.User.setupUserSidebar(e)
         function f(c) {
             var d = a(this)
@@ -2922,36 +2965,110 @@ mode_post = 0;
     b.router.connect("^/communities/[0-9]+", function(a, c, d) {
 		changesel("community");
         if($("#post-form").length) {
-var mode_post = 0;
-$("label.textarea-menu-memo").on("click", function() {
-	if(openDrawboardModal()) {
-var menu = $("div.textarea-with-menu");
-var memo = $("div.textarea-memo");
-var text = $("div.textarea-container");
-    if(menu.hasClass("active-text")) {
-        menu.removeClass("active-text");
-        menu.addClass("active-memo");
-        memo.removeClass("none");
-        text.addClass("none");
-    }
-b.Form.toggleDisabled($("input.post-button"), false);
-mode_post = 1;
+            var letters = ["a", "b", "c", "d", "e"]; // lazy as fuck but who cares lol
+            $("label.textarea-menu-memo").on("click", function() {
+                if (openDrawboardModal()) {
+                    var menu = $("div.textarea-with-menu");
+                    var memo = $("div.textarea-memo");
+                    var text = $("div.textarea-container");
+                    var poll = $("div.textarea-poll");
+                    if (menu.hasClass("active-text") || menu.hasClass("active-poll")) {
+                        menu.removeClass("active-text");
+                        menu.removeClass("active-poll");
+                        menu.addClass("active-memo");
+                        memo.removeClass("none");
+                        text.addClass("none");
+                        poll.addClass("none");
+                    }
+                    b.Form.toggleDisabled($("input.post-button"), false);
 
-setupDrawboard();
-}
-});
+                    setupDrawboard();
+                }
+            });
+            
 $("label.textarea-menu-text").on("click", switchtext);
+$("label.textarea-menu-poll").on("click", switchpoll);
+
+$('button.add-option').on('click', addOption);
+$('button.delete').on('click', deleteOption);
 
 $(".post-button").on("click", switchtext);
-
 function switchtext() {
 var menu = $("div.textarea-with-menu");
-        menu.removeClass("active-memo");
-        menu.addClass("active-text");
-        $("div.textarea-container").removeClass("none");
-        $("div.textarea-memo").addClass("none");
-mode_post = 0;
+menu.removeClass("active-memo");
+menu.removeClass("active-poll");
+menu.addClass("active-text");
+$("div.textarea-container").removeClass("none");
+$("div.textarea-memo").addClass("none");
+$("div.textarea-poll").addClass("none");
+$("textarea[name=body]").attr("data-required", "");
+b.EntryForm.setupFormStatus($("#post-form"), d);
+}
+/* 'Commented because it\'s broken'
+function switchpoll() {
+var menu = $("div.textarea-with-menu");
+menu.removeClass("active-text");
+menu.removeClass("active-memo");
+menu.addClass("active-poll");
+$("div.textarea-poll").removeClass("none");
+$("div.textarea-container").removeClass("none");
+$("div.textarea-memo").addClass("none");
+$("textarea[name=body]").removeAttr("data-required");
+b.EntryForm.setupFormStatus($("#post-form"), d);
+}
+function addOption() {
+    var options = $(".option").length;
+	// lol it's Nintendo Switch
+	switch(options) {
+		case 2:
+			$(this).before('<button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required>');
+			$(".delete").removeClass("none");
+		break;
+		case 3:
+			$(this).before('<button type="button" class="delete" option="option-d"></button><input type="text" class="url-form option" name="option-d" placeholder="Option D" maxlength="64" data-required>');
+		break;
+		case 4:
+			$(this).before('<button type="button" class="delete" option="option-e"></button><input type="text" class="url-form option" name="option-e" placeholder="Option E" maxlength="64" data-required>');
+			$(this).attr("disabled", "true");
+		break;
+		default:
+			$('.textarea-poll').html('<button type="button" class="delete" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
+			$("button.add-option").on("click", addOption);
+		break;
+	}
+    $("button.delete").off("click");
+    $("button.delete").on("click", deleteOption);
+    b.EntryForm.setupFormStatus($("#post-form"), d);
+}
+function deleteOption() {
+    var options = $(".option").length;
+    if(options == 5 || options == 4) {
+        $(".add-option").removeAttr("disabled");
+        $(".option[name=" + $(this).attr("option") + "]").remove();
+        $(this).remove();
+        for(var i = 0; i < options - 1; i++) {
+            $(".option").eq(i).attr("name", "option-" + letters[i]);
+            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
+            $(".delete").eq(i).attr("option", "option-" + letters[i]);
+        }
+    } else if(options == 3) {
+        $(".option[name=" + $(this).attr("option") + "]").remove();
+        $(this).remove();
+        for(var i = 0; i < options - 1; i++) {
+            $(".option").eq(i).attr("name", "option-" + letters[i]);
+            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
+            $(".delete").not(this).eq(i).attr("option", "option-" + letters[i]);
+        }
+        $(".delete").addClass("none");
+    } else {
+        $('.textarea-poll').html('<button type="button" class="delete none" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete none" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
+        $("button.add-option").on("click", addOption);
+        $("button.delete").on("click", deleteOption);
     }
+    b.EntryForm.setupFormStatus($("#post-form"), d);
+}
+*/
+
 }
         b.Community.setupCommunitySidebar(d),
         b.SocialButton.setup(d)

@@ -445,10 +445,10 @@ border-top: 1px solid #222;
     border: 1px solid rgba(221, 221, 221, 0);
 }
 #wrapper, #image-header-content {
-    background-image: url(https://i.imgur.com/m5GdGXO.png) !important;
+    background-image: url(/s/img/op.png) !important;
 }
 #empathy-content:before {
-    background: url(https://i.imgur.com/QIrWWFS.png) no-repeat 0 0 !important;
+    background: url(/s/img/rks.png) no-repeat 0 0 !important;
 }
 code,
 pre {

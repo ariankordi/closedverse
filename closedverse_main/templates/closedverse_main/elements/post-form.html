@@ -8,18 +8,29 @@
 			<li><label class="textarea-menu-text">
 				<input type="radio" name="_post_type" value="body">
 			</label></li>
-			<li><label class="textarea-menu-memo checked">
+			<li><label class="textarea-menu-memo">
 			<input type="radio" name="_post_type" value="painting">
 			</label></li>
+			<!--
+			<li><label class="textarea-menu-poll">
+			<input type="radio" name="_post_type" value="poll">
+			</label></li>
+			-->
 		</menu>
   <div class="textarea-container">
-    <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Share your thoughts in a post to {{ community.name }}" data-open-folded-form="" data-required=""></textarea>
+    <textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="{% if community.is_activity %}Share a post to your followers.{% else %}Share your thoughts in a post to {{ community.name }}{% endif %}" data-open-folded-form="" data-required=""></textarea>
   </div>
   <div class="textarea-memo none">
 	
   </div>
   {% memo_drawboard %}
-  
+  <!--
+  <div class="textarea-poll none">
+	<input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required>
+	<input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required>
+	<button type="button" class="button symbol add-option">Add option</button>
+  </div>
+  -->
 	</div>
 
   <input type="text" class="textarea-line url-form" name="url" placeholder="URL/YT video" maxlength="1024">

@@ -29,6 +29,8 @@ urlpatterns = [
 	url(r'users/'+ username +'/friend\.cancel$', views.user_friendrequest_cancel, name='user-fr-cancel'),
 	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
 	
+	url(r'origin', views.origin_id, name='origin-id-get'),
+	
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
 	url(r'communities/'+ community +'/posts$', views.post_create, name='post-create'),

@@ -1,5 +1,5 @@
 {% extends "closedverse_main/layout.html" %}
-{% load static %}{% load closedverse_user %}
+{% load static %}{% load closedverse_user %}{% load closedverse_community %}
 {% block main-body %}
 {% user_sidebar request user user.profile 0 True %}
 <div class="main-column">
@@ -12,11 +12,16 @@
 	</div>
 
 <form class="search" action="{% url "main:user-search" %}">
-  <input type="text" name="query" title="Search users" placeholder="Search users" minlength="1" maxlength="16">
+  <input type="text" name="query" title="Search users" placeholder="Search users" minlength="2" maxlength="16">
   <input type="submit" value="q" title="Search">
 </form>
 
   </div>
+  {% if community %}
+  <div class="post-form none">
+  		{% post_form request.user community %}
+  </div>
+  {% endif %}
   <div id="js-main">
     <div class="activity-feed content-loading-window">
       <div>

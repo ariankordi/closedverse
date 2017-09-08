@@ -15,7 +15,7 @@
     {% if comment.drawing %}
     <p class="reply-content-memo"><img src="{{ comment.drawing }}"></p>
 	{% else %}
-    <p class="reply-content-text">{{ comment.body|linebreaksbr }}</p>
+    <div class="reply-content-text">{{ comment.body|linebreaksbr }}</div>
 	{% endif %}
 	{% if comment.screenshot %}
 	<div class="screenshot-container still-image"><img src="{{ comment.screenshot }}"></div>

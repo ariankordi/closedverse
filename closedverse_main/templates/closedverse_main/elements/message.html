@@ -1,4 +1,4 @@
-{% load closedverse_tags %}      <div class="post scroll {% if message.mine %}my{% else %}other{% endif %}" id="{{ message.unique_id }}">
+{% load markdown_deux_tags %}{% load closedverse_tags %}      <div class="post scroll {% if message.mine %}my{% else %}other{% endif %}" id="{{ message.unique_id }}">
         {% user_icon_container message.creator message.feeling %}
 		<p class="timestamp-container">
           <span class="timestamp">{% time message.created %}</span>
@@ -7,7 +7,7 @@
 		  {% if message.drawing %}
 		  <p class="post-content-memo"><img src="{{ message.drawing }}"></p>
 		  {% else %}
-          <p class="post-content-text">{{ message.body|linebreaksbr }}</p>
+          <div class="post-content-text">{{ message.body|markdown }}</div>
 		  {% endif %}
 		  {% if message.screenshot %}
 		  <div class="screenshot-container still-image"><img src="{{ message.screenshot }}"></div>

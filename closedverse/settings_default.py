@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+	#pip3 install django-markdown-deux django-markdown2
+	'markdown_deux',
     'closedverse_main',
 ]
 
@@ -148,3 +150,13 @@ memo_msg = "Heyyyy!"
 cloudinary_key = None
 cloudinary_secret = None
 cloudinary_name = None
+
+# MD
+MARKDOWN_DEUX_STYLES = {
+    "default": {
+        "extras": {
+            "code-friendly": None,
+        },
+        "safe_mode": "escape",
+    },
+}

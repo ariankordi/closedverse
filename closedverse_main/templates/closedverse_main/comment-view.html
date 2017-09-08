@@ -11,7 +11,7 @@
 <div class="post-list-outline more">
   <div id="post-content" class="post reply-permalink-post">
     <div id="{{ comment.unique_id }}" class="other">
-      <p class="community-container"><a href="{% url "main:community-view" comment.community.id %}"><img src="{{ comment.community.icon }}" class="community-icon">{{ comment.community.name }}</a></p>
+      <p class="community-container"><a {% if comment.community.clickable %}href="{% url "main:community-view" comment.community.id %}"{% endif %}><img src="{{ comment.community.icon }}" class="community-icon">{{ comment.community.name }}</a></p>
 	    {% if comment.is_mine or comment.can_rm %}
 		<div class="edit-buttons-content">
 				<button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:comment-rm" comment.id %}"><span class="symbol-label">Delete</span></button>

@@ -6,7 +6,7 @@
 	<a class="test-community-link" href="{% url "main:post-view" post.original_post.id %}"><img src="{% avatar post.original_post.creator.avatar post.original_post.feeling %}" class="community-icon">
 	<span class="reply symbol"></span>Comment on {{ post.original_post.creator.nickname }}'s post</a>
 	{% else %}
-    <a class="test-community-link" href="{% url "main:community-view" post.community.id %}"><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
+    <a class="test-community-link" {% if post.community.clickable %}href="{% url "main:community-view" post.community.id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
 	{% endif %}
   </p>
   {% endif %}

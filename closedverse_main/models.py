@@ -25,16 +25,21 @@ class UserManager(BaseUserManager):
 		user.save(using=self._db)
 		return user
 
-	def closed_create_user(self, username, password, addr, nick, nn):
+	def closed_create_user(self, username, password, email, addr, nick, nn, gravatar):
 		user = self.model(
 		username = username,
 		nickname = nick,
 		addr = addr,
+		email = email,
 		)
 		if nn:
 			user.avatar = nn[0]
 			user.origin_id = nn[2]
 			user.origin_info = json.dumps(nn)
+			user.has_gravatar = False
+		else:
+			user.avatar = util.get_gravatar(email) or None
+			user.has_gravatar = True
 		user.set_password(password)
 		user.save(using=self._db)
 		return user
@@ -66,8 +71,9 @@ class User(models.Model):
 	username = models.CharField(max_length=32, unique=True)
 	nickname = models.CharField(max_length=32, null=True)
 	password = models.CharField(max_length=128)
-	email = models.CharField(max_length=255, blank=True)
+	email = models.EmailField(null=True, blank=True, default=json.dumps([]))
 	avatar = models.CharField(max_length=1200, blank=True)
+	has_gravatar = models.BooleanField(default=False)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 
@@ -113,6 +119,17 @@ class User(models.Model):
 		return bcrypt_sha256.using(rounds=13).verify(raw_password, hash=self.password)
 	def profile(self):
 		return self.profile_set.get(user=self)
+	def gravatar(self):
+		g = util.get_gravatar(self.email)
+		if not g:
+			return settings.STATIC_URL + '/img/anonymous-mii.png'
+		return g
+	def mh(self):
+		try:
+			infodecode = json.loads(self.origin_info)
+		except:
+			return None
+		return infodecode[0]
 	def get_class(self):
 			first = {
 			1: 'moderator',
@@ -268,13 +285,18 @@ class Community(models.Model):
 	ico = models.URLField(blank=True)
 	banner = models.URLField(blank=True)
 	# Type: 0 - general, 1 - game, 2 - special 
-	type = models.SmallIntegerField(default=0, choices=((0, 'general'), (1, 'game'), (2, 'special')))
+	type = models.SmallIntegerField(default=0, choices=((0, 'general'), (1, 'game'), (2, 'special'), (3, 'hide')))
 	# Platform - 0/none, 1/3DS, 2/Wii U, 3/both
 	platform = models.SmallIntegerField(default=0, choices=((0, 'none'), (1, '3ds'), (2, 'wii u'), (3, 'both')))
-	tags = models.CharField(blank=True, null=True, max_length=255, choices=(('announcements', 'main announcement community'), ('changelog', 'main changelog')))
+	tags = models.CharField(blank=True, null=True, max_length=255, choices=(('announcements', 'main announcement community'), ('changelog', 'main changelog'), ('activity', 'Activity Feed posting community')))
 	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
+	is_rm = models.BooleanField(default=False)
 	creator = models.ForeignKey(User, blank=True, null=True)
+
+	objects = PostManager()
+	real = models.Manager()
+
 	def __str__(self):
 		return self.name
 	def icon(self):
@@ -305,7 +327,10 @@ class Community(models.Model):
 		if thing == "":
 			return None
 		return "img/platform-tag-" + thing + ".png"
-
+	def is_activity(self):
+		return self.tags == 'activity'
+	def clickable(self):
+		return not self.is_activity() and not self.type == 3
 	def get_posts(self, limit=50, offset=0, request=None):
 		posts = Post.objects.filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
@@ -316,6 +341,8 @@ class Community(models.Model):
 		return posts
 		
 	def create_post(self, request):
+		if request.user.post_set.filter(created__gt=timezone.now() - timedelta(seconds=10)):
+			return 3
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
@@ -331,6 +358,8 @@ class Community(models.Model):
 		new_post = self.post_set.create(body=request.POST.get('body'), creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'))
 		new_post.is_mine = True
 		return new_post
+
+
 	class Meta:
 		verbose_name_plural = "communities"
 
@@ -430,6 +459,8 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
+		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)):
+			return 3
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None

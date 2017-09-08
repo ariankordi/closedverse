@@ -5,11 +5,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship
-from .util import get_mii, recaptcha_verify
+from .util import get_mii, recaptcha_verify, get_gravatar
 from closedverse import settings
 import re
 from django.urls import reverse
-from json import dumps
+from json import dumps, loads
 
 def json_response(msg='', code=0, httperr=400):
 	thing = {
@@ -70,7 +70,7 @@ def signup_page(request):
 		if settings.recaptcha_pub:
 			if not recaptcha_verify(request, settings.recaptcha_priv):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
-		if not (request.POST['username'] and request.POST['password'] and request.POST['password_again']):
+		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again') and request.POST.get('email')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (tried to match with r'^[A-Za-z0-9-._]{1,32}$')")
@@ -93,10 +93,12 @@ def signup_page(request):
 			if not mii:
 				return HttpResponseBadRequest("The NNID provided doesn't exist.")
 			nick = mii[1]
+			gravatar = False
 		else:
 			nick = request.POST['nickname']
 			mii = None
-		make = User.objects.closed_create_user(request.POST['username'], request.POST['password'], request.META['REMOTE_ADDR'], nick, mii)
+			gravatar = True
+		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST['email'], addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
 		Profile.objects.create(user=make)
 		login(request, make)
 		return HttpResponse("/")
@@ -132,6 +134,17 @@ def user_view(request, username):
 			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		if request.POST.get('avatar') == '1':
+			user.avatar = get_gravatar(user.email) or None
+			user.has_gravatar = True
+		elif request.POST.get('avatar') == '0':
+			user.has_gravatar = False
+			getmii = get_mii(request.POST.get('origin_id'))
+			if not getmii:
+				return HttpResponseNotFound('NNID not found')
+			user.avatar = getmii[0]
+			user.origin_id = getmii[2]
+			user.origin_info = dumps(getmii)
 		profile.avatar = request.POST.get('avatar')
 		profile.country = request.POST.get('country')
 		profile.weblink = request.POST.get('website')
@@ -354,6 +367,7 @@ def profile_settings(request):
 	profile = request.user.profile()
 	profile.setup(request)
 	user = request.user
+	user.mh = user.mh()
 	return render(request, 'closedverse_main/profile-settings.html', {
 		'title': 'Profile settings',
 		'user': user,
@@ -366,6 +380,8 @@ def special_community_tag(request, tag):
 
 def community_view(request, community):
 	communities = get_object_or_404(Community, id=community)
+	if not communities.clickable():
+		return HttpResponseForbidden()
 	if request.GET.get('offset'):
 		posts = communities.get_posts(50, int(request.GET['offset']), request)
 	else:
@@ -410,8 +426,17 @@ def post_create(request, community):
 			return json_response({
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
+			3: "You're making posts too fast, wait a few seconds and try again.",
 			}.get(new_post))
-		return render(request, 'closedverse_main/elements/community_post.html', { 'post': new_post })
+		# Render correctly whether we're posting to Activity Feed
+		if community.is_activity():
+			return render(request, 'closedverse_main/elements/community_post.html', { 
+			'post': new_post,
+			'with_community_container': True,
+			'type': 2,
+			})
+		else:
+			return render(request, 'closedverse_main/elements/community_post.html', { 'post': new_post })
 	else:
 		raise Http404()
 
@@ -501,6 +526,7 @@ def post_comments(request, post):
 			return json_response({
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
+			3: "You're making comments too fast, wait a few seconds and try again.",
 			}.get(new_post))
 		# Give the notification!
 		if post.is_mine(request):
@@ -686,8 +712,10 @@ def activity_feed(request):
 		else:
 			request.session['activity_no_my'] = True
 	if not request.META.get('HTTP_X_REQUESTED_WITH') or request.META.get('HTTP_X_PJAX'):
+		post_community = Community.objects.filter(tags='activity').first()
 		return render(request, 'closedverse_main/activity-loading.html', {
 			'title': 'Activity Feed',
+			'community': post_community,
 		})
 	if request.session.get('activity_no_my'):
 		has_friend = True
@@ -770,6 +798,15 @@ def messages_read(request, username):
 	conversation.set_read(request.user)
 	return HttpResponse()
 
+@require_http_methods(['POST'])
+@login_required
+def origin_id(request):
+	if not request.POST.get('a'):
+		return HttpResponseBadRequest()
+	mii = get_mii(request.POST['a'])
+	if not mii:
+		return HttpResponseBadRequest("The NNID provided doesn't exist.")
+	return HttpResponse(mii[0])
 def set_lighting(request):
 	if not request.session.get('lights', False):
 		request.session['lights'] = True

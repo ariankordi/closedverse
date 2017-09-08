@@ -6,7 +6,7 @@ from closedverse import settings
 register = template.Library()
 
 @register.simple_tag
-def avatar(avatar, feeling=0):
+def avatar(avatar, feeling=0, miionly=False):
 	if bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
 		feeling = {
 		0: 'normal',
@@ -22,6 +22,12 @@ def avatar(avatar, feeling=0):
 		return settings.STATIC_URL + '/img/anonymous-mii.png'
 	else:
 		return avatar
+@register.simple_tag
+def miionly(avatar):
+	if not avatar or not bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
+		return settings.STATIC_URL + '/img/anonymous-mii.png'
+	else:
+		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(avatar)
 @register.simple_tag
 def time(stamp, full=False):
 	return HumanTime(stamp.timestamp(), full)

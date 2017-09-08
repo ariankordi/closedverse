@@ -9,19 +9,17 @@
 			<h3 class="label"><label><span class="red">*</span> User ID: <input type="text" class="auth-input" name="username" maxlength="32" minlength="4" placeholder="ID"></label></h3>
 			<h3 class="label"><label>Nickname: <input type="text" class="auth-input" name="nickname" maxlength="32" placeholder="Nick/Mii name?"></label></h3>
 			<h3 class="label"><label>Nintendo Network ID: <input type="text" class="auth-input" name="origin_id" maxlength="16" minlength="6" placeholder="NNID"></label></h3>
-			<!-- Not now <h3 class="label"><label><span class="red">*</span> E-mail address: <input type="email" class="auth-input" name="email" maxlength="254" minlength="6" placeholder="Email"></label></h3>-->
+			<h3 class="label"><label><span class="red">*</span> E-mail address: <input type="email" class="auth-input" name="email" maxlength="254" minlength="6" placeholder="Email"></label></h3>
 			<h3 class="label"><label><span class="red">*</span> Password: <input type="password" class="auth-input" name="password" maxlength="32" minlength="6" placeholder="Password"></label></h3>
 			<h3 class="label"><label><span class="red">*</span> Confirm password: <input type="password" class="auth-input" name="password_again" maxlength="32" minlength="6" placeholder="Password again"></label></h3>
 			{% csrf_token %}
+			{% if recaptcha %}
 			<div class="g-recaptcha" data-sitekey="{{ recaptcha }}" data-theme="dark"></div>
 			<script src='https://www.google.com/recaptcha/api.js'></script>
+			{% endif %}
 			
 			<p class="red" style="margin-bottom:6px"></p>
-			{% if recaptcha %}
 			<button type="submit" class="button" onclick="event.preventDefault();cac();">Create account</button>
-			{% else %}
-			<button type="submit" class="button" onclick="event.preventDefault();cac();">Create account</button>
-			{% endif %}
 			<div class="ll">
 				<p>All fields with a red asterisk (<span class="red">*</span>) are required.</p>
 				<p>NNIDs are only required for getting a Mii and a nickname from.</p>
