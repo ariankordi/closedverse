@@ -88,7 +88,11 @@ def signup_page(request):
 			return HttpResponseBadRequest("Your nickname is either too long or too short (1-32 characters)")
 		if request.POST['origin_id'] and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
+		if User.email_in_use(request.POST['email']):
+			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 		if request.POST['origin_id']:
+			if User.nnid_in_use(request.POST['origin_id']):
+				return HttpResponseBadRequest("That Nintendo Network ID address is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
 			if not mii:
 				return HttpResponseBadRequest("The NNID provided doesn't exist.")
@@ -110,10 +114,39 @@ def signup_page(request):
 			'recaptcha': settings.recaptcha_pub,
 			'classes': ['no-login-btn'],
 		})
+def forgot_passwd(request):
+	if request.method == 'POST' and request.POST.get('email'):
+		try:
+			user = User.objects.get(email=request.POST['email'])
+		except (User.DoesNotExist, ValueError):
+			return HttpResponseNotFound("There isn't a user with that email address.")
+		try:
+			user.password_reset_email(request)
+		except:
+			return HttpResponseBadRequest("There was an error submitting that.")
+		return HttpResponse("Success! Check your emails, it should have been sent from \"{0}\".".format(settings.DEFAULT_FROM_EMAIL))
+	if request.GET.get('token'):
+		user = User.get_from_passwd(request.GET['token'])
+		if not user:
+			raise Http404()
+		if request.method == 'POST':
+			if not request.POST['password'] == request.POST['password_again']:
+				return HttpResponseBadRequest("Your passwords don't match.")
+			user.set_password(request.POST['password'])
+			user.save()
+			return HttpResponse("Success! Now you can log in with your new password!")
+		return render(request, 'closedverse_main/forgot_reset.html', {
+			'title': 'Reset password',
+			'classes': ['no-login-btn'],
+		})
+	return render(request, 'closedverse_main/forgot_page.html', {
+		'title': 'Reset password',
+		'classes': ['no-login-btn'],
+	})
 
 def logout_page(request):
 	logout(request)
-	return redirect('/')
+	return redirect("/")
 
 def user_view(request, username):
 	user = get_object_or_404(User, username=username)
@@ -134,6 +167,10 @@ def user_view(request, username):
 			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
+		if User.email_in_use(request.POST.get('email'), request):
+			return json_response("That email address is already in use, that can't happen.")
+		if User.nnid_in_use(request.POST.get('origin_id'), request):
+			return json_response("That Nintendo Network ID address is already in use, that would cause confusion.")
 		if request.POST.get('avatar') == '1':
 			user.avatar = get_gravatar(user.email) or None
 			user.has_gravatar = True
@@ -150,10 +187,12 @@ def user_view(request, username):
 				user.avatar = getmii[0]
 				user.origin_id = getmii[2]
 				user.origin_info = dumps(getmii)
+		user.email = request.POST.get('email')
 		profile.avatar = request.POST.get('avatar')
 		profile.country = request.POST.get('country')
 		profile.weblink = request.POST.get('website')
 		profile.comment = request.POST.get('profile_comment')
+		profile.external = request.POST.get('external')
 		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
 		profile.id_visibility = (request.POST.get('id_visibility') or 0)
 		user.nickname = request.POST.get('screen_name')
@@ -385,6 +424,7 @@ def special_community_tag(request, tag):
 
 def community_view(request, community):
 	communities = get_object_or_404(Community, id=community)
+	communities.post_perm = communities.post_perm(request)
 	if not communities.clickable():
 		return HttpResponseForbidden()
 	if request.GET.get('offset'):
@@ -432,6 +472,7 @@ def post_create(request, community):
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
 			3: "You're making posts too fast, wait a few seconds and try again.",
+			4: "Apparently, you're not allowed to post here.",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
@@ -839,3 +880,5 @@ def help_legal(request):
 	if not settings.PROD:
 		return HttpResponseForbidden()
 	return render(request, 'closedverse_main/help/legal.html', {})
+def help_contact(request):
+	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})

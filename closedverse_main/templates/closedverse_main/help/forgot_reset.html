@@ -1,0 +1,21 @@
+{% extends "closedverse_main/layout.html" %}
+{% load static %}{% block main-body %}
+<div class="main-column center">
+    <div class="post-list-outline login-page">
+        <form method="post">
+			<img src="{% static "img/menu-logo.png" %}">
+			<p class="lh">Reset password</p>
+			<p>Welcome back! It appears you've got the email, and now it's time to reset your password.</p>
+			<form method="post">
+				<h3 class="label"><label>New password: <input type="password" class="auth-input" name="password" placeholder="Password" required></label></h3>
+				<h3 class="label"><label>Confirm new password: <input type="password_again" class="auth-input" name="password" placeholder="Password again" required></label></h3>
+				{% csrf_token %}
+			<p class="red" style="margin-bottom:6px"></p>
+			<button type="submit" class="button">Reset</button>
+
+			</form>
+
+		</form>
+	</div>
+</div>
+{% endblock %}

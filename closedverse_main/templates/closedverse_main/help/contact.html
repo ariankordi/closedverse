@@ -1,0 +1,31 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column" id="help">
+<div class="post-list-outline">
+    <h2 class="label">Where even do I contact you, anyway?</h2>
+    <div id="guide" class="help-content">
+      <div class="faq">
+        <p>Great question!</p>
+		
+		<h2>Arian Kordi</h2>
+		<ul>
+		<li><a href="https://ariankordi.net/">ariankordi.net's homepage at the bottom</a></li>
+		<li>Discord: <b>ariankordi#5902</b></li>
+		<li>Email address: <a href="mailto:&#097;&#114;&#105;&#097;&#110;&#107;&#111;&#114;&#100;&#105;&#064;&#097;&#114;&#105;&#097;&#110;&#107;&#111;&#114;&#100;&#105;&#046;&#110;&#101;&#116;">ariankordi@ariankordi.net</a></li>
+		<li>My account's name here is probably <a href="{% url "main:user-view" "ariankordi" %}">ariankordi</a></li>
+		<li>Please bug PF2M with any Miiverse hacking questions, thanks</li>
+		</ul>
+		<h2>PF2M</h2>
+		<ul>
+		<li><a href="https://www.pf2m.com/contact/">pf2m.com/contact/</a></li>
+		<li>His real Discord: <b>PF2M#3395</b></li>
+		<li>Email addresses: <a href="mailto:niconic%6Fnii@pf2%6D.com">niconiconii@pf2m.com</a>, <a href="mailto:i%6Ek%6Cings%61rehot@g%6Dail.c%6Fm">inklingsarehot@pf2m.com</a></li>
+		<li>His account's name here is probably <a href="{% url "main:user-view" "PF2M" %}">PF2M</a></li>
+		</ul>
+        
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

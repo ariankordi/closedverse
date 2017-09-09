@@ -15,17 +15,25 @@
 		This site does not return errors if there is an error (example, if you Yeah your own post on Miiverse, the server tells you that you cannot do that, however this one just tells you that it was successful), so if this happens, then something is wrong.<br>If you're either confused or sure this isn't a problem on your side, let me know and I'll look into it.</p>
 		<h2>I did something, but then it suddenly reverted itself, but then I refreshed and it did what I intended it to do.</h2>
 		<p>If you edit a post, set a post as a favorite, send a friend request, etc. and then it appears that didn't go through but refreshing the page makes the changes, this means that my database is slow.<br>I don't expect this to happen much, but at times, the database can pretend to be finished when it's not, your browser could refresh after an action, and the database still isn't done.<br>Again, this is only a problem I've been encountering on my development server, so I don't expect this to be a thing here.</p>
-		<h2>The color looks ugly.</h2>
-		<p>Sorry, but the dark black theme was too dark.</p>
+		<h2>Can I delete my account?</h2>
+		<p>No. If you need to delete one by emergency though, contact me.<br>The reason is kinda simple: it's like a domino effect if I delete your account, if I delete your account, then your profile, posts, comments, messages, friendships, follows, etc. are deleted. Obviously, that should be so, but I don't have a "fake deletion" system like Miiverse does, if it's deleted, then it's GONE forever, bye-bye, see ya.<br>I might make it a thing in the future though.</p>
+		<h2>I'm not getting emails when resetting my password.</h2>
+		<p>Sorry, I don't know what to do when that happens. Of course, you should check your spam folder, since I'm not using my own host and am using PF2M's because his is easier to manage.<br>Again, contact me/us.</p>
 		
 		<h2>Less question-y questions</h2>
-        <h2>Haha, now where's my Markdown?</h2>
+		<h2>What's with the Splatoon loading animation? It looks stupid.</h2>
+		<p>I thought it looked good enough. It doesn't appear on mobile if you're using a smaller device (iPhone 5, etc.), so you're not going to know what this is talking about if you're using that.</p>
+        <h3>Haha, now where's my Markdown?</h3>
 		<p>Sorry, but I just haven't been able to make it happen. Discord's Markdown is really just fake Markdown, as it has lots more to it: headings, images, links, paragraphs, you get the idea. All of the implementations of Markdown in Python have either all of that or nothing.<br>There is really Markdown, but it's in Messages, which is why one line break now looks like a space in messages.<br>Again, sorry. If anyone could find a good enough text formatting implementation that works in Django, let me know.</p>
-		<h2>Closedverse? What?</h2>
+		<h3>The color looks ugly.</h3>
+		<p>Sorry, but the dark black theme was too dark.</p>
+		<h3>Your logo looks ugly.</h3>
+		<p>If you can make a better one, let me know.</p>
+		<h3>Closedverse? What?</h3>
         <p>Yes, that's the name I'm using.</p>
         <p>This entire thing was supposed to be an Openverse parody and was meant to be made completely and entirely made from when PF2M closed Openverse to now in a span of a few weeks, but I did not get that done in time thanks to school, PF2M was informed beforehand and didn't want to work on Openverse any more after his knowing of this. Oh well.</p>
 
-        <h2>What's wrong with the other 4 Miiverse clones? There are 5 now!</h2>
+        <h3>What's wrong with the other 4 Miiverse clones? There are 5 now!</h3>
 		<p>There are indeed now 5 Miiverse clones. There are, though, major and minor problems with each of them, which I will list without any bias.</p>
 		<p>
 		<strong>Openverse</strong><br>
@@ -58,7 +66,7 @@
 		</ul>
 		</p>
 
-        <h2>What are the advantages of this one?</h2>
+        <h3>What are the advantages of this one?</h3>
         <p>I'll list what deviates this from the other Miiverse clones.</p>
 		<ul>
 		<li>I think this is the only Miiverse clone not written in PHP. This is written in Python and uses the Django framework, and Django is a framework for crazy fast development with the best programming.</li>

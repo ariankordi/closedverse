@@ -7,7 +7,9 @@ from datetime import datetime, timedelta
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
 from . import util
-import uuid, json
+import uuid, json, base64
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.urls import reverse
 import re
 
@@ -202,10 +204,10 @@ class User(models.Model):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
 	def friend_state(self, other):
 		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
-		query1 = other.fr_source.filter(target=self, finished=False)
+		query1 = other.fr_source.filter(target=self, finished=False).exists()
 		if query1:
 			return 1
-		query2 = self.fr_source.filter(target=other, finished=False)
+		query2 = self.fr_source.filter(target=other, finished=False).exists()
 		if query2:
 			return 2
 		query3 = Friendship.find_friendship(self, other)
@@ -274,10 +276,38 @@ class User(models.Model):
 		for conversation in conversations:
 			count += conversation.unread(self).count()
 		return count
-
+	def password_reset_email(self, request):
+		htmlmsg = render_to_string('closedverse_main/help/email.html', {
+			'menulogo': request.build_absolute_uri(settings.STATIC_URL + 'img/menu-logo.png'),
+			'contact': request.build_absolute_uri(reverse('main:help-contact')),
+			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
+		})
+		subj = 'Closedverse password reset for "{0}"'.format(self.username)
+		return send_mail(subject=subj, message="Bro, do you even HTML E-Mail?", html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
+		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
 
 	def search(query='', limit=50, offset=0, request=None):
 		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
+	def email_in_use(addr, request=None):
+		if not addr:
+			return False
+		if request:
+			return User.objects.filter(email=addr).exclude(id=request.user.id).exists()
+		else:
+			return User.objects.filter(email=addr).exists()
+	def nnid_in_use(id, request=None):
+		if not id:
+			return False
+		if request:
+			return User.objects.filter(origin_id=id).exclude(id=request.user.id).exists()
+		else:
+			return User.objects.filter(origin_id=id).exists()
+	def get_from_passwd(passwd):
+		try:
+			user = User.objects.get(password=base64.urlsafe_b64decode(passwd))
+		except:
+			return False
+		return user
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -294,6 +324,7 @@ class Community(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
 	is_rm = models.BooleanField(default=False)
+	allowed_users = models.TextField(null=True, blank=True)
 	creator = models.ForeignKey(User, blank=True, null=True)
 
 	objects = PostManager()
@@ -341,9 +372,19 @@ class Community(models.Model):
 				post.recent_comment = post.recent_comment()
 				post.comment_count = post.get_comments().count()
 		return posts
-		
+	def post_perm(self, request):
+		if self.allowed_users:
+			allows = self.allowed_users.split(',')
+			if not request.user.is_authenticated or str(request.user.id) not in allows:
+				return False
+			return True
+		else:
+			return True
+
 	def create_post(self, request):
-		if request.user.post_set.filter(created__gt=timezone.now() - timedelta(seconds=10)):
+		if not self.post_perm(request):
+			return 4
+		if request.user.post_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
@@ -461,7 +502,7 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
-		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)):
+		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
@@ -497,7 +538,7 @@ class Post(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
+		if not timezone.now() < self.created + timezone.timedelta(minutes=5).exists():
 			self.has_edit = True
 		return self.save()
 	def rm(self, request):
@@ -658,6 +699,7 @@ class Profile(models.Model):
 	relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
 	weblink = models.CharField(max_length=1200, blank=True, default="")
 	gameskill = models.SmallIntegerField(default=0)
+	external = models.CharField(max_length=255, blank=True, default="")
 	favorite = models.ForeignKey(Post, blank=True, null=True)
 	
 	def __str__(self):
@@ -780,7 +822,7 @@ class Complaint(models.Model):
 	def __str__(self):
 		return "\"" + str(self.body) + "\" from " + str(self.creator) + " as a " + str(self.get_sex_display())
 	def has_past_sent(user):
-		return user.complaint_set.filter(created__gt=timezone.now() - timedelta(minutes=5))
+		return user.complaint_set.filter(created__gt=timezone.now() - timedelta(minutes=5)).exists()
 
 class FriendRequest(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

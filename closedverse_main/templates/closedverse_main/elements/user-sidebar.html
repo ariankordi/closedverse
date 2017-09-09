@@ -114,6 +114,14 @@
 				<span>{% time user.created True %}</span>
 			</div>
 		</div>
+		{% if profile.external %}
+		<div class="data-content">
+			<h4><span>"DiscordTag"</span></h4>
+			<div class="note">
+				<span>{{ profile.external }}</span>
+			</div>
+		</div>
+		{% endif %}
 		<div class="favorite-game-genre">
 			<h4><span>Web URL</span></h4>
 			<div class="note">

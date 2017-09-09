@@ -14,12 +14,9 @@
 			
 			<button type="submit" class="button">Sign In</button>
 			
-			<!-- remove -->
-			<br><p>(TODO: Password reset and URL for it here)</p>
-			
 			<div class="ll">
 				<p>If you don't have an account, <a href="{% url "main:signup" %}">you can sign up here.</a></p>
-				<p>If you've forgotten your password, you can <a href="">reset it here.</a></p>
+				<p>If you've forgotten your password or need to reset it, you can <a href="{% url "main:forgot-passwd" %}">do that here.</a></p>
 			</div>
 		</form>
 	</div>

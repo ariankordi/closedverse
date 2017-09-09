@@ -2148,6 +2148,9 @@ var Olv = Olv || {};
             a("#global-menu-news").on("click", function(b) {
                 a(b.currentTarget).find(".badge").hide()
             });
+            a("#global-menu-message").on("click", function(b) {
+                a(b.currentTarget).find(".badge").hide()
+            });
             var c = b.UpdateChecker.getInstance();
             a(c).on("update", function(b, d) {
                 a.each(c._settings, function(b, c) {
@@ -2294,7 +2297,7 @@ var Olv = Olv || {};
             h.abort && h.abort()
         })
 	
-	$('input[type=checkbox]').on('click', function() {
+	$('div.post-filter > input[type=checkbox]').on('click', function() {
 		go(d.pathname + "?&my=" + $(this).attr('value'))
 	})
     }),
@@ -2944,6 +2947,26 @@ mode_post = 0;
 				type: 'POST', url: window.location.href, data: a("form").serialize(),
 				success: function(s) {
 				lfinish(s);
+				},
+				error: function(s) {
+				$("p.red").text(s.responseText)
+				},
+				beforeSend: function() {
+				NProgress.start();
+				},
+				complete: function() {
+				NProgress.done();
+				}
+				});
+		})
+	}),
+	b.router.connect("^/reset/$", function(d, c, f) {
+		$("form[method=post]").on("submit", function(e) {
+			e.preventDefault();
+				$.ajax({
+				type: 'POST', url: window.location.href, data: $("form").serialize(),
+				success: function(s) {
+				$("p.red").addClass("green"),$("p.red").text(s)
 				},
 				error: function(s) {
 				$("p.red").text(s.responseText)

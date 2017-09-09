@@ -16,7 +16,7 @@
         <p class="settings-label">Profile comment</p>
         <textarea class="textarea" name="profile_comment" maxlength="2200" placeholder="Write about yourself here.">{{ profile.comment }}</textarea>
 
-        <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="{% url "main:help-rules" %">Closedverse's rules</a>.</p>
+        <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="{% url "main:help-rules" %}">Closedverse's rules</a>.</p>
       </li>
 	  <!--
       <li>
@@ -42,12 +42,26 @@
 		<a class="get-ipinfo" href="#">If you want to use your location, you can get it automatically here (it will not be automatically saved).</a>
 		</p>
       </li>
+      <li class="setting-email">
+        <p class="settings-label">E-mail address</p>
+        <div class="center center-input">
+			<input type="text" name="email" maxlength="255" placeholder="Email address" value="{{ user.email }}">
+		</div>
+        <p class="note">Please note that your email can be a fake one, however if you need to reset your password, this must be accessible. You can't share emails.</p>
+      </li>
       <li class="setting-website">
         <p class="settings-label">Web URL</p>
         <div class="center center-input">
 			<input type="text" name="website" maxlength="255" placeholder="URL" value="{{ profile.weblink }}">
 		</div>
         <p class="note">If you want to advertise a URL of some sorts on your profile, this is where it goes.</p>
+      </li>
+      <li class="setting-website">
+        <p class="settings-label">DiscordTag</p>
+        <div class="center center-input">
+			<input type="text" name="external" maxlength="255" placeholder="DiscordTag" value="{{ profile.external }}">
+		</div>
+        <p class="note">Actually, you don't have to put a DiscordTag here, you can put anything here. Discord sure is popular though.</p>
       </li>
 	  	  {% if user.origin_id %}
       <li>

@@ -122,6 +122,9 @@ input.disabled {
 .red {
   color: red;
 }
+.green {
+  color: green !important;
+}
 body {
   font-size: 14px;
   text-align: center;
@@ -6723,6 +6726,7 @@ h2.label-topic_post .label-topic_post-msgid {
   display: block;
   clear: both;
 }
+.index-memo h2:not(.label),
 #help .help-content h2 {
   clear: both;
   padding: 5px 10px 3px;
@@ -6731,6 +6735,10 @@ h2.label-topic_post .label-topic_post-msgid {
   color: #fff;
   font-size: 14px;
   border-radius: 5px;
+}
+.index-memo h2:not(.label) {
+  margin-bottom: 5px;
+  margin-top: 14px;
 }
 #help .help-content .num1 h2 {
   margin-top: 0;
@@ -6763,9 +6771,6 @@ h2.label-topic_post .label-topic_post-msgid {
 #help .help-content p.guide-img5 img,
 #help .help-content p.guide-img7 img {
   width: 120px;
-}
-#help .help-content a {
-  display: block;
 }
 #help .help-content a:hover {
   text-decoration: underline;
@@ -8840,6 +8845,9 @@ h2.label-topic_post .label-topic_post-msgid {
   background: #dddddd;
   color: #919191;
   text-shadow: none;
+}
+.login-page {
+text-align: center;
 }
 .login-page img {
 margin-top: 30px;

@@ -12,6 +12,7 @@ urlpatterns = [
 	url(r'^^$|^communities$|^index.*$$', views.community_list, name='community-list'),
 	url(r'login/$', views.login_page, name='login'),
 	url(r'signup/$', views.signup_page, name='signup'),
+	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
 	url(r'settings/profile$', views.profile_settings, name='profile-settings'),
 	url(r'users/'+ username +'\.follow\.json$', views.user_follow, name='user-follow'),
@@ -67,4 +68,5 @@ urlpatterns = [
 	url(r'meta/rules/?$', views.help_rules, name='help-rules'),
 	url(r'meta/faq/?$', views.help_faq, name='help-faq'),
 	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
+	url(r'meta/contact/?', views.help_contact, name='help-contact')
 ]
