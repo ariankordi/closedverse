@@ -236,6 +236,112 @@ $('.memo-finish-btn').click(function(){
 
 })
 }
+function setupPostForm2() {
+            var letters = ["a", "b", "c", "d", "e"]; // lazy as fuck but who cares lol
+            $("label.textarea-menu-memo").on("click", function() {
+                if (openDrawboardModal()) {
+                    var menu = $("div.textarea-with-menu");
+                    var memo = $("div.textarea-memo");
+                    var text = $("div.textarea-container");
+                    var poll = $("div.textarea-poll");
+                    if (menu.hasClass("active-text") || menu.hasClass("active-poll")) {
+                        menu.removeClass("active-text");
+                        menu.removeClass("active-poll");
+                        menu.addClass("active-memo");
+                        memo.removeClass("none");
+                        text.addClass("none");
+                        poll.addClass("none");
+                    }
+                    Olv.Form.toggleDisabled($("input.post-button"), false);
+
+                    setupDrawboard();
+                }
+            });
+            
+$("label.textarea-menu-text").on("click", switchtext);
+
+//$("label.textarea-menu-poll").on("click", switchpoll);
+
+//$('button.add-option').on('click', addOption);
+//$('button.delete').on('click', deleteOption);
+
+$(".post-button").on("click", switchtext);
+function switchtext() {
+var menu = $("div.textarea-with-menu");
+menu.removeClass("active-memo");
+menu.removeClass("active-poll");
+menu.addClass("active-text");
+$("div.textarea-container").removeClass("none");
+$("div.textarea-memo").addClass("none");
+$("div.textarea-poll").addClass("none");
+$("textarea[name=body]").attr("data-required", "");
+Olv.EntryForm.setupFormStatus($("#post-form"), d);
+}
+/* 'Commented because it\'s broken'
+function switchpoll() {
+var menu = $("div.textarea-with-menu");
+menu.removeClass("active-text");
+menu.removeClass("active-memo");
+menu.addClass("active-poll");
+$("div.textarea-poll").removeClass("none");
+$("div.textarea-container").removeClass("none");
+$("div.textarea-memo").addClass("none");
+$("textarea[name=body]").removeAttr("data-required");
+Olv.EntryForm.setupFormStatus($("#post-form"), d);
+}
+function addOption() {
+    var options = $(".option").length;
+	// lol it's Nintendo Switch
+	switch(options) {
+		case 2:
+			$(this).before('<button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required>');
+			$(".delete").removeClass("none");
+		break;
+		case 3:
+			$(this).before('<button type="button" class="delete" option="option-d"></button><input type="text" class="url-form option" name="option-d" placeholder="Option D" maxlength="64" data-required>');
+		break;
+		case 4:
+			$(this).before('<button type="button" class="delete" option="option-e"></button><input type="text" class="url-form option" name="option-e" placeholder="Option E" maxlength="64" data-required>');
+			$(this).attr("disabled", "true");
+		break;
+		default:
+			$('.textarea-poll').html('<button type="button" class="delete" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
+			$("button.add-option").on("click", addOption);
+		break;
+	}
+    $("button.delete").off("click");
+    $("button.delete").on("click", deleteOption);
+    Olv.EntryForm.setupFormStatus($("#post-form"), d);
+}
+function deleteOption() {
+    var options = $(".option").length;
+    if(options == 5 || options == 4) {
+        $(".add-option").removeAttr("disabled");
+        $(".option[name=" + $(this).attr("option") + "]").remove();
+        $(this).remove();
+        for(var i = 0; i < options - 1; i++) {
+            $(".option").eq(i).attr("name", "option-" + letters[i]);
+            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
+            $(".delete").eq(i).attr("option", "option-" + letters[i]);
+        }
+    } else if(options == 3) {
+        $(".option[name=" + $(this).attr("option") + "]").remove();
+        $(this).remove();
+        for(var i = 0; i < options - 1; i++) {
+            $(".option").eq(i).attr("name", "option-" + letters[i]);
+            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
+            $(".delete").not(this).eq(i).attr("option", "option-" + letters[i]);
+        }
+        $(".delete").addClass("none");
+    } else {
+        $('.textarea-poll').html('<button type="button" class="delete none" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete none" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
+        $("button.add-option").on("click", addOption);
+        $("button.delete").on("click", deleteOption);
+    }
+    Olv.EntryForm.setupFormStatus($("#post-form"), d);
+}
+*/
+}
 var blank = /^[\s\u00A0\u3000]*$/
 //!© Nintendo/Hatena 2012-2017 copyright@hatena.com
 var Olv = Olv || {};
@@ -2105,7 +2211,10 @@ var Olv = Olv || {};
             b.Form.setupForPage(),
             b.EntryForm.setupSubmission(c, e),
             b.EntryForm.setupFormStatus(c, e),
-            b.EntryForm.setupFoldedForm(c, e),
+            b.EntryForm.setupFoldedForm(c, e);
+				if($('#post-form').length) {
+					setupPostForm2();
+				}
             b.User.setupFollowButton(e),
             c.hasClass("for-identified-user") && b.EntryForm.setupIdentifiedUserForm(c, e),
             c.on("olv:entryform:post:done", g),
@@ -2512,18 +2621,18 @@ $('.post-poll .poll-option').on('click', function() {
 		$(this).siblings('.poll-option').removeClass('selected');
 		$(this).addClass('selected');
 		recalculateVotes($(this).siblings('.poll-option').addBack());
-		$(this).parent().addClass('selected');	
-    $.ajax('/posts/' + $(this).parent().attr('post-id') + '/vote/' + parseInt($(this).index()), {
+		$(this).parents('.post-poll').addClass('selected');
+    $.ajax('/posts/' + $(this).parents('.post-poll').attr('post-id') + '/vote/' + parseInt($(this).index()), {
 			method: 'post',
 			dataType: 'json',
     	success: pollSuccess,
 			error: pollError
     });
   } else {
-  	$(this).parent().removeClass('selected');
+  	$(this).parents('.post-poll').removeClass('selected');
 		$(this).removeClass('selected');
 		recalculateVotes($(this).siblings('.poll-option').addBack());
-		$.ajax('/posts/' + $(this).parent().attr('post-id') + '/vote/0', {
+		$.ajax('/posts/' + $(this).parents('.post-poll').attr('post-id') + '/vote/0', {
 			method: 'post',
     	dataType: 'json',
     	success: pollSuccess,
@@ -2871,6 +2980,8 @@ mode_post = 0;
 						if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
 							$('p.error').html('The NNID provided is invalid.')
 							return false
+						} else {
+							$('p.error').html(null)
 						}
 							$.ajax({
 								url: inp.attr('data-action').replace('nil', inp.val()),
@@ -2965,109 +3076,7 @@ mode_post = 0;
     b.router.connect("^/communities/[0-9]+", function(a, c, d) {
 		changesel("community");
         if($("#post-form").length) {
-            var letters = ["a", "b", "c", "d", "e"]; // lazy as fuck but who cares lol
-            $("label.textarea-menu-memo").on("click", function() {
-                if (openDrawboardModal()) {
-                    var menu = $("div.textarea-with-menu");
-                    var memo = $("div.textarea-memo");
-                    var text = $("div.textarea-container");
-                    var poll = $("div.textarea-poll");
-                    if (menu.hasClass("active-text") || menu.hasClass("active-poll")) {
-                        menu.removeClass("active-text");
-                        menu.removeClass("active-poll");
-                        menu.addClass("active-memo");
-                        memo.removeClass("none");
-                        text.addClass("none");
-                        poll.addClass("none");
-                    }
-                    b.Form.toggleDisabled($("input.post-button"), false);
-
-                    setupDrawboard();
-                }
-            });
-            
-$("label.textarea-menu-text").on("click", switchtext);
-$("label.textarea-menu-poll").on("click", switchpoll);
-
-$('button.add-option').on('click', addOption);
-$('button.delete').on('click', deleteOption);
-
-$(".post-button").on("click", switchtext);
-function switchtext() {
-var menu = $("div.textarea-with-menu");
-menu.removeClass("active-memo");
-menu.removeClass("active-poll");
-menu.addClass("active-text");
-$("div.textarea-container").removeClass("none");
-$("div.textarea-memo").addClass("none");
-$("div.textarea-poll").addClass("none");
-$("textarea[name=body]").attr("data-required", "");
-b.EntryForm.setupFormStatus($("#post-form"), d);
-}
-/* 'Commented because it\'s broken'
-function switchpoll() {
-var menu = $("div.textarea-with-menu");
-menu.removeClass("active-text");
-menu.removeClass("active-memo");
-menu.addClass("active-poll");
-$("div.textarea-poll").removeClass("none");
-$("div.textarea-container").removeClass("none");
-$("div.textarea-memo").addClass("none");
-$("textarea[name=body]").removeAttr("data-required");
-b.EntryForm.setupFormStatus($("#post-form"), d);
-}
-function addOption() {
-    var options = $(".option").length;
-	// lol it's Nintendo Switch
-	switch(options) {
-		case 2:
-			$(this).before('<button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required>');
-			$(".delete").removeClass("none");
-		break;
-		case 3:
-			$(this).before('<button type="button" class="delete" option="option-d"></button><input type="text" class="url-form option" name="option-d" placeholder="Option D" maxlength="64" data-required>');
-		break;
-		case 4:
-			$(this).before('<button type="button" class="delete" option="option-e"></button><input type="text" class="url-form option" name="option-e" placeholder="Option E" maxlength="64" data-required>');
-			$(this).attr("disabled", "true");
-		break;
-		default:
-			$('.textarea-poll').html('<button type="button" class="delete" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="delete" option="option-c"></button><input type="text" class="url-form option" name="option-c" placeholder="Option C" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
-			$("button.add-option").on("click", addOption);
-		break;
-	}
-    $("button.delete").off("click");
-    $("button.delete").on("click", deleteOption);
-    b.EntryForm.setupFormStatus($("#post-form"), d);
-}
-function deleteOption() {
-    var options = $(".option").length;
-    if(options == 5 || options == 4) {
-        $(".add-option").removeAttr("disabled");
-        $(".option[name=" + $(this).attr("option") + "]").remove();
-        $(this).remove();
-        for(var i = 0; i < options - 1; i++) {
-            $(".option").eq(i).attr("name", "option-" + letters[i]);
-            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
-            $(".delete").eq(i).attr("option", "option-" + letters[i]);
-        }
-    } else if(options == 3) {
-        $(".option[name=" + $(this).attr("option") + "]").remove();
-        $(this).remove();
-        for(var i = 0; i < options - 1; i++) {
-            $(".option").eq(i).attr("name", "option-" + letters[i]);
-            $(".option").eq(i).attr("placeholder", "Option " + letters[i].toUpperCase());
-            $(".delete").not(this).eq(i).attr("option", "option-" + letters[i]);
-        }
-        $(".delete").addClass("none");
-    } else {
-        $('.textarea-poll').html('<button type="button" class="delete none" option="option-a"></button><input type="text" class="url-form option" name="option-a" placeholder="Option A" maxlength="64" data-required><button type="button" class="delete none" option="option-b"></button><input type="text" class="url-form option" name="option-b" placeholder="Option B" maxlength="64" data-required><button type="button" class="button symbol add-option">Add Option</button>');
-        $("button.add-option").on("click", addOption);
-        $("button.delete").on("click", deleteOption);
-    }
-    b.EntryForm.setupFormStatus($("#post-form"), d);
-}
-*/
+setupPostForm2()
 
 }
         b.Community.setupCommunitySidebar(d),

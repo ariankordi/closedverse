@@ -68,7 +68,7 @@
                 <div class="icon-container">
                     <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
                 </div>
-                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not user.origin_id %} (None){% endif %}" value="{{ user.origin_id }}" data-action="{% url "main:origin-id-get" %}">
+                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not user.origin_id %} (None){% endif %}" value="{% if user.origin_id %}{{ user.origin_id }}{% endif %}" data-action="{% url "main:origin-id-get" %}">
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>

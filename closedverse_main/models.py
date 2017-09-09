@@ -71,7 +71,7 @@ class User(models.Model):
 	username = models.CharField(max_length=32, unique=True)
 	nickname = models.CharField(max_length=32, null=True)
 	password = models.CharField(max_length=128)
-	email = models.EmailField(null=True, blank=True, default=json.dumps([]))
+	email = models.EmailField(null=True, blank=True)
 	avatar = models.CharField(max_length=1200, blank=True)
 	has_gravatar = models.BooleanField(default=False)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
@@ -125,6 +125,8 @@ class User(models.Model):
 			return settings.STATIC_URL + '/img/anonymous-mii.png'
 		return g
 	def mh(self):
+		if not self.origin_info:
+			return None
 		try:
 			infodecode = json.loads(self.origin_info)
 		except:

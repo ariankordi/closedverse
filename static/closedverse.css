@@ -2789,11 +2789,6 @@ canvas {
   border-radius: 5px;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 1px 0 #fff;
 }
-.delete:not(.none) + .url-form.option {
-  border-top-right-radius: 0px !important;
-  border-bottom-right-radius: 0px !important;
-  width: calc(100% - 56px);
-}
 .file-button-container {
   margin-top: 15px;
   background: #f6f6f6;
@@ -4093,7 +4088,7 @@ p.note-jasrac span {
   margin: 10px 30px 10px;
 }
 .download-request-setting-form ul li:before {
-  content: '●';
+  content: '\25CF';
   margin: 0 0.2em 0 -0.9em;
 }
 .download-request-setting-form .settings-label {
@@ -8741,27 +8736,24 @@ h2.label-topic_post .label-topic_post-msgid {
 .textarea-with-menu .textarea-menu-poll.disabled {
   background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), color-stop(0.5, #ffffff), to(#e6e6e6)) 0 0;
 }
-.textarea-with-menu .textarea-menu-text {
+.textarea-with-menu .textarea-menu li label {
   z-index: 2;
+}
+.textarea-with-menu .textarea-menu li:first-of-type label {
   -webkit-border-top-left-radius: 6px;
+}
+.textarea-with-menu .textarea-menu li:last-of-type label {
+  -webkit-border-top-right-radius: 6px;
 }
 .textarea-with-menu .textarea-menu-text:before {
   background-position: 0 0;
   width: 20px;
   height: 20px;
 }
-.textarea-with-menu .textarea-menu-memo {
-  z-index: 2;
-  -webkit-border-top-right-radius: 6px;
-}
 .textarea-with-menu .textarea-menu-memo:before {
   background-position: -60px 0;
   width: 20px;
   height: 20px;
-}
-.textarea-with-menu .textarea-menu-poll {
-  z-index: 2;
-  -webkit-border-top-right-radius: 6px;
 }
 .textarea-with-menu .textarea-menu-poll:before {
   background-position: -120px 0;
@@ -8805,25 +8797,29 @@ h2.label-topic_post .label-topic_post-msgid {
   margin-bottom: 8px;
   border-radius: 5px;
 }
+.textarea-with-menu .textarea-poll .delete:not(.none) + .option {
+  width: calc(100% - 64px);
+}
+.textarea-with-menu .textarea-poll .delete.none + .option {
+  width: calc(100% - 36px);
+}
 .textarea-with-menu .textarea-poll .delete {
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 1px 0 #fff;
-  background: white;
-  padding: 1.8%;
-  border: 1px solid #969696;
-  border-left: 0;
-  height: 42px;
-  width: 32px;
+  border-radius: 25px;
+  background: none;
+  margin-top: 1%;
+  padding: 5px 8px 8px 8px;
+  border: none;
+  height: 28px;
   float: right;
 }
 .textarea-with-menu .textarea-poll .delete:before {
   font-family: "MiiverseSymbols";
-  font-size: 14px;
+  font-size: 16px;
   content: "x";
 }
 .textarea-with-menu .textarea-poll .delete:hover {
   background: #0080ff;
+  color: #fff;
 }
 .textarea-with-menu .textarea-poll .add-option {
   margin-bottom: 12px;
@@ -8879,7 +8875,12 @@ border: 1px solid #dddddd;
 
 .post-poll {
   position: relative;
-  margin: 0 10px;
+  margins: 0 10px;
+}
+.poll-options.with-background {
+  background-position: center;
+  background-size: cover;
+  padding: 25% 10px 5px;
 }
 .post-poll .poll-option {
   border-radius: 5px;
@@ -8887,6 +8888,7 @@ border: 1px solid #dddddd;
   display: block;
   padding: 12px;
   margin: 5px 0px;
+  height: 20px;
   color: white;
   width: auto;
 }
@@ -8946,7 +8948,6 @@ pre {
 html.os-mac > pre::-webkit-scrollbar { 
 display: block !important;
 }
-
 
 #splatoon {
   display: block;

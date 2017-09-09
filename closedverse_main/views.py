@@ -139,12 +139,17 @@ def user_view(request, username):
 			user.has_gravatar = True
 		elif request.POST.get('avatar') == '0':
 			user.has_gravatar = False
-			getmii = get_mii(request.POST.get('origin_id'))
-			if not getmii:
-				return HttpResponseNotFound('NNID not found')
-			user.avatar = getmii[0]
-			user.origin_id = getmii[2]
-			user.origin_info = dumps(getmii)
+			if not request.POST.get('origin_id'):
+				user.origin_id = None
+				user.origin_info = None
+				user.avatar = None
+			else:
+				getmii = get_mii(request.POST.get('origin_id'))
+				if not getmii:
+					return json_response('NNID not found')
+				user.avatar = getmii[0]
+				user.origin_id = getmii[2]
+				user.origin_info = dumps(getmii)
 		profile.avatar = request.POST.get('avatar')
 		profile.country = request.POST.get('country')
 		profile.weblink = request.POST.get('website')
