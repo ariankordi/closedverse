@@ -70,7 +70,7 @@ def signup_page(request):
 		if settings.recaptcha_pub:
 			if not recaptcha_verify(request, settings.recaptcha_priv):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
-		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again') and request.POST.get('email')):
+		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (tried to match with r'^[A-Za-z0-9-._]{1,32}$')")
@@ -88,7 +88,7 @@ def signup_page(request):
 			return HttpResponseBadRequest("Your nickname is either too long or too short (1-32 characters)")
 		if request.POST['origin_id'] and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
-		if User.email_in_use(request.POST['email']):
+		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 		if request.POST['origin_id']:
 			if User.nnid_in_use(request.POST['origin_id']):

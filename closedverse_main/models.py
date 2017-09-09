@@ -40,7 +40,7 @@ class UserManager(BaseUserManager):
 			user.origin_info = json.dumps(nn)
 			user.has_gravatar = False
 		else:
-			user.avatar = util.get_gravatar(email) or None
+			user.avatar = util.get_gravatar(email) or ""
 			user.has_gravatar = True
 		user.set_password(password)
 		user.save(using=self._db)
@@ -74,7 +74,7 @@ class User(models.Model):
 	nickname = models.CharField(max_length=32, null=True)
 	password = models.CharField(max_length=128)
 	email = models.EmailField(null=True, blank=True)
-	avatar = models.CharField(max_length=1200, blank=True)
+	avatar = models.CharField(max_length=1200, blank=True, default="")
 	has_gravatar = models.BooleanField(default=False)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
