@@ -4,7 +4,7 @@ from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow
 from .util import get_mii, recaptcha_verify, get_gravatar
 from closedverse import settings
 import re
@@ -881,6 +881,9 @@ def server_stat(request):
 		'comments': Comment.objects.filter().count(),
 		'messages': Message.objects.filter().count(),
 		'yeahs': Yeah.objects.filter().count(),
+		'notifications': Notification.objects.filter().count(),
+		'follows': Follow.objects.filter().count(),
+		'friendships': Friendship.objects.filter().count(),
 	}
 	if request.GET.get('json'):
 		return JsonResponse(all_stats)

@@ -1601,7 +1601,7 @@ var Olv = Olv || {};
             b.showConfirm(null, b.loc("olv.portal.album.delete_confirm")).done(function(a) {
                 a && b.Form.submit(e, f, !0).done(function() {
                     c.close(),
-                    location.reload()
+                    reload()
                 })
             }))
         }),
@@ -2060,7 +2060,7 @@ var Olv = Olv || {};
             var e = a(this);
             b.Form.isDisabled(e) || (b.Form.post(e.attr("data-action"), null, e).done(function(b) {
                 e.addClass("none").siblings().removeClass("none"),
-                e.hasClass("relationship-button") && (d.noReloadOnFollow && b.can_follow_more === !0 || location.reload()),
+                e.hasClass("relationship-button") && (d.noReloadOnFollow && b.can_follow_more === !0 || reload()),
                 "following_count"in b && a(e).trigger("olv:visitor:following-count:change", [b.following_count])
             }),
             c.preventDefault())
@@ -2076,7 +2076,7 @@ var Olv = Olv || {};
                 });
                 f.done(function(a) {
                     a && b.Form.post(d.attr("data-action"), null, d).done(function() {
-                        d.hasClass("relationship-button") ? location.reload() : (d.addClass("none"),
+                        d.hasClass("relationship-button") ? reload() : (d.addClass("none"),
                         e.removeClass("none"),
                         b.Form.toggleDisabled(e, !1))
                     })
@@ -2139,14 +2139,13 @@ var Olv = Olv || {};
 		// Unthing
     }
     ,
-    b.init.done(function(a) {
+	b.init.done(function() {
 		$('#wrapper').attr('class', $('#main-body').attr('class'));
         b.Global.setupMyMenu()
+	}),
+    b.init.done(function(a) {
         if (a("#global-menu-news").length) {
             a("#global-menu-news").on("click", function(b) {
-                a(b.currentTarget).find(".badge").hide()
-            });
-            a("#global-menu-message").on("click", function(b) {
                 a(b.currentTarget).find(".badge").hide()
             });
             var c = b.UpdateChecker.getInstance();
@@ -2199,7 +2198,7 @@ var Olv = Olv || {};
                 e.text(f),
                 e.toggle(f > 0)
             }),
-            a("#main-body").on("pjax:complete", function(a) {
+            a(document).on("pjax:complete", function(a) {
                 c.resetInterval()
             }),
             c.invoke()
@@ -2990,7 +2989,10 @@ mode_post = 0;
 				$('#guide > div > ul > li:nth-child(4) > strong').html(tt['comments']),
 				$('#guide > div > ul > li:nth-child(5) > strong').html(tt['messages']),
 				$('#guide > div > ul > li:nth-child(6) > strong').html(tt['yeahs']),
-				$('#guide > div > ul > li:nth-child(7) > strong').html(tt['complaints']);
+				$('#guide > div > ul > li:nth-child(7) > strong').html(tt['complaints']),
+				$('#guide > div > ul > li:nth-child(8) > strong').html(tt['notifications']),
+				$('#guide > div > ul > li:nth-child(9) > strong').html(tt['follows']),
+				$('#guide > div > ul > li:nth-child(10) > strong').html(tt['friendships']);
 			});
 		})
 	}),
@@ -3178,4 +3180,7 @@ Olv.Locale.Data={
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false}),/*$(document).on('pjax:error',function(){return false}),*/
 $(document).on('pjax:send',function(){NProgress.start()});
 $(document).on('pjax:complete',function(){
-$('#wrapper').attr('class', $('#main-body').attr('class')),NProgress.done();Olv.init.done()});
+NProgress.done();
+Olv.Global.setupMyMenu();
+Olv.init.done();
+});
