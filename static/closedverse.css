@@ -1221,6 +1221,9 @@ content: "F";
 .icon-container.openverse {
   position: relative;
 }
+.icon-container.urapp {
+  position: relative;
+}
 .icon-container.moderator {
   position: relative;
 }
@@ -1257,6 +1260,15 @@ content: "F";
   width: 22px;
   height: 22px;
 }
+.icon-container.urapp:after {
+  content: url("/s/img/open-zsdev.png");
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+}
 .icon-container.moderator:after {
   content: url("/s/img/moderator.png");
   position: absolute;
@@ -1284,85 +1296,6 @@ content: "F";
   width: 22px;
   height: 22px;
 }
-.user-community .icon-container {
-  position: relative;
-  overflow: visible;
-  background: transparent;
-}
-.user-community .icon-container .icon {
-  width: 38px;
-  height: 38px;
-  position: absolute;
-  top: 0;
-}
-.user-community .icon-container .user-icon {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 36px;
-  height: 36px;
-  background: #fff;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  -ms-border-radius: 5px;
-  -o-border-radius: 5px;
-  border-radius: 5px;
-  border: 1px solid #dddddd;
-}
-.user-community.administrator .icon-container:after {
-  content: url("/s/img/administrator.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
-.user-community.developer .icon-container:after {
-  content: url("/s/img/developer.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
-.user-community.openverse .icon-container:after {
-  content: url("/s/img/open-dev.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
-.user-community.moderator .icon-container:after {
-  content: url("/s/img/moderator.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
-.user-community.donator .icon-container:after {
-  content: url("/s/img/donator.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
-.user-community.tester .icon-container:after {
-  content: url("/s/img/tester.png");
-  position: absolute;
-  display: block;
-  top: 20px;
-  right: 21px;
-  width: 17px;
-  height: 17px;
-}
 /*
 .post-permalink-feeling-icon {
   float: left;
@@ -1387,6 +1320,9 @@ content: "F";
   position: relative;
 }
 .post-permalink-feeling-icon.openverse {
+  position: relative;
+}
+.post-permalink-feeling-icon.urapp {
   position: relative;
 }
 .post-permalink-feeling-icon.moderator {

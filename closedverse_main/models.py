@@ -76,7 +76,7 @@ class User(models.Model):
 	email = models.EmailField(null=True, blank=True)
 	avatar = models.CharField(max_length=1200, blank=True, default="")
 	has_gravatar = models.BooleanField(default=False)
-	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'moderator'), (2, 'admin'), (5, 'pf2m'), (10, 'master')))
+	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
@@ -136,14 +136,16 @@ class User(models.Model):
 		return infodecode[0]
 	def get_class(self):
 			first = {
-			1: 'moderator',
-			2: 'admin',
+			1: 'urapp',
+			2: 'moderator',
+			3: 'admin',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
 			second = {
-			1: "Moderator",
-			2: "Admin",
+			1: "cave story official #1 fan",
+			2: "Moderator",
+			3: "Admin",
 			5: "O-PHP-enverse Man",
 			10: "Friendship ended with PHP / Now PYTHON is my best friend",
 			}.get(self.level, '')
@@ -215,7 +217,7 @@ class User(models.Model):
 			return 3
 		return 0
 	def get_fr(self, other):
-		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(target=other))
+		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(source=other))
 	def get_frs_target(self):
 		return FriendRequest.objects.filter(target=self, finished=False)
 	def get_frs_notif(self):

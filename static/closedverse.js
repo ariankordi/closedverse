@@ -2184,19 +2184,6 @@ var Olv = Olv || {};
                     j += b['msg']
                 h.text(j),
                 h.toggle(j > 0)
-            },
-			
-			function(b, c) {
-                var d = a("#global-menu-message")
-                  , e = d.find(".badge");
-                0 === e.length && (e = a("<span>", {
-                    "class": "badge"
-                }),
-                e.hide().appendTo(d.find("a")));
-                var f = 0;
-                    f += b['msg']
-                e.text(f),
-                e.toggle(f > 0)
             }),
             a(document).on("pjax:complete", function(a) {
                 c.resetInterval()
@@ -2517,6 +2504,18 @@ mode_post = 0;
         e.done(function() {
             h.off("olv:entryform:post:done", g)
         })
+		$('button.reload-btn').click(function(e){
+				NProgress.start();
+				$.ajax({
+                    url: window.location.href,
+                    headers: {
+                        "X-AUTOPAGERIZE": !0
+                    }
+                }).done(function(b) {
+					NProgress.done();
+                    $('.js-post-list').replaceWith(b)
+				});
+		});
     }),
     b.router.connect("^/communities/[0-9]+(/artwork(/hot|/new)?|/topic(/new|/open)?)$", function(c, d, e) {
 		changesel("community");
@@ -2978,8 +2977,7 @@ mode_post = 0;
 		})
 	}),
 	b.router.connect("^/server$", function() {
-		$('button.reload-btn').on('click', function(e){
-			e.preventDefault();
+		$('button.reload-btn').click(function(e){
 			NProgress.start();
 			var thing = $.getJSON(window.location.href, { json: '1' }, function(tt) {
 				NProgress.done();
@@ -3181,6 +3179,5 @@ $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){re
 $(document).on('pjax:send',function(){NProgress.start()});
 $(document).on('pjax:complete',function(){
 NProgress.done();
-Olv.Global.setupMyMenu();
 Olv.init.done();
 });
