@@ -40,6 +40,7 @@
                   <li><a href="{% url "main:help-faq" %}" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>
 				  <li><a href="{% url "main:help-contact" %}" class="symbol my-menu-guide"><span>Contact Information</span></a></li>
                   <li><a href="#" class="symbol my-menu-white-power"><span>Feedback/bug report</span></a></li>
+                  <li><a href="{% url "main:server-stat" %}" class="symbol my-menu-openman"><span>Server Statistics</span></a></li>
 				  <li>
                     <form action="{% url "main:logout" %}" method="post" id="my-menu-logout" class="symbol">
                       {% csrf_token %}

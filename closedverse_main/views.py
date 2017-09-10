@@ -4,7 +4,7 @@ from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message
 from .util import get_mii, recaptcha_verify, get_gravatar
 from closedverse import settings
 import re
@@ -873,8 +873,15 @@ def help_complaint(request):
 	return HttpResponse()
 
 def server_stat(request):
-	return render(request, 'closedverse_main/help/faq.html', {
+	return render(request, 'closedverse_main/help/stats.html', {
 		'title': 'Server stats',
+		'communities': Community.objects.filter().count(),
+		'posts': Post.objects.filter().count(),
+		'users': User.objects.filter().count(),
+		'complaints': Complaint.objects.filter().count(),
+		'comments': Comment.objects.filter().count(),
+		'messages': Message.objects.filter().count(),
+		'yeahs': Yeah.objects.filter().count(),
 	})
 def help_rules(request):
 	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
