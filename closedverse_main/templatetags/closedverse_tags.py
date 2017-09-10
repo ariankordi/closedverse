@@ -83,5 +83,6 @@ def empathy_content(yeahs, request, has_yeah=False):
 @register.inclusion_tag('closedverse_main/elements/names.html')
 def print_names(names):
 	return {
+		'nameallmn': len(names) - 3,
 		'names': names,
 	}
