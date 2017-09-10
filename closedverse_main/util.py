@@ -13,7 +13,7 @@ import base64
 from closedverse import settings
 
 def HumanTime(date, full=False):
-	now = time.time()
+	now = (time.time() or 1)
 	if ((now - date) >= 345600) or full:
 		return datetime.fromtimestamp(date).strftime('%m/%d/%Y %l:%M %p')
 	interval = (now - date)
@@ -38,6 +38,8 @@ def get_mii(nnid):
 	ftree = html.fromstring(page)
 	miihash = ftree.xpath('//*[@id="sidebar-profile-body"]/div/a/img/@src')[0].split('.net/')[1].split('_n')[0]
 	screenname = ftree.xpath('//*[@id="sidebar-profile-body"]/a/text()')[0]
+	if "img/anonymous-mii.png" in miihash:
+		miihash = settings.STATIC_URL + '/img/anonymous-mii.png'
 	
 	return [miihash, screenname, nnid]
 
@@ -72,6 +74,6 @@ def image_upload(img):
 def get_gravatar(email):
 	try:
 		page = urllib.request.urlopen('https://gravatar.com/avatar/'+ md5(email.encode('utf-8').lower()).hexdigest() +'?d=404&s=128')
-	except urllib.error.HTTPError:
+	except:
 		return False
 	return page.geturl()

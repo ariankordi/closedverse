@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Q, QuerySet
 from django.utils import timezone
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
@@ -73,7 +75,7 @@ class User(models.Model):
 	username = models.CharField(max_length=32, unique=True)
 	nickname = models.CharField(max_length=32, null=True)
 	password = models.CharField(max_length=128)
-	email = models.EmailField(null=True, blank=True)
+	email = models.EmailField(null=True, blank=True, default="")
 	avatar = models.CharField(max_length=1200, blank=True, default="")
 	has_gravatar = models.BooleanField(default=False)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
@@ -217,7 +219,7 @@ class User(models.Model):
 			return 3
 		return 0
 	def get_fr(self, other):
-		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(source=other))
+		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(source=other)).exclude(finished=True)
 	def get_frs_target(self):
 		return FriendRequest.objects.filter(target=self, finished=False)
 	def get_frs_notif(self):
@@ -326,6 +328,7 @@ class Community(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
 	is_rm = models.BooleanField(default=False)
+	is_feature = models.BooleanField(default=False)
 	allowed_users = models.TextField(null=True, blank=True)
 	creator = models.ForeignKey(User, blank=True, null=True)
 
@@ -388,6 +391,11 @@ class Community(models.Model):
 			return 4
 		if request.user.post_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
+		if request.POST.get('url'):
+			try:
+				URLValidator()(value=request.POST['url'])
+			except ValidationError:
+				return 5
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
@@ -404,6 +412,8 @@ class Community(models.Model):
 		new_post.is_mine = True
 		return new_post
 
+	def search(query='', limit=50, offset=0, request=None):
+		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).order_by('-created')[offset:offset + limit]
 
 	class Meta:
 		verbose_name_plural = "communities"
@@ -718,6 +728,13 @@ class Profile(models.Model):
 		elif not self.user.origin_id:
 			return None
 		return self.user.origin_id
+	def got_fullurl(self):
+		if profile.weblink:
+			try:
+				URLValidator()(value=self.weblink)
+			except ValidationError:
+				return False
+			return True
 	def setup(self, request):
 		self.origin_id = self.origin_id(request.user)
 

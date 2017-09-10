@@ -1,8 +1,11 @@
 {% load closedverse_tags %}<h3 class="community-title">{{ title }}</h3>
 {% if communities %}
-<ul class="list community-list community-card-list device-new-community-list">
+<ul class="list community-list community-card-list {% if feature %}test-community-list-item{% else %}device-new-community-list{% endif %}">
 	{% for community in communities %}
 	<li class="trigger" data-href="{% url "main:community-view" community.id %}">
+		{% if feature %}
+		<img src="{{ community.banner }}" class="community-list-cover">
+		{% endif %}
 		<div class="community-list-body">
 			<span class="icon-container">
 				<img class="icon" src="{{ community.icon }}">

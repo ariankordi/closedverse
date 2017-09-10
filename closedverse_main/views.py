@@ -33,9 +33,10 @@ def community_list(request):
 	return render(request, 'closedverse_main/community_list.html', {
 		'title': 'Communities',
 		'classes': classes,
-		'general': obj.filter(type=0).order_by('-created')[0:6],
-		'game': obj.filter(type=1).order_by('-created')[0:6],
-		'special': obj.filter(type=2).order_by('-created')[0:6],
+		'general': obj.filter(type=0).order_by('-created')[0:8],
+		'game': obj.filter(type=1).order_by('-created')[0:8],
+		'special': obj.filter(type=2).order_by('-created')[0:8],
+		'feature': obj.filter(is_feature=True).order_by('-created'),
 		'settings': settings,
 	})
 
@@ -473,6 +474,7 @@ def post_create(request, community):
 			2: "The image you've uploaded is invalid.",
 			3: "You're making posts too fast, wait a few seconds and try again.",
 			4: "Apparently, you're not allowed to post here.",
+			5: "Uh-oh, that URL wasn't valid..",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():

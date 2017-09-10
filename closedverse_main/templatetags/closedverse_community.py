@@ -60,3 +60,10 @@ def file_button():
 	return {
 		
 	}
+@register.inclusion_tag('closedverse_main/elements/community_page_elem.html')
+def community_page_element(communities, text='General Communities', feature=False):
+	return {
+		'communities': communities,
+		'title': text,
+		'feature': feature,
+	}

@@ -2225,7 +2225,6 @@ var Olv = Olv || {};
 		})
         b.Content.autopagerize(".js-post-list", e),
         b.Entry.setupEmpathyButtons(e),
-        b.Entry.setupHiddenContents(e),
         a("form.search").on("submit", b.Form.validateValueLength);
         var h, i, j = a(".content-loading-window");
         if (j.length) {
@@ -2238,15 +2237,16 @@ var Olv = Olv || {};
                     fragment: "activityfeed"
                 }) + k,*/
                 silent: !0, beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()},
-            }).done(function(b) {
-                a("#js-main").html(b),
-                a(document).trigger("olv:activity:success", [b, c, d])
+            }).done(function(l) {
+                a("#js-main").html(l),
+                a(document).trigger("olv:activity:success", [l, c, d])
 					pf = $('div.post-form')
 					if(pf.length) {
 						$('#js-main').prepend($('div.post-form'))
 						pf.removeClass('none')
 						f()
 					}
+					b.Entry.setupHiddenContents(e);
             }).fail(function() {
                 setTimeout(function() {
                     j.remove(),

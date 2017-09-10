@@ -50,12 +50,6 @@ def nocontent(text='', style=''):
         'text': text,
         'style': style,
     }
-@register.inclusion_tag('closedverse_main/elements/community_page_elem.html')
-def community_page_element(communities, text='General Communities'):
-	return {
-		'communities': communities,
-		'title': text,
-	}
 @register.simple_tag
 def empathy_txt(feeling=0, has=False):
 	if has:
@@ -83,6 +77,6 @@ def empathy_content(yeahs, request, has_yeah=False):
 @register.inclusion_tag('closedverse_main/elements/names.html')
 def print_names(names):
 	return {
-		'nameallmn': len(names) - 3,
+		'nameallmn': len(names) - 4,
 		'names': names,
 	}

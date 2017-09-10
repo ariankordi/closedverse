@@ -1,5 +1,5 @@
 {% extends "closedverse_main/layout.html" %}
-{% load closedverse_tags %}{% block main-body %}
+{% load closedverse_tags %}{% load closedverse_community %}{% block main-body %}
 <div class="community-main">
 		<div id="community-eyecatch"></div>
 	</div>
@@ -18,9 +18,12 @@
 		{% endif %}
 	</div>
 	<div class="community-main">
-		{% community_page_element general "General Communities" %}
-		{% community_page_element game "Game Communities" %}
-		{% community_page_element special "Special Communities" %}
+		{% if feature %}
+			{% community_page_element feature "Featured Communities" True %}
+		{% endif %}
+			{% community_page_element general "General Communities" %}
+			{% community_page_element game "Game Communities" %}
+			{% community_page_element special "Special Communities" %}
 	</div>
 	<div id="community-guide-footer">
 		<div id="guide-menu">
