@@ -538,7 +538,7 @@ class Post(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=5).exists():
+		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
 			self.has_edit = True
 		return self.save()
 	def rm(self, request):
