@@ -2979,8 +2979,20 @@ mode_post = 0;
 		})
 	}),
 	b.router.connect("^/server$", function() {
-		$('button').on('click', function(e){e.preventDefault();
-		reload()})
+		$('button.reload-btn').on('click', function(e){
+			e.preventDefault();
+			NProgress.start();
+			var thing = $.getJSON(window.location.href, { json: '1' }, function(tt) {
+				NProgress.done();
+				$('#guide > div > ul > li:nth-child(1) > strong').html(tt['communities']),
+				$('#guide > div > ul > li:nth-child(2) > strong').html(tt['posts']),
+				$('#guide > div > ul > li:nth-child(3) > strong').html(tt['users']),
+				$('#guide > div > ul > li:nth-child(4) > strong').html(tt['comments']),
+				$('#guide > div > ul > li:nth-child(5) > strong').html(tt['messages']),
+				$('#guide > div > ul > li:nth-child(6) > strong').html(tt['yeahs']),
+				$('#guide > div > ul > li:nth-child(7) > strong').html(tt['complaints']);
+			});
+		})
 	}),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
 		changesel('mymenu')

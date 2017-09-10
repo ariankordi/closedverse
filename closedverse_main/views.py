@@ -661,25 +661,25 @@ def user_friendrequest_create(request, username):
 @login_required
 def user_friendrequest_accept(request, username):
 	user = get_object_or_404(User, username=username)
-	user.accept_fr(request.user)
+	request.user.accept_fr(user)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_reject(request, username):
 	user = get_object_or_404(User, username=username)
-	user.reject_fr(request.user)
+	request.user.reject_fr(user)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_cancel(request, username):
 	user = get_object_or_404(User, username=username)
-	user.cancel_fr(request.user)
+	request.user.cancel_fr(user)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_delete(request, username):
 	user = get_object_or_404(User, username=username)
-	user.delete_friend(request.user)
+	request.user.delete_friend(user)
 	return HttpResponse()
 
 def check_notifications(request):
@@ -873,8 +873,7 @@ def help_complaint(request):
 	return HttpResponse()
 
 def server_stat(request):
-	return render(request, 'closedverse_main/help/stats.html', {
-		'title': 'Server stats',
+	all_stats = {
 		'communities': Community.objects.filter().count(),
 		'posts': Post.objects.filter().count(),
 		'users': User.objects.filter().count(),
@@ -882,7 +881,10 @@ def server_stat(request):
 		'comments': Comment.objects.filter().count(),
 		'messages': Message.objects.filter().count(),
 		'yeahs': Yeah.objects.filter().count(),
-	})
+	}
+	if request.GET.get('json'):
+		return JsonResponse(all_stats)
+	return render(request, 'closedverse_main/help/stats.html', all_stats)
 def help_rules(request):
 	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
 def help_faq(request):
