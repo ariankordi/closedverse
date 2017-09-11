@@ -2360,6 +2360,7 @@ var Olv = Olv || {};
 	b.router.connect("/notifications(\/)?$", function(a, c, d) {
 	   changesel("news");
 	   if($('div.notify').length) {
+		   $('#global-menu-news > a > span').html('0')
 			b.Form.post("/notifications/set_read")
 	   }
 	   $('button.rm').on('click', function() {

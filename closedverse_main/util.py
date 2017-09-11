@@ -13,10 +13,10 @@ import base64
 from closedverse import settings
 
 def HumanTime(date, full=False):
-	now = (time.time() or 1)
+	now = time.time()
 	if ((now - date) >= 345600) or full:
 		return datetime.fromtimestamp(date).strftime('%m/%d/%Y %l:%M %p')
-	interval = (now - date)
+	interval = (now - date) or 1
 	if interval <= 59:
 		return 'Less than a minute ago'
 	intvals = [86400, 3600, 60, ]
@@ -77,3 +77,7 @@ def get_gravatar(email):
 	except:
 		return False
 	return page.geturl()
+
+def filterchars(str):
+	if "\u202e" in str:
+		return str.split("\u202e")[1]

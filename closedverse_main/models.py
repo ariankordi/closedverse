@@ -32,7 +32,7 @@ class UserManager(BaseUserManager):
 	def closed_create_user(self, username, password, email, addr, nick, nn, gravatar):
 		user = self.model(
 		username = username,
-		nickname = nick,
+		nickname = util.filterchars(nick),
 		addr = addr,
 		email = email,
 		)
@@ -729,12 +729,13 @@ class Profile(models.Model):
 			return None
 		return self.user.origin_id
 	def got_fullurl(self):
-		if profile.weblink:
+		if self.weblink:
 			try:
 				URLValidator()(value=self.weblink)
 			except ValidationError:
 				return False
 			return True
+		return False
 	def setup(self, request):
 		self.origin_id = self.origin_id(request.user)
 

@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow
-from .util import get_mii, recaptcha_verify, get_gravatar
+from .util import get_mii, recaptcha_verify, get_gravatar, filterchars
 from closedverse import settings
 import re
 from django.urls import reverse
@@ -92,6 +92,8 @@ def signup_page(request):
 		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 		if request.POST['origin_id']:
+			if request.POST['origin_id'].lower() in loads(open('closedverse_main/forbidden.json', 'r').read()):
+				return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
 				return HttpResponseBadRequest("That Nintendo Network ID address is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
@@ -172,15 +174,17 @@ def user_view(request, username):
 			return json_response("That email address is already in use, that can't happen.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID address is already in use, that would cause confusion.")
+		if request.POST['origin_id'].lower() in loads(open('forbidden.json', 'r').read()):
+			return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if request.POST.get('avatar') == '1':
-			user.avatar = get_gravatar(user.email) or None
+			user.avatar = get_gravatar(user.email) or ""
 			user.has_gravatar = True
 		elif request.POST.get('avatar') == '0':
 			user.has_gravatar = False
 			if not request.POST.get('origin_id'):
 				user.origin_id = None
 				user.origin_info = None
-				user.avatar = None
+				user.avatar = ""
 			else:
 				getmii = get_mii(request.POST.get('origin_id'))
 				if not getmii:
@@ -189,14 +193,13 @@ def user_view(request, username):
 				user.origin_id = getmii[2]
 				user.origin_info = dumps(getmii)
 		user.email = request.POST.get('email')
-		profile.avatar = request.POST.get('avatar')
 		profile.country = request.POST.get('country')
 		profile.weblink = request.POST.get('website')
 		profile.comment = request.POST.get('profile_comment')
 		profile.external = request.POST.get('external')
 		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
 		profile.id_visibility = (request.POST.get('id_visibility') or 0)
-		user.nickname = request.POST.get('screen_name')
+		user.nickname = filterchars(request.POST.get('screen_name'))
 		profile.save()
 		user.save()
 		return HttpResponse()

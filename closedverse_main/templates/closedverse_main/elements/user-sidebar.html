@@ -125,7 +125,7 @@
 		<div class="favorite-game-genre">
 			<h4><span>Web URL</span></h4>
 			<div class="note">
-				<span>{% if profile.weblink %}<a class="link-confirm" href="{% if not got_fullurl %}http://{% endif %}{{ profile.weblink }}">{{ profile.weblink }}</a>{% else %}Not Set{% endif %}</span>
+				<span>{% if profile.weblink %}<a class="link-confirm" href="{% if not profile.got_fullurl %}http://{% endif %}{{ profile.weblink }}">{{ profile.weblink }}</a>{% else %}Not Set{% endif %}</span>
 			</div>
 		</div>
 	</div>
