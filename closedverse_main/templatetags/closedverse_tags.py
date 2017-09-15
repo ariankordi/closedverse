@@ -30,7 +30,7 @@ def miionly(avatar):
 		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(avatar)
 @register.simple_tag
 def time(stamp, full=False):
-	return HumanTime(stamp.timestamp(), full)
+	return HumanTime(stamp.timestamp(), full) or "Less than a minute ago"
 @register.simple_tag
 def user_class(user):
 	return user.get_class()[0]

@@ -1,0 +1,9 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}{% load closedverse_community %}
+{% user_sidebar request user user.profile 0 %}
+<div class="main-column post-list-outline">
+<h2 class="label">Favorite communities</h2>
+{% community_page_element favorites None %}
+
+</div>
+{% endblock %}

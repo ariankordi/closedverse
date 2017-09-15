@@ -45,45 +45,51 @@ $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
 }
 function openDrawboardModal() {
-	if(innerWidth <= 400) {
-		Olv.showMessage("", "It appears the device you're using right now doesn't support drawing, sorry.\n\nIf you were able to draw right now, you'd only be able to put dots on the drawboard. (if anyone knows the cause of this, let me know)");
-		return false;
-	} else {
 		var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
 		return true;
-	}
 }
-// God damn PF2M, you could've made this object-oriented
-// Or maybe I could, but it's not commented, hmm? hmmmm??
-function setupDrawboard() {
-var canvas = document.getElementById("artwork-canvas");
-var ctx = canvas.getContext('2d');
-		var haval = $("input[type=hidden][name=painting]")
-		if(haval.length) {
-			dds = new Image();
-			dds.src = "data:image/png;base64," + haval.val();
-			dds.onload = function() {
-			   ctx.drawImage(dds,0,0);
-			};
-		}
-var undoCanvas = document.getElementById('artwork-canvas-undo');
-var undoCtx = undoCanvas.getContext('2d');
-var redoCanvas = document.getElementById('artwork-canvas-redo');
-var redoCtx = redoCanvas.getContext('2d');
-var mousePosOld = 0;
-var artworkTool = {type: 0, size: 1};
-var sizeSmall = 1;
-var sizeMedium = 2;
-var sizeLarge = 4;
+// There used to be an un-nice comment here but I'm just putting a comment here anyway because it's green and that's the color of money, something I need
+// Oh, sorry, no I don't need money, I need FRESH JUICY PLUMP education
 var artworkColors = [["black", "#000"], ["gray", "#808080"], ["red", "#ff0000"], ["brown", "#804000"], ["orange", "#ff8000"], ["darkorange", "#c08000"], ["yellow", "#ffff00"], ["beige", "#fff8dc"], ["green", "#00c700"], ["darkgreen", "#008000"], ["skyblue", "#00ffff"], ["darkaqua", "#00a0a0"], ["blue", "#0000ff"], ["openverse", "#0080ff"], ["pink", "#ff00ff"], ["purple", "#800080"]];
+var artworkChanged = '';
+var artworkTool = {type: 0, size: 1};
 var artworkColorOffset = 0;
 var artworkZoomFactor = 1;
+function setupDrawboard() {
+    var canvas = document.getElementById("artwork-canvas");
+    var ctx = canvas.getContext('2d');
+	var haval = $("input[type=hidden][name=painting]")
+	if(haval.length) {
+		dds = new Image();
+		dds.src = "data:image/png;base64," + haval.val();
+		dds.onload = function() {
+		    ctx.drawImage(dds,0,0);
+		};
+	}
+    var undoCanvas = document.getElementById('artwork-canvas-undo');
+    var undoCtx = undoCanvas.getContext('2d');
+    var redoCanvas = document.getElementById('artwork-canvas-redo');
+    var redoCtx = redoCanvas.getContext('2d');
+    if(artworkChanged != window.location.href) {
+        artworkTool = {type: 0, size: 1};
+        artworkColorOffset = 0;
+        artworkZoomFactor = 1;
+        artworkChanged = window.location.href;
+    }
+    var mousePosOld = 0;
 function getMousePos(evt) {
-	var rect = canvas.getBoundingClientRect();
-  return {
-		x: (evt.clientX - rect.left) / artworkZoomFactor,
-		y: (evt.clientY - rect.top) / artworkZoomFactor
-  };
+    var rect = canvas.getBoundingClientRect();
+    if(evt.type == "touchmove") {
+        var clientX = evt.touches[0].clientX;
+        var clientY = evt.touches[0].clientY;
+	} else {
+        var clientX = evt.clientX;
+        var clientY = evt.clientY;
+	}
+    return {
+        x: (clientX - rect.left) / artworkZoomFactor,
+		y: (clientY - rect.top) / artworkZoomFactor
+    };
 }
 function drawLineNoAliasing(ctx, sx, sy, tx, ty) {
     var dist = Math.sqrt((tx-sx)*(tx-sx)+(ty-sy)*(ty-sy));
@@ -98,7 +104,7 @@ function artworkUpdate(evt) {
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
 	if(mousePosOld == 0) mousePosOld = mousePos;
-	if(evt.which == 1) {
+	if(evt.which == 1 || evt.type == "touchmove" && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
 		if(artworkTool.type == 0) {
 			ctx.fillStyle = artworkColors[artworkColorOffset][1];
 		} else {
@@ -110,9 +116,10 @@ function artworkUpdate(evt) {
 	}
 }
 function artworkDrawOnce(evt) {
+    undoCtx.drawImage(canvas, 0, 0);
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
-	if(evt.which == 1) {
+	if(evt.which == 1 || evt.type == 'touchstart' && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
 		if(artworkTool.type == 0) {
 			ctx.fillStyle = artworkColors[artworkColorOffset][1];
 		} else {
@@ -126,12 +133,9 @@ function artworkDrawOnce(evt) {
   }
 }
 function artworkClear() {
-artworkUndoDown();
+undoCtx.drawImage(canvas, 0, 0);
 ctx.fillStyle = "#fff";
 ctx.fillRect(0, 0, 320, 120);
-}
-function artworkUndoDown() {
-undoCtx.drawImage(canvas, 0, 0);
 }
 function artworkUndo() {
 redoCtx.drawImage(canvas, 0, 0);
@@ -148,15 +152,15 @@ function artworkToolUpdate() {
 	}
 	if($(this).hasClass('selected')) {
 		if($(this).hasClass('small')) {
-			artworkTool = {type: toolType, size: sizeMedium};
+			artworkTool = {type: toolType, size: 2};
 			$(this).removeClass('small');
 			$(this).addClass('medium');
 		} else if ($(this).hasClass('medium')) {
-artworkTool = {type: toolType, size: sizeLarge};
+artworkTool = {type: toolType, size: 4};
 $(this).removeClass('medium');
 $(this).addClass('large');
 } else if ($(this).hasClass('large')) {
-artworkTool = {type: toolType, size: sizeSmall};
+artworkTool = {type: toolType, size: 1};
 $(this).removeClass('large');
 $(this).addClass('small');
 } else {
@@ -166,11 +170,11 @@ artworkTool = {type: toolType};
 $('.memo-buttons button').removeClass('selected');
 $(this).addClass('selected');
 if($(this).hasClass('small')) {
-artworkTool = {type: toolType, size: sizeSmall};
+artworkTool = {type: toolType, size: 1};
 } else if ($(this).hasClass('medium')) {
-artworkTool = {type: toolType, size: sizeMedium};
+artworkTool = {type: toolType, size: 2};
 } else if ($(this).hasClass('large')) {
-artworkTool = {type: toolType, size: sizeLarge};
+artworkTool = {type: toolType, size: 4};
 } else {
 artworkTool = {type: toolType};
 }
@@ -201,31 +205,48 @@ if(artworkColorOffset > 0 && artworkColorOffset < 15) {
 $(this).addClass(artworkColors[artworkColorOffset][0]);
 }
 function artworkZoomUpdate(evt) {
-	if(artworkZoomFactor == 1) {
-  	artworkZoomFactor = 2;
+    if(artworkZoomFactor == 1) {
+  	    artworkZoomFactor = 2;
 		$('#artwork-canvas').css('width', '640px');
-		$('.memo-canvas').addClass('zoom')
-  } else if(artworkZoomFactor == 2) {
-  	artworkZoomFactor = 4;
+		$('.memo-canvas').addClass('zoom');
+		// if(/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) {
+		$('.artwork-lock').removeClass('none');
+		// } uncomment these lines if you want to make the button mobile only
+    } else if(artworkZoomFactor == 2) {
+  	    artworkZoomFactor = 4;
 		$('#artwork-canvas').css('width', '1280px');
 		$(this).addClass('out');
-  } else {
-  	artworkZoomFactor = 1;
+    } else {
+  	    artworkZoomFactor = 1;
 		$('#artwork-canvas').css('width', '320px');
 		$(this).removeClass('out');
-		$('.memo-canvas').removeClass('zoom')
-  }
+		$('.memo-canvas').removeClass('zoom');
+		$('.artwork-lock').addClass('none');
+    }
+    evt.preventDefault();
 }
+$('body').css('overflow', 'hidden');
 artworkClear();
-$(document).on('mousemove', artworkUpdate);
-$('#artwork-canvas').on('mousedown', artworkDrawOnce);
-$('#artwork-canvas').on('mousedown', artworkUndoDown);
-$('button').contextmenu(function() { $(this).click(); return false });
+$(document).on('mousemove touchmove', artworkUpdate);
+$(document).on('touchstart', function() {
+    mousePosOld = 0;
+});
+$('#artwork-canvas').on('mousedown touchstart', artworkDrawOnce);
+$('#memo-drawboard-page button').contextmenu(function() { $(this).click(); return false });
 $('.artwork-clear').click(artworkClear);
 $('.artwork-undo').click(artworkUndo);
 $('.artwork-pencil, .artwork-eraser, .artwork-fill').click(artworkToolUpdate);
 $('.artwork-color').click(artworkColorUpdate);
 $('.artwork-zoom').click(artworkZoomUpdate);
+$('.artwork-lock').click(function(){
+    if(!$(this).hasClass('selected')) {
+        $('.memo-canvas').addClass('locked');
+        $(this).addClass('selected');
+    } else {
+        $('.memo-canvas').removeClass('locked');
+        $(this).removeClass('selected');
+    }
+});
 $('.memo-finish-btn').click(function(){
 	var dataURL = canvas.toDataURL();
         if(typeof dataURL !== undefined) {
@@ -233,6 +254,8 @@ $('.memo-finish-btn').click(function(){
 		}
 	$("#drawing").remove();
 	$(".textarea-memo").append("<img id=\"drawing\" src=\"" + dataURL + "\" style=\"background:white;\"></img>");
+	$("#memo-drawboard-page button").off('click');
+	$('body').css('overflow', '');
 
 })
 }
@@ -275,7 +298,7 @@ $("div.textarea-container").removeClass("none");
 $("div.textarea-memo").addClass("none");
 $("div.textarea-poll").addClass("none");
 $("textarea[name=body]").attr("data-required", "");
-Olv.EntryForm.setupFormStatus($("#post-form"), d);
+//Olv.EntryForm.setupFormStatus($("#post-form"), d);
 }
 /* 'Commented because it\'s broken'
 function switchpoll() {
@@ -1438,7 +1461,7 @@ var Olv = Olv || {};
         var e = a(this);
         e.toggleClass("empathy-added", d);
         var f = e.attr("data-feeling") || "normal";
-        e.find(".empathy-button-text").text(b.loc("olv.portal.miitoo." + f + (d ? ".delete" : "")));
+        e.find(".yeah-button-text").text(b.loc("olv.portal.miitoo." + f + (d ? ".delete" : "")));
         var g;
         g = +e.attr("data-is-in-reply-list") ? e.closest(".reply-meta").find(".empathy-count") : e.closest(".post-meta").find(".empathy-count"),
         g.text(+g.text() + (d ? 1 : -1));
@@ -1454,11 +1477,11 @@ var Olv = Olv || {};
     }
     ,
     b.Entry.setupEmpathyButtons = function(c) {
-        a(document).on("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".empathy-button", b.Entry.onEmpathyToggle),
-        a(document).on("click", ".empathy-button", b.Entry.onEmpathyClick),
+        a(document).on("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".yeah-button", b.Entry.onEmpathyToggle),
+        a(document).on("click", ".yeah-button", b.Entry.onEmpathyClick),
         c.done(function() {
-            a(document).off("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".empathy-button", b.Entry.onEmpathyToggle),
-            a(document).off("click", ".empathy-button", b.Entry.onEmpathyClick)
+            a(document).off("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".yeah-button", b.Entry.onEmpathyToggle),
+            a(document).off("click", ".yeah-button", b.Entry.onEmpathyClick)
         })
     }
     ,
@@ -1474,11 +1497,11 @@ var Olv = Olv || {};
                 f.toggleClass("none", 0 === g)
             }
         }
-        a(document).on("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".empathy-button", d),
-        a(document).on("click", ".empathy-button", b.Entry.onEmpathyClick),
+        a(document).on("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".yeah-button", d),
+        a(document).on("click", ".yeah-button", b.Entry.onEmpathyClick),
         c.done(function() {
-            a(document).off("click", ".empathy-button", b.Entry.onEmpathyClick),
-            a(document).off("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".empathy-button", d)
+            a(document).off("click", ".yeah-button", b.Entry.onEmpathyClick),
+            a(document).off("olv:entry:empathy:toggle olv:entry:empathy:toggle:fail", ".yeah-button", d)
         })
     }
     ,
@@ -2122,7 +2145,7 @@ var Olv = Olv || {};
         })
 		
 		// Thing
-		a('.my-menu-white-power').on('click', function(e) {
+		$('.my-menu-white-power').on('click', function(e) {
 		e.preventDefault()
 				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div><p></p></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
 		var g = new b.ModalWindow($('.feedback-dialog'));g.open();
@@ -2135,7 +2158,27 @@ var Olv = Olv || {};
 				b.showMessage("", "That was successfully submitted, and hopefully someone will see it. Thank you!")
 			})
 		})
-		})
+		});
+		
+		$('.my-menu-account-setting').on('click', function(e) {
+			e.preventDefault();
+				$.ajax({url: '/pref',
+					success: function(a) {
+						prefs = JSON.parse(a);
+						yeah_notifications = prefs[0];
+						lights_off = prefs[1];
+						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account settings</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s settings, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a '+
+							yeah_notifications ? 'checked':''  
+							+'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights() '+ 
+							lights_off ? 'checked':''
+						+'> Enable dark mode</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						
+						}, error: function() {
+						b.showMessage('', "Can't open your account preferences because getting your current preferences failed.")
+						}
+				});
+			
+		});
 		// Unthing
     }
     ,
@@ -2223,8 +2266,7 @@ var Olv = Olv || {};
 			s.preventDefault();
 			go($(this).attr('action') + '?'+$(this).serialize())
 		})
-        b.Content.autopagerize(".js-post-list", e),
-        b.Entry.setupEmpathyButtons(e),
+        b.Entry.setupEmpathyButtons(e);
         a("form.search").on("submit", b.Form.validateValueLength);
         var h, i, j = a(".content-loading-window");
         if (j.length) {
@@ -2246,6 +2288,7 @@ var Olv = Olv || {};
 						pf.removeClass('none')
 						f()
 					}
+					b.Content.autopagerize(".js-post-list", e),
 					b.Entry.setupHiddenContents(e);
             }).fail(function() {
                 setTimeout(function() {
@@ -2359,10 +2402,6 @@ var Olv = Olv || {};
     }),
 	b.router.connect("/notifications(\/)?$", function(a, c, d) {
 	   changesel("news");
-	   if($('div.notify').length) {
-		   $('#global-menu-news > a > span').html('0')
-			b.Form.post("/notifications/set_read")
-	   }
 	   $('button.rm').on('click', function() {
 		   $(this).parent().parent().remove()
 		   b.Form.post('/notifications/' + $(this).parent().parent().attr('id') + '.rm')

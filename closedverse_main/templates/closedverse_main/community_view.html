@@ -1,5 +1,5 @@
 {% extends "closedverse_main/layout.html" %}{% block main-body %}{% load closedverse_community %}
-{% community_sidebar community %}
+{% community_sidebar community request %}
 	<div class="main-column">
 		<div class="post-list-outline">
 		{% if request.user.is_authenticated and community.post_perm %}

@@ -453,6 +453,11 @@ body {
   height: 40px;
   width: 40px;
 }
+#memo-drawboard-page button.artwork-lock {
+  margin-left: -40px;
+  height: 40px;
+  float: right;
+}
 #memo-drawboard-page button.selected {
   background: #0080ff;
 }
@@ -543,8 +548,14 @@ body {
   margin-top: 48px;
   height: 128px;
 }
+#memo-drawboard-page button.artwork-lock:before {
+  content: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAACXBIWXMAAAsTAAALEwEAmpwYAAADGGlDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2BgnuDo4uTKJMDAUFBUUuQe5BgZERmlwH6egY2BmYGBgYGBITG5uMAxIMCHgYGBIS8/L5UBFTAyMHy7xsDIwMDAcFnX0cXJlYE0wJpcUFTCwMBwgIGBwSgltTiZgYHhCwMDQ3p5SUEJAwNjDAMDg0hSdkEJAwNjAQMDg0h2SJAzAwNjCwMDE09JakUJAwMDg3N+QWVRZnpGiYKhpaWlgmNKflKqQnBlcUlqbrGCZ15yflFBflFiSWoKAwMD1A4GBgYGXpf8EgX3xMw8BSMDVQYqg4jIKAUICxE+CDEESC4tKoMHJQODAIMCgwGDA0MAQyJDPcMChqMMbxjFGV0YSxlXMN5jEmMKYprAdIFZmDmSeSHzGxZLlg6WW6x6rK2s99gs2aaxfWMPZ9/NocTRxfGFM5HzApcj1xZuTe4FPFI8U3mFeCfxCfNN45fhXyygI7BD0FXwilCq0A/hXhEVkb2i4aJfxCaJG4lfkaiQlJM8JpUvLS19QqZMVl32llyfvIv8H4WtioVKekpvldeqFKiaqP5UO6jepRGqqaT5QeuA9iSdVF0rPUG9V/pHDBYY1hrFGNuayJsym740u2C+02KJ5QSrOutcmzjbQDtXe2sHY0cdJzVnJRcFV3k3BXdlD3VPXS8Tbxsfd99gvwT//ID6wIlBS4N3hVwMfRnOFCEXaRUVEV0RMzN2T9yDBLZE3aSw5IaUNak30zkyLDIzs+ZmX8xlz7PPryjYVPiuWLskq3RV2ZsK/cqSql01jLVedVPrHzbqNdU0n22VaytsP9op3VXUfbpXta+x/+5Em0mzJ/+dGj/t8AyNmf2zvs9JmHt6vvmCpYtEFrcu+bYsc/m9lSGrTq9xWbtvveWGbZtMNm/ZarJt+w6rnft3u+45uy9s/4ODOYd+Hmk/Jn58xUnrU+fOJJ/9dX7SRe1LR68kXv13fc5Nm1t379TfU75/4mHeY7En+59lvhB5efB1/lv5dxc+NH0y/fzq64Lv4T8Ffp360/rP8f9/AA0ADzT6lvFdAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAABnSURBVHjatJRBDsAgCAR3///o6cUmNVCIrXIhbhiDLmq0Fv4JWJKYBRqAZkv6DicxX3hkYlUG+CEhSdgZWwHSjXwHWkNMksrAWwErWFgAWK/qHmBcJEtn4DRw3ocWiC+tnqWDv8Y1AKETUgGf7LYxAAAAAElFTkSuQmCC');
+}
 #memo-drawboard-page .memo-canvas.zoom {
   overflow-x: scroll;
+}
+#memo-drawboard-page .memo-canvas.locked {
+  overflow: hidden;
 }
 #memo-drawboard-page .memo-canvas #artwork-canvas {
   -ms-interpolation-mode: nearest-neighbor;
@@ -835,7 +846,7 @@ left: 10% !important;
   content: url(/s/img/font/wp.svg);
   width: 20px;
 }
-#global-menu #global-my-menu .my-menu-miiverse-setting:before {
+#global-menu #global-my-menu .my-menu-account-setting:before {
   content: "Y";
 }
 /*Not done yet*/
@@ -4711,7 +4722,7 @@ div#activity-feed-tutorial.no-content p.tleft {
 .digest .post .user-name,
 .digest .post .timestamp-container,
 .digest .post .accepting,
-.digest .post .post-meta .empathy-button,
+.digest .post .post-meta .yeah-button,
 .digest .post .post-meta .played,
 .digest .post .topic-body {
   display: none;
@@ -5276,7 +5287,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   font-size: 18px;
   color: #0080ff;
 }
-.empathy-button {
+.yeah-button {
   float: left;
   display: inline-block;
   *display: inline;
@@ -5300,7 +5311,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   -o-box-shadow: inset 0 1px 0 #ffffff;
   box-shadow: inset 0 1px 0 #ffffff;
 }
-.empathy-button:hover {
+.yeah-button:hover {
   text-decoration: none;
   -webkit-box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.1);
   -moz-box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.1);
@@ -5308,7 +5319,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   -o-box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.1);
   box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.1);
 }
-.empathy-button:before {
+.yeah-button:before {
   content: "E";
   font-size: 16px;
   color: #969696;
@@ -5319,14 +5330,14 @@ div#activity-feed-tutorial.no-content p.tleft {
   *zoom: 1;
   vertical-align: middle;
 }
-.empathy-button:disabled {
+.yeah-button:disabled {
   color: #dddddd;
   cursor: default;
 }
-.empathy-button:disabled:before {
+.yeah-button:disabled:before {
   color: #dddddd;
 }
-.empathy-button:disabled:hover {
+.yeah-button:disabled:hover {
   -webkit-box-shadow: inset 0 1px 0 #ffffff;
   -moz-box-shadow: inset 0 1px 0 #ffffff;
   -ms-box-shadow: inset 0 1px 0 #ffffff;
@@ -5765,7 +5776,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   margin-left: 0;
   padding: 0;
 }
-.post-body .multi-timeline-post-list .post-subtype-artwork .empathy-button {
+.post-body .multi-timeline-post-list .post-subtype-artwork .yeah-button {
   display: none;
 }
 .post-body .multi-timeline-post-list .post-subtype-artwork .hidden-content {
@@ -5823,7 +5834,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   padding: 5px 0 0 0;
 }
 .multi-timeline-post-list .post-subtype-topic .icon-container,
-.multi-timeline-post-list .post-subtype-topic .empathy-button {
+.multi-timeline-post-list .post-subtype-topic .yeah-button {
   display: none;
 }
 .multi-timeline-post-list .post-subtype-topic.post.with-image .body {
@@ -7361,6 +7372,9 @@ h2.label-topic_post .label-topic_post-msgid {
   .user-data .data-content.game .note div {
     margin: 0 8px;
   }
+  .login-page .g-recaptcha {
+margin: 10px 0px 15px !important;
+}
   .redesign-banner {
     position: relative;
     min-width: 428px;

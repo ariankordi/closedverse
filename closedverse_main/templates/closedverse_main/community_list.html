@@ -18,6 +18,25 @@
 		{% endif %}
 	</div>
 	<div class="community-main">
+	{% if favorites %}
+		<h3 class="community-title symbol community-favorite-title">Favorite communities</h3>
+		<div class="card" id="community-favorite">
+		  <ul>
+			{% for favorite in favorites %}
+				<li class="test-favorite-community">
+				  <a href="{% url "main:community-view" favorite.community.id %}" class="icon-container">
+					<img src="{{ favorite.community.icon }}" class="icon">
+					
+				  </a>
+				</li>
+			 {% endfor %}
+				
+			<li class="read-more">
+			  <a href="{% url "main:community-favorites" %}" class="favorite-community-link symbol"><span class="symbol-label">Show more</span></a>
+			</li>
+		  </ul>
+		</div>
+	{% endif %}
 		{% if feature %}
 			{% community_page_element feature "Featured Communities" True %}
 		{% endif %}

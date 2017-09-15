@@ -46,7 +46,7 @@ def get_mii(nnid):
 def recaptcha_verify(request, key):
 	if not request.POST.get('g-recaptcha-response'):
 		return False
-	re_request = urllib.request.urlopen('https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}&remoteip={2}'.format(key, request.POST['g-recaptcha-response'], request.META['REMOTE_ADDR']))
+	re_request = urllib.request.urlopen('https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}'.format(key, request.POST['g-recaptcha-response']))
 	jsond = json.loads(re_request.read().decode())
 	if not jsond['success']:
 		return False
@@ -81,3 +81,4 @@ def get_gravatar(email):
 def filterchars(str):
 	if "\u202e" in str:
 		return str.split("\u202e")[1]
+	return str

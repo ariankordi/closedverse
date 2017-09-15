@@ -33,8 +33,12 @@ urlpatterns = [
 	url(r'origin', views.origin_id, name='origin-id-get'),
 	
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
+	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
 	url(r'communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
+	url(r'communities/'+ community +'/favorite$', views.community_favorite_create, name='community-favorite-add'),
+	url(r'communities/'+ community +'/favorite\.rm$', views.community_favorite_rm, name='community-favorite-rm'),
 	url(r'communities/'+ community +'/posts$', views.post_create, name='post-create'),
+	
 	# Some of these NAMES (not patterns) are hardcoded into models.py
 	url(r'posts/'+ post +'$', views.post_view, name='post-view'),
 	url(r'posts/'+ post +'/yeah$', views.post_add_yeah, name='post-add-yeah'),
@@ -59,6 +63,7 @@ urlpatterns = [
 	
 	url(r'activity/?$', views.activity_feed, name='activity'),
 	url(r'users\.search$', views.user_search, name='user-search'),
+	url(r'pref$', views.prefs, name='prefs'),
 	url(r'messages/?$', views.messages, name='messages'),
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),

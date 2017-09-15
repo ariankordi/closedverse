@@ -31,10 +31,10 @@
           </p></div>
 			{% endif %}
         <div class="post-meta">
-		  <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit empathy-button
+		  <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
 		  {% if not post.can_yeah %}disabled{% endif %}
-		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="empathy-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
+		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
           {% if post.url %}
 		  <a class="link-confirm symbol button" href="{{ post.url }}"></a>
 		  {% endif %}

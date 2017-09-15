@@ -1,4 +1,5 @@
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
@@ -28,8 +29,10 @@ def community_list(request):
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
+		favorites = request.user.communityfavorite_set.order_by('-created')[0:8]
 	else:
 		classes = []
+		favorites = None
 	return render(request, 'closedverse_main/community_list.html', {
 		'title': 'Communities',
 		'classes': classes,
@@ -37,7 +40,20 @@ def community_list(request):
 		'game': obj.filter(type=1).order_by('-created')[0:8],
 		'special': obj.filter(type=2).order_by('-created')[0:8],
 		'feature': obj.filter(is_feature=True).order_by('-created'),
+		'favorites': favorites,
 		'settings': settings,
+	})
+
+@login_required
+def community_favorites(request):
+	favorites = request.user.communityfavorite_set.order_by('-created')
+	communities = []
+	for fav in favorites:
+		communities.append(fav.community)
+	del(favorites)
+	return render(request, 'closedverse_main/community_favorites.html', {
+		'title': 'Favorite communities',
+		'favorites': communities,
 	})
 
 def login_page(request):
@@ -92,8 +108,8 @@ def signup_page(request):
 		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 		if request.POST['origin_id']:
-			if request.POST['origin_id'].lower() in loads(open('closedverse_main/forbidden.json', 'r').read()):
-				return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
+			#if request.POST['origin_id'].lower() in loads(open('closedverse_main/forbidden.json', 'r').read()):
+			#	return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
 				return HttpResponseBadRequest("That Nintendo Network ID address is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
@@ -160,6 +176,9 @@ def user_view(request, username):
 	profile = user.profile()
 	profile.setup(request)
 	if request.method == 'POST':
+		user = request.user
+		profile	= user.profile()
+		profile.setup(request)
 		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
@@ -174,8 +193,8 @@ def user_view(request, username):
 			return json_response("That email address is already in use, that can't happen.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID address is already in use, that would cause confusion.")
-		if request.POST['origin_id'].lower() in loads(open('forbidden.json', 'r').read()):
-			return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
+		#if request.POST['origin_id'].lower() in loads(open('forbidden.json', 'r').read()):
+		#	return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if request.POST.get('avatar') == '1':
 			user.avatar = get_gravatar(user.email) or ""
 			user.has_gravatar = True
@@ -428,7 +447,7 @@ def special_community_tag(request, tag):
 
 def community_view(request, community):
 	communities = get_object_or_404(Community, id=community)
-	communities.post_perm = communities.post_perm(request)
+	communities.setup(request)
 	if not communities.clickable():
 		return HttpResponseForbidden()
 	if request.GET.get('offset'):
@@ -456,6 +475,20 @@ def community_view(request, community):
 			'posts': posts,
 			'next': next_offset,
 		})
+
+@require_http_methods(['POST'])
+@login_required
+def community_favorite_create(request, community):
+	the_community = get_object_or_404(Community, id=community)
+	the_community.favorite_add(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def community_favorite_rm(request, community):
+	the_community = get_object_or_404(Community, id=community)
+	the_community.favorite_rm(request)
+	return HttpResponse()
+
 @require_http_methods(['POST'])
 @login_required
 def post_create(request, community):
@@ -718,11 +751,13 @@ def notification_delete(request, notification):
 def notifications(request):
 	notifications = request.user.get_notifications()
 	frs = request.user.get_frs_notif()
-	return render(request, 'closedverse_main/notifications.html', {
+	response = loader.get_template('closedverse_main/notifications.html').render({
 		'title': 'My notifications',
 		'notifications': notifications,
 		'frs': frs,
-	})
+	}, request)
+	update = request.user.notification_read()
+	return HttpResponse(response)
 @login_required
 def friend_requests(request):
 	friendrequests = request.user.get_frs_target()
@@ -848,6 +883,15 @@ def messages_read(request, username):
 	conversation = friendship.conversation()
 	conversation.set_read(request.user)
 	return HttpResponse()
+
+@login_required
+def prefs(request):
+	profile = request.user.profile
+	if request.method == 'POST':
+		return json_response("lol")
+	lights = not (request.session.get('lights', False))
+	arr = [False, lights]
+	return JsonResponse(arr, safe=False)
 
 @require_http_methods(['POST'])
 @login_required

@@ -2,9 +2,10 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('closedverse_main/elements/community_sidebar.html')
-def community_sidebar(community):
+def community_sidebar(community, request):
 	return {
 		'community': community,
+		'request': request,
 	}
 @register.inclusion_tag('closedverse_main/elements/community_post.html')
 def community_post(post, type=0):

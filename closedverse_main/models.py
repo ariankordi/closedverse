@@ -369,7 +369,7 @@ class Community(models.Model):
 		return self.tags == 'activity'
 	def clickable(self):
 		return not self.is_activity() and not self.type == 3
-	def get_posts(self, limit=50, offset=0, request=None):
+	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
 		posts = Post.objects.filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
 			for post in posts:
@@ -385,6 +385,23 @@ class Community(models.Model):
 			return True
 		else:
 			return True
+	
+	def has_favorite(self, request):
+		if request.user.communityfavorite_set.filter(community=self).exists():
+			return True
+		return False
+	def favorite_add(self, request):
+		if not self.has_favorite(request):
+			return request.user.communityfavorite_set.create(community=self)
+	def favorite_rm(self, request):
+		if self.has_favorite(request):
+			return request.user.communityfavorite_set.get(community=self).delete()
+
+
+	def setup(self, request):
+		if request.user.is_authenticated:
+			self.post_perm = self.post_perm(request)
+			self.has_favorite = self.has_favorite(request)
 
 	def create_post(self, request):
 		if not self.post_perm(request):
@@ -428,8 +445,14 @@ class CommunityClink(models.Model):
 	kind = models.BooleanField(default=False)
 
 # Do this, or not
-#class CommunityFavorite(models.Model):
-#
+class CommunityFavorite(models.Model):
+	id = models.AutoField(primary_key=True)
+	by = models.ForeignKey(User)
+	community = models.ForeignKey(Community)
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "Community favorite by " + str(by) + " for " + str(community)
 
 class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -444,6 +467,7 @@ class Post(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
+	poll = models.ForeignKey('Poll', null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0, choices=((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin')))
@@ -463,7 +487,7 @@ class Post(models.Model):
 			return self.body
 	def yt_vid(self):
 		try:
-			thing = re.search('^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$', self.url).group(0).split('v=')[1]
+			thing = re.search('(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})', self.url).group(6)
 		except:
 			return False
 		return thing
@@ -963,3 +987,32 @@ class Message(models.Model):
 		if self.creator == user:
 			return True
 		return False
+
+class Poll(models.Model):
+	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+	id = models.AutoField(primary_key=True)
+	able_vote = models.BooleanField(default=True)
+	choices = models.TextField(default="[]")
+	created = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return "A poll created at " + created
+	def setup(self):
+		self.choices = json.loads(choices)
+	def vote(self, user, opt):
+		if self.pollvote_set.filter(by=user).exists():
+			return False
+		self.pollvote_set.create(by=user, choice=opt)
+	def unvote(self, user):
+		vote = self.pollvote_set.filter(by=user).first()
+		if vote:
+			vote.delete()
+class PollVote(models.Model):
+	id = models.AutoField(primary_key=True)
+	done = models.DateTimeField(auto_now_add=True)
+	choice = models.SmallIntegerField(default=0)
+	poll = models.ForeignKey(Poll)
+	by = models.ForeignKey(User)
+	
+	def __str__(self):
+		return "A vote on option " + str(choice) + " for poll \"" + self.poll + "\" by " + str(self.by)
