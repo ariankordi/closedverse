@@ -16,6 +16,7 @@
         <a class="tab-icon-my-news{% if frs %} notify{% endif %}" href="{% url "main:friend-requests" %}">
 			<span class="symbol fr"></span>
 			<span>Friend Requests</span>
+			{% if frs %}<span class="badge" style></span>{% endif %}
 		</a>
 
       </div>

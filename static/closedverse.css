@@ -697,6 +697,22 @@ body {
   *display: inline;
   *zoom: 1;
 }
+.tab-icon-my-news .badge {
+  display: block;
+  padding: -120px;
+  height: 18px;
+  width: 9px;
+  padding: 1px 5px 0;
+  background: #fc951e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 18px;
+  margin-top: -17px;
+  margin-left: 16px;
+  border-radius: 20px;
+}
 #global-menu li.selected a {
   color: #0080ff;
 }
