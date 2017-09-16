@@ -20,7 +20,7 @@
 						</p>
 						{% if friend.get_latest_msg %}
 						<span class="timestamp">{% time friend.get_latest_msg.created %}</span>
-						<p class="text {% if friend.get_latest_msg.drawing %}type-memo {% endif %}{% if friend.get_latest_msg.mine %}my{% else %}other{% endif %}">{{ friend.get_latest_msg.trun }}</p>
+						<p class="text {% if friend.get_latest_msg.drawing or friend.get_latest_msg.is_rm %}type-memo {% endif %}{% if friend.get_latest_msg.mine %}my{% else %}other{% endif %}">{{ friend.get_latest_msg.trun }}</p>
 						{% else %}
 						<p class="text placeholder">You haven't exchanged messages with this user yet.</p>
 						{% endif %}

@@ -482,6 +482,8 @@ class Post(models.Model):
 	def is_reply(self):
 		return False
 	def trun(self):
+		if self.is_rm:
+			return 'deleted'
 		if self.drawing:
 			return 'drawing'
 		else:
@@ -639,6 +641,8 @@ class Comment(models.Model):
 	def is_reply(self):
 		return True
 	def trun(self):
+		if self.is_rm:
+			return 'deleted'
 		if self.drawing:
 			return '(drawing)'
 		else:
@@ -982,11 +986,17 @@ class Message(models.Model):
 	url = models.URLField(max_length=1200, blank=True, default="")
 	created = models.DateTimeField(auto_now_add=True)
 	read = models.BooleanField(default=False)
+	is_rm = models.BooleanField(default=False)
 	creator = models.ForeignKey(User)
+
+	objects = PostManager()
+	real = models.Manager()
 
 	def __str__(self):
 		return self.body[:50] + "..."
 	def trun(self):
+		if self.is_rm:
+			return 'deleted'
 		if self.drawing:
 			return '(drawing)'
 		else:
@@ -995,6 +1005,10 @@ class Message(models.Model):
 		if self.creator == user:
 			return True
 		return False
+	def rm(self, request):
+		if self.mine(request.user):
+			self.is_rm = True
+			return self.save()
 
 class Poll(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

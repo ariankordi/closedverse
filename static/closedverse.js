@@ -2442,7 +2442,6 @@ var Olv = Olv || {};
 	}),
 	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
 		changesel("message");
-		b.Form.post($('input[type=hidden][message-read]').attr('message-read'))
 		b.Content.autopagerize(".list.messages", d)
 			var ff = $('#post-form')
 		    b.EntryForm.setupSubmission(ff, d),
@@ -2493,6 +2492,18 @@ var menu = $("div.textarea-with-menu");
 mode_post = 0;
     }
 }
+
+	rm_btn = $('.rm-post-button')
+	if(rm_btn.length) {
+		rm_btn.click(function(){
+			thingy = $(this)
+			b.showConfirm("Delete message", "Really delete this message?")
+				$('.ok-button').click(function(){
+					b.Form.post(rm_btn.attr('data-action'))
+					thingy.parent().parent().remove()
+				})
+		})
+	}
 			
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {

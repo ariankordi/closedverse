@@ -866,13 +866,15 @@ def messages_view(request, username):
 				'messages': messages,
 				'next': next_offset,
 			})
-		return render(request, 'closedverse_main/messages-view.html', {
-			'title': 'Conversation with {0} ({1})'.format(other.nickname, other.username),
-			'other': other,
-			'conversation': conversation,
-			'messages': messages,
-			'next': next_offset,
-		})
+		response = loader.get_template('closedverse_main/messages-view.html').render({
+				'title': 'Conversation with {0} ({1})'.format(other.nickname, other.username),
+				'other': other,
+				'conversation': conversation,
+				'messages': messages,
+				'next': next_offset,
+			}, request)
+		conversation.set_read(request.user)
+		return HttpResponse(response)
 @require_http_methods(['POST'])
 @login_required
 def messages_read(request, username):
@@ -882,6 +884,13 @@ def messages_read(request, username):
 		return HttpResponse()
 	conversation = friendship.conversation()
 	conversation.set_read(request.user)
+	return HttpResponse()
+
+@require_http_methods(['POST'])
+@login_required
+def message_rm(request, message):
+	message = get_object_or_404(Message, unique_id=message)
+	message.rm(request)
 	return HttpResponse()
 
 @login_required

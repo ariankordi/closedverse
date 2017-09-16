@@ -17,13 +17,17 @@ class CommunityAdmin(admin.ModelAdmin):
 	def get_queryset(self, request):
 		return models.Community.real.get_queryset()
 
+class MessageAdmin(admin.ModelAdmin):
+	def get_queryset(self, request):
+		return models.Message.real.get_queryset()
+
 admin.site.unregister(Group)
 
 admin.site.register(models.User)
 admin.site.register(models.Profile)
 admin.site.register(models.Community, CommunityAdmin)
 admin.site.register(models.Complaint)
-admin.site.register(models.Message)
+admin.site.register(models.Message, MessageAdmin)
 admin.site.register(models.Conversation)
 
 

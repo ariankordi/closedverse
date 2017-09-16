@@ -2,6 +2,9 @@
         {% user_icon_container message.creator message.feeling %}
 		<p class="timestamp-container">
           <span class="timestamp">{% time message.created %}</span>
+		  {% if message.mine %}
+		  <button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:message-delete" message.unique_id %}"><span class="symbol-label">Delete</span></button>
+		  {% endif %}
         </p>
         <div class="post-body">
 		  {% if message.drawing %}

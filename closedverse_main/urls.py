@@ -6,6 +6,7 @@ username = r'(?P<username>[A-Za-z0-9-._]+)'
 community = r'(?P<community>[0-9]+)'
 post = r'(?P<post>[0-9]+)'
 comment = r'(?P<comment>[0-9]+)'
+uuidr = r'[0-9a-f\-]'
 
 app_name = 'main'
 urlpatterns = [
@@ -59,12 +60,14 @@ urlpatterns = [
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),
-	url(r'notifications/(?P<notification>[0-9a-f\-]+)\.rm$', views.notification_delete, name='notification-delete'),
+	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
+
 	
 	url(r'activity/?$', views.activity_feed, name='activity'),
 	url(r'users\.search$', views.user_search, name='user-search'),
 	url(r'pref$', views.prefs, name='prefs'),
 	url(r'messages/?$', views.messages, name='messages'),
+	url(r'messages/(?P<message>'+ uuidr +'+)\.rm$', views.message_rm, name='message-delete'),
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),
 	
