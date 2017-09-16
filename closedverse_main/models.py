@@ -1006,9 +1006,8 @@ class Message(models.Model):
 			return True
 		return False
 	def rm(self, request):
-		if self.mine(request.user):
-			self.is_rm = True
-			return self.save()
+		self.is_rm = True
+		return self.save()
 
 class Poll(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
