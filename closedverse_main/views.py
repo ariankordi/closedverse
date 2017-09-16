@@ -886,11 +886,16 @@ def messages_read(request, username):
 
 @login_required
 def prefs(request):
-	profile = request.user.profile
+	profile = request.user.profile()
 	if request.method == 'POST':
-		return json_response("lol")
+		if request.POST.get('a'):
+			profile.let_yeahnotifs = True
+		else:
+			profile.let_yeahnotifs = False
+		profile.save()
+		return HttpResponse()
 	lights = not (request.session.get('lights', False))
-	arr = [False, lights]
+	arr = [profile.let_yeahnotifs, lights]
 	return JsonResponse(arr, safe=False)
 
 @require_http_methods(['POST'])

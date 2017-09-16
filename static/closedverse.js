@@ -2164,15 +2164,16 @@ var Olv = Olv || {};
 			e.preventDefault();
 				$.ajax({url: '/pref',
 					success: function(a) {
-						prefs = JSON.parse(a);
-						yeah_notifications = prefs[0];
-						lights_off = prefs[1];
-						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account settings</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s settings, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a '+
-							yeah_notifications ? 'checked':''  
-							+'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights() '+ 
-							lights_off ? 'checked':''
-						+'> Enable dark mode</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						yeah_notifications = a[0] ? ' checked' : '';
+						lights_off = a[1] ? ' checked' : '';
 						
+						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						var g = new b.ModalWindow($('.acc-set'));g.open();
+						$('.ac-send').click(function() {
+							b.Form.post('/pref', $('#feedback-form').serializeArray())
+							g.close();
+							$('.acc-set').remove();
+						})
 						}, error: function() {
 						b.showMessage('', "Can't open your account preferences because getting your current preferences failed.")
 						}

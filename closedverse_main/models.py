@@ -245,6 +245,7 @@ class User(models.Model):
 	def delete_friend(self, target):
 		fr = Friendship.find_friendship(self, target)
 		if fr:
+			fr.conversation().all_read()
 			fr.delete()
 	def get_activity(self, limit=20, offset=0, distinct=False, friends_only=False, request=None):
 		#Todo: make distinct work; combine friends and following, but then get posts from them
@@ -737,6 +738,7 @@ class Profile(models.Model):
 	gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default="")
 	favorite = models.ForeignKey(Post, blank=True, null=True)
+	let_yeahnotifs = models.BooleanField(default=True)
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
@@ -831,7 +833,11 @@ class Notification(models.Model):
 		# Just keeping this simple for now, might want to make it better later
 		# If the user sent a notification to this user at least 5 seconds ago, return False
 		# Or if user is to
-		if (not type == 3 and user == to) or user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to):
+		# Or if yeah notifications are off and this is a yeah notification
+		user_is_self_unk = (not type == 3 and user == to)
+		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to)
+		user_no_yeahnotif = (not to.profile().let_yeahnotifs and (type == 0 or type == 1))
+		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False
 		# Search for my own notifiaction. If it exists, set it as unread.
 		merge_own = user.notification_sender.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
@@ -942,6 +948,8 @@ class Conversation(models.Model):
 		return self.message_set.filter(read=False).exclude(creator=user).order_by('-created')
 	def set_read(self, user):
 		return self.unread(user).update(read=True)
+	def all_read(self):
+		return self.objects.filter().update(read=True)
 	def messages(self, request, limit=50, offset=0):
 		msgs = self.message_set.filter().order_by('-created')[offset:offset + limit]
 		for msg in msgs:
