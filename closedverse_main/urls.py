@@ -32,9 +32,11 @@ urlpatterns = [
 	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
 	
 	url(r'origin', views.origin_id, name='origin-id-get'),
-	
+
+	url(r'communities\.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
+	url(r'communities/all$', views.community_all, name='community-viewall'),
 	url(r'communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
 	url(r'communities/'+ community +'/favorite$', views.community_favorite_create, name='community-favorite-add'),
 	url(r'communities/'+ community +'/favorite\.rm$', views.community_favorite_rm, name='community-favorite-rm'),

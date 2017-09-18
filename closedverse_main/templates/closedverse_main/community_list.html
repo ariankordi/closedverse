@@ -4,9 +4,10 @@
 		<div id="community-eyecatch"></div>
 	</div>
 	<div class="community-top-sidebar">
-		<!--<form action="/titles/search" class="search">
-			<input maxlength="32" name="query" placeholder="Search Communities" type="text"><input title="Search" type="submit" value="q">
+		<form action="{% url "main:community-search" %}" class="search">
+			<input maxlength="32" name="query" placeholder="Search all communities" type="text"><input title="Search" type="submit" value="q">
 		</form>
+		<!--
 		<div id="identified-user-banner">
 			<a class="list-button" href="/identified_user_posts"><span class="title">Get the latest news here!</span><span class="text">Posts from Verified Users</span></a>
 		</div>-->
@@ -43,6 +44,7 @@
 			{% community_page_element general "General Communities" %}
 			{% community_page_element game "Game Communities" %}
 			{% community_page_element special "Special Communities" %}
+			<a href="{% url "main:community-viewall" %}" class="big-button">Show more</a>
 	</div>
 	<div id="community-guide-footer">
 		<div id="guide-menu">

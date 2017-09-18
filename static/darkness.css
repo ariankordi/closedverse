@@ -456,6 +456,20 @@ border-top: 1px solid #222;
 #empathy-content:before {
     background: url(/s/img/rks.png) no-repeat 0 0 !important;
 }
+.community-switcher .community-switcher-tab {
+    background-color: #202030;
+    background: -webkit-gradient(linear, left top, left bottom, from(#202030), to(#202030), color-stop(0.5, #202030));
+    background: -webkit-linear-gradient(top, #202030 0%, #202030 50%, #202030 100%);
+    background: -moz-linear-gradient(top, #202030 0%, #202030 50%, #202030 100%);
+    background: -ms-linear-gradient(top, #202030 0%, #202030 50%, #202030 100%);
+    background: -o-linear-gradient(top, #202030 0%, #202030 50%, #202030 100%);
+    background: linear-gradient(top, #202030 0%, #202030 50%, #202030 100%);
+    border: 1px solid black;
+    color: #fff;
+}
+.community-switcher .community-switcher-tab:first-of-type {
+    border-left: 1px solid black;
+}
 code,
 pre {
 border: 1px solid #404040 !important;

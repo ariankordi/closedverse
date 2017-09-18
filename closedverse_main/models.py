@@ -16,6 +16,7 @@ from django.urls import reverse
 import re
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'))
+post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'))
 
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
@@ -433,6 +434,9 @@ class Community(models.Model):
 	def search(query='', limit=50, offset=0, request=None):
 		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).order_by('-created')[offset:offset + limit]
 
+	def get_all(type=0, offset=0, limit=12):
+		return Community.objects.filter(type=type).order_by('-created')[offset:offset + limit]
+		
 	class Meta:
 		verbose_name_plural = "communities"
 
@@ -453,7 +457,7 @@ class CommunityFavorite(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
-		return "Community favorite by " + str(by) + " for " + str(community)
+		return "Community favorite by " + str(self.by) + " for " + str(self.community)
 
 class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -471,7 +475,7 @@ class Post(models.Model):
 	poll = models.ForeignKey('Poll', null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
-	status = models.SmallIntegerField(default=0, choices=((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin')))
+	status = models.SmallIntegerField(default=0, choices=post_status)
 	creator = models.ForeignKey(User)
 
 	objects = PostManager()
@@ -630,7 +634,7 @@ class Comment(models.Model):
 	befores = models.TextField(null=True, blank=True)
 	has_edit = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
-	status = models.SmallIntegerField(default=0)
+	status = models.SmallIntegerField(default=0, choices=post_status)
 	creator = models.ForeignKey(User, blank=True, null=True)
 
 	objects = PostManager()
@@ -665,7 +669,8 @@ class Comment(models.Model):
 		else:
 			return False
 	def can_rm(self, request):
-		return request.user.level > 0
+		if request.user.level > 0 or self.original_post.is_mine(request):
+			return True
 	def give_yeah(self, request):
 		if self.has_yeah(request):
 			return True
@@ -828,7 +833,7 @@ class Notification(models.Model):
 	def all_users(self):
 		arr = []
 		arr.append(self.source)
-		merges = self.merged.filter()
+		merges = self.merged.filter().order_by('created')
 		for merge in merges:
 			arr.append(merge.source)
 		return arr
@@ -953,7 +958,7 @@ class Conversation(models.Model):
 	def set_read(self, user):
 		return self.unread(user).update(read=True)
 	def all_read(self):
-		return self.objects.filter().update(read=True)
+		return self.message_set.filter().update(read=True)
 	def messages(self, request, limit=50, offset=0):
 		msgs = self.message_set.filter().order_by('-created')[offset:offset + limit]
 		for msg in msgs:
@@ -1009,6 +1014,11 @@ class Message(models.Model):
 		self.is_rm = True
 		return self.save()
 
+	def makeopt(ls):
+		if len(ls) < 1:
+			raise ValueError
+		return json.dumps(ls)
+
 class Poll(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -1017,12 +1027,13 @@ class Poll(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
-		return "A poll created at " + created
+		return "A poll created at " + str(self.created)
 	def setup(self):
 		self.choices = json.loads(choices)
 	def vote(self, user, opt):
-		if self.pollvote_set.filter(by=user).exists():
-			return False
+		ex_query = self.pollvote_set.filter(by=user)
+		if ex_query.exists():
+			ex_query.first().delete()
 		self.pollvote_set.create(by=user, choice=opt)
 	def unvote(self, user):
 		vote = self.pollvote_set.filter(by=user).first()
@@ -1037,3 +1048,17 @@ class PollVote(models.Model):
 	
 	def __str__(self):
 		return "A vote on option " + str(choice) + " for poll \"" + self.poll + "\" by " + str(self.by)
+
+class RedFlag(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	post = models.ForeignKey(Post, blank=True, null=True)
+	comment = models.ForeignKey(Comment, blank=True, null=True)
+	user = models.ForeignKey(User, blank=True, null=True)
+	type = models.SmallIntegerField(choices=((0, 'Post'), (1, 'Comment'), (2, 'User'), ))
+	reason = models.SmallIntegerField(choices=((0, "Actual harassment"), (1, "Spam"), (2, "I don't like this"), (3, "Personal info"), (4, "Obscene use of swearing"), (5, "NSFW where not allowed"), (6, "Overly advertising/spam"), (7, "Please delete this")))
+	reasoning = models.TextField(default="", null=True, blank=True)
+	
+	def __str__(self):
+		return "Report on a " + self.get_type_display() + " for " + self.get_reason_display() + ": " + str(self.reasoning)
+	

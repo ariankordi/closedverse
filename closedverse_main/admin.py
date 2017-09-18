@@ -41,3 +41,5 @@ if settings.DEBUG:
 	admin.site.register(models.FriendRequest)
 	admin.site.register(models.Friendship)
 	admin.site.register(models.Notification)
+	admin.site.register(models.Poll)
+	admin.site.register(models.PollVote)

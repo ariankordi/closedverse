@@ -23,12 +23,12 @@
 		{% if post.yt_vid %}
 		<a href="{% url "main:post-view" post.id %}" class="screenshot-container video"><img height="48" src="https://i.ytimg.com/vi/{{ post.yt_vid }}/default.jpg"></a>
 		{% endif %}
-			{% if post.screenshot %}<a class="screenshot-container still-image" href="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}"><img src="{{ post.screenshot }}"></a>{% endif %}
 			{% if post.drawing %}
 			<p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 			{% else %}
             <p class="post-content-text">{{ post.body|truncatechars:200|linebreaksbr }}</p>
 			{% endif %}
+			{% if post.screenshot %}<a class="screenshot-container still-image" href="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}"><img src="{{ post.screenshot }}"></a>{% endif %}
 		{% if post.spoils and not post.is_mine %}
 		<div class="hidden-content"><p>This post contains spoilers.</p>
               <button type="button" class="hidden-content-button">View Post</button>

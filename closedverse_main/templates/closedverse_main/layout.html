@@ -13,9 +13,9 @@
     <meta name="apple-mobile-web-app-title" content="Closedverse">
     <meta name="description" content="Closedverse is a social network made by Arian Kordi that allows you to discuss games, communities and more. With over-protective administration and a post limit, you're sure to have fun here!">
 	<link rel="shortcut icon" type="image/png" href="{% static "favicon.png" %}">
-    <link rel="stylesheet" type="text/css" href="{% static "closedverse.min.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "closedverse.css" %}">
 	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "blueness.css" %}">
-    <script src="{% static "closedverse.min.js" %}"></script>
+    <script src="{% static "closedverse.js" %}"></script>
   </head>
 
   <body class=""{% if request.user.is_authenticated %}

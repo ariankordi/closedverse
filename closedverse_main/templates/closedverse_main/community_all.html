@@ -1,0 +1,33 @@
+{% extends "closedverse_main/layout.html" %}
+{% load closedverse_tags %}{% load closedverse_community %}{% block main-body %}
+<div class="community-main">
+	</div>
+	<div class="community-top-sidebar">
+		{% if settings.memo_title and settings.memo_msg %}
+		<div class="post-list-outline index-memo">
+			<h2 class="label">{{ settings.memo_title }}</h2>
+			{% autoescape off %}{{ settings.memo_msg }}{% endautoescape %}
+		</div>
+		{% endif %}
+	</div>
+	<div class="community-main">
+		<br><br><br>
+			<div class="community-switcher">
+				<a class="community-switcher-tab gen selected" href="#">General</a>
+				<a class="community-switcher-tab game" href="#">Game</a>
+				<a class="community-switcher-tab special" href="#">Special</a>
+			</div>
+			<div class="communities gen">
+				{% community_page_element general "General Communities" %}
+			</div>
+			<div class="communities game none">
+				{% community_page_element game "Game Communities" %}
+			</div>
+			<div class="communities special none">
+				{% community_page_element special "Special Communities" %}
+			</div>
+			{% if has_next %}
+				<a href="{% url "main:community-viewall" %}?offset={{ next }}" class="big-button">Next</a>
+			{% endif %}
+	</div>
+{% endblock %}

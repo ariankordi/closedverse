@@ -43,6 +43,51 @@ def community_list(request):
 		'favorites': favorites,
 		'settings': settings,
 	})
+def community_all(request):
+	offset = int(request.GET.get('offset', 0))
+	if request.user.is_authenticated:
+		classes = ['guest-top']
+	else:
+		classes = []
+	gen = Community.get_all(0, offset)
+	game = Community.get_all(1, offset)
+	special = Community.get_all(2, offset)
+	if gen.count() > 11 or game.count() > 11 or special.count() > 11:
+		has_next = True
+	else:
+		has_next = False
+	next = offset + 12
+	return render(request, 'closedverse_main/community_all.html', {
+		'title': 'All Communities',
+		'classes': classes,
+		'general': gen,
+		'game': game,
+		'special': special,
+		'has_next': has_next,
+		'next': next,
+	})
+
+def community_search(request):
+	query = request.GET.get('query')
+	if not query or len(query) < 2:
+		raise Http404()
+	if request.GET.get('offset'):
+		communities = Community.search(query, 20, int(request.GET['offset']), request)
+	else:
+		communities = Community.search(query, 20, 0, request)
+	if communities.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+	return render(request, 'closedverse_main/community-search.html', {
+		'classes': ['search'],
+		'query': query,
+		'communities': communities,
+		'next': next_offset,
+	})
 
 @login_required
 def community_favorites(request):
@@ -168,7 +213,7 @@ def logout_page(request):
 	return redirect("/")
 
 def user_view(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My profile'
 	else:
@@ -243,7 +288,7 @@ def user_view(request, username):
 	})
 
 def user_posts(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My posts'
 	else:
@@ -277,7 +322,7 @@ def user_posts(request, username):
 			'next': next_offset,
 		})
 def user_yeahs(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My yeahs'
 	else:
@@ -319,7 +364,7 @@ def user_yeahs(request, username):
 		})
 
 def user_following(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My follows'
 	else:
@@ -355,7 +400,7 @@ def user_following(request, username):
 			'next': next_offset,
 		})
 def user_followers(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My followers'
 	else:
@@ -392,7 +437,7 @@ def user_followers(request, username):
 		})
 
 def user_friends(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My friends'
 	else:

@@ -69,6 +69,11 @@ def p_username(user):
 	}
 @register.inclusion_tag('closedverse_main/elements/empathy-content.html')
 def empathy_content(yeahs, request, has_yeah=False):
+	for yeah in yeahs:
+		if yeah.post:
+			yeah.feeling = yeah.post.feeling
+		else:
+			yeah.feeling = yeah.comment.feeling
 	return {
 		'yeahs': yeahs,
 		'myself': request.user,

@@ -37,7 +37,7 @@ if(a !== undefined) {
 	}
 }
 function prlinkConf() {
-$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class=black-button type=button onclick="go(\''+ass+'\');$(\'.linkconfirmsuck\').remove();">Yes</button></div></div></div></div></div>');
+$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="go(\''+ass+'\');$(\'.linkconfirmsuck\').remove()">Yes</button></div></div></div></div></div>');
 var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
 }
 function lights() {
@@ -1092,8 +1092,10 @@ var Olv = Olv || {};
     b.ModalWindowManager._mask = null,
     b.ModalWindowManager.toggleMask = function(b) {
                 if(a(".mask").length) {
+				a("body").removeClass("masked");
                 a(".mask").remove();
                 } else {
+	a("body").addClass("masked");
     a("#main-body").append("<div class=mask>");
                 }
     }
@@ -2381,22 +2383,32 @@ var Olv = Olv || {};
             a(".filter-select-page form").off("submit", h),
             a("form.search").off("submit", b.Form.validateValueLength)
         })
+		$('form.search').on('submit', function(s) {
+			s.preventDefault();
+			go($(this).attr('action') + '?'+$(this).serialize())
+		})
     }),
-    b.router.connect("^/communities/categories/[a-z0-9\\-_]+$", function(c, d, e) {
+    b.router.connect("^/communities/all$", function(c, d, e) {
 		changesel("community");
-        function f(b) {
-            if (!b.isDefaultPrevented()) {
-                b.preventDefault();
-                var c = a(this).find('select[name="category"]').val();
-                window.location.href = c
-            }
-        }
-        b.Content.autopagerize(".community-list", e),
-        a("#filter-select-page form").on("submit", f),
-        e.done(function() {
-            a("#filter-select-page form").off("submit", f)
-        })
+		gsl = function(e) {
+			e.preventDefault();
+			$('.selected').removeClass('selected');
+			$(this).addClass('selected');
+			cl = $(this).attr('class').split(' ')[1],
+			$('.' + cl).removeClass('none')
+			$('.communities:not(.none):not(.'+ cl +')').addClass('none')
+		}
+        $('.gen').click(gsl),
+		$('.game').click(gsl),
+		$('.special').click(gsl);
     }),
+	b.router.connect("^/communities.search$", function(c) {
+		$('form.search').on('submit', function(s) {
+			s.preventDefault();
+			go($(this).attr('action') + '?'+$(this).serialize())
+		})
+		$("form.search").off("submit", b.Form.validateValueLength);
+	}),
     b.router.connect("^/(identified_user_posts|notifications)+$", function(a, c, d) {
         b.Guest.isGuest() || b.User.setupFollowButton(d),
         b.Content.autopagerize(".js-post-list", d)

@@ -53,12 +53,13 @@
 		</div>
 		{% endif %}
 		<div id="the-post">
-		  {% if post.screenshot %}<div class="screenshot-container still-image"><img src="{{ post.screenshot }}"></div>{% endif %}
 		  {% if post.drawing %}
 		  <p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 		  {% else %}
           <p class="post-content-text">{{ post.body|linebreaksbr }}</p>
 	      {% endif %}
+		  
+		  {% if post.screenshot %}<div class="screenshot-container still-image"><img src="{{ post.screenshot }}"></div>{% endif %}
 
 			{% if post.yt_vid %}
 			<div class="screenshot-container video"><iframe class="youtube-player" type="text/html" width="490" height="276" src="https://www.youtube.com/embed/{{ post.yt_vid }}?rel=0&modestbranding=1&iv_load_policy=3" frameborder="0"></iframe></div>
