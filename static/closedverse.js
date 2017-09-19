@@ -45,6 +45,9 @@ $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
 }
 function openDrawboardModal() {
+	if(innerWidth <= 400) {
+		Olv.showMessage("", "It appears you might be using a mobile device right now.\nPlease note that drawings are not optimized for mobile at the moment, and you'll only be able to draw straight lines for the time being.\nThis is an issue I have only experienced on iOS though, you might not have issues with other browsers. If you know how to fix it, let me know. Thanks.");
+	}
 		var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
 		return true;
 }
@@ -2994,13 +2997,22 @@ mode_post = 0;
     b.router.connect("^/users/[0-9a-zA-Z\\-_.]+/favorites$", function(a, c, d) {
         b.Content.autopagerize(".community-list", d)
     }),
-	b.router.connect("^/login/$|^/signup/$", function() {
+	b.router.connect("^/login/$|^/signup/$", function(c, d, e) {
 		function lfinish(b) {
 		window.location.href=b
 		//a('body').attr('sess-usern', a('input[name=username]').val())
 		//go(b)
 		}
-		cac = function (){$.ajax({type:'POST',url:window.location.href,data:$('form').serialize(),success:function(e){lfinish(e)},error:function(e){$('p.red').text(e.responseText)},beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}})};
+		cac = function (){
+			$.ajax({
+				type: 'POST',
+				url: window.location.href,
+				data: $('form').serialize(),
+				success: lfinish,
+				error: function(e){
+					$('p.red').text(e.responseText);
+				}, beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}})
+		};
 		a("form[method=post]").on("submit", function(e) {
 			e.preventDefault();
 				a.ajax({
@@ -3009,7 +3021,8 @@ mode_post = 0;
 				lfinish(s);
 				},
 				error: function(s) {
-				$("p.red").text(s.responseText)
+				$("p.red").text(s.responseText);
+					if(window.grecaptcha) grecaptcha.reset();
 				},
 				beforeSend: function() {
 				NProgress.start();

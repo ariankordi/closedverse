@@ -4,17 +4,19 @@
 {% user_sidebar request user user.profile 0 True %}
 <div class="main-column"><div class="post-list-outline">
   <h2 class="label">Search Communities</h2>
-  <form class="search user-search" action="{% url "main:user-search" %}">
+  <form class="search user-search" action="{% url "main:community-search" %}">
   <input type="text" name="query" value="{{ query }}" placeholder="Mario, etc." minlength="1" maxlength="16">
 	<input type="submit" value="q" title="Search">
   </form>
   {% if communities %}
-  <div class="search-user-content search-content">
+  <div class="search-content">
       <p class="user-found note">{{ communities|length }} result{% if not communities|length == 1 %}s{% endif %} found for "{{ query }}"</p>
 <ul class="list community-list community-card-list">
 {% for community in communities %}
 <li id="{{ community }}" class="trigger test-community-list-item " data-href="{% url "main:community-view" community.id %}" tabindex="0">
-  <img src="{{ community.banner }}" class="community-list-cover">
+	{% if community.banner %}
+		<img src="{{ community.banner }}" class="community-list-cover">
+	{% endif %}
   <div class="community-list-body">
   <span class="icon-container"><img src="{{ community.icon }}" class="icon"></span>
   <div class="body">

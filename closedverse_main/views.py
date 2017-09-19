@@ -108,9 +108,14 @@ def login_page(request):
 		# then return that.
 			return HttpResponseBadRequest("You didn't fill in all of the fields.")
 		# Now let's authenticate.
+		# Remove spaces from the username, because some people do that.
+		request.POST['username'].replace(' ', '')
+		# Wait, first check if the user exists.
+		if not User.objects.filter(username=request.POST['username']).exists():
+			return HttpResponseNotFound("The user doesn't exist.")
 		user = authenticate(username=request.POST['username'], password=request.POST['password'])
 		if not user:
-			return HttpResponse("Invalid username or password.", status=401)
+			return HttpResponse("Invalid password.", status=401)
 		if not user.is_active():
 			return HttpResponseForbidden("This user isn't active.")
 		login(request, user)
