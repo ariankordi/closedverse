@@ -74,19 +74,17 @@ class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	username = models.CharField(max_length=32, unique=True)
-	nickname = models.CharField(max_length=32, null=True)
+	nickname = models.CharField(max_length=64, null=True)
 	password = models.CharField(max_length=128)
 	email = models.EmailField(null=True, blank=True, default="")
 	avatar = models.CharField(max_length=1200, blank=True, default="")
-	has_gravatar = models.BooleanField(default=False)
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
 	origin_info = models.CharField(max_length=255, null=True, blank=True)
 
-	#confirm_code = models.CharField(max_length=32, null=True, blank=True)
-	#confirm_finished = models.BooleanField(default=False)
+	#Todo: move origin id and origin info to profile at some point
 	
 	staff = models.BooleanField(default=False)
 	active = models.BooleanField(default=True)
@@ -94,7 +92,7 @@ class User(models.Model):
 	is_anonymous = False
 	is_authenticated = True
 	
-	last_login = models.DateTimeField(auto_now=True)
+	recent = models.DateTimeField(auto_now=True)
 	created = models.DateTimeField(auto_now_add=True)
 	USERNAME_FIELD = 'username'
 	EMAIL_FIELD = 'email'
@@ -268,6 +266,8 @@ class User(models.Model):
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
+	def wake(self):
+		return self.save(update_fields=['recent'])
 
 	def get_latest_msg(self, me):
 		conversation = Conversation.objects.filter(Q(source=self) & Q(target=me) | Q(target=self) & Q(source=me)).order_by('-created')[:1].first()
@@ -432,7 +432,7 @@ class Community(models.Model):
 		return new_post
 
 	def search(query='', limit=50, offset=0, request=None):
-		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).order_by('-created')[offset:offset + limit]
+		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).exclude(type=3).order_by('-created')[offset:offset + limit]
 
 	def get_all(type=0, offset=0, limit=12):
 		return Community.objects.filter(type=type).order_by('-created')[offset:offset + limit]
@@ -482,7 +482,7 @@ class Post(models.Model):
 	real = models.Manager()
 
 	def __str__(self):
-		return self.body[:50] + "..."
+		return self.body[:250]
 	def is_reply(self):
 		return False
 	def trun(self):
@@ -641,7 +641,7 @@ class Comment(models.Model):
 	real = models.Manager()
 
 	def __str__(self):
-		return self.body[:50] + "..."
+		return self.body[:250]
 	def is_reply(self):
 		return True
 	def trun(self):
@@ -748,6 +748,7 @@ class Profile(models.Model):
 	external = models.CharField(max_length=255, blank=True, default="")
 	favorite = models.ForeignKey(Post, blank=True, null=True)
 	let_yeahnotifs = models.BooleanField(default=True)
+	has_gravatar = models.BooleanField(default=False)
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
@@ -805,7 +806,7 @@ class Notification(models.Model):
 	latest = models.DateTimeField(auto_now=True)
 
 	def __str__(self):
-		return 'Notification from ' + str(self.source) + ' to ' + str(self.to) + ' with type ' + str(self.type)
+		return "Notification from " + str(self.source) + " to " + str(self.to) + " with type \"" + self.get_type_display() + "\""
 	def url(self):
 		what_type = {
 			0: 'main:post-view',
@@ -998,7 +999,7 @@ class Message(models.Model):
 	real = models.Manager()
 
 	def __str__(self):
-		return self.body[:50] + "..."
+		return self.body[:250]
 	def trun(self):
 		if self.is_rm:
 			return 'deleted'
@@ -1028,8 +1029,8 @@ class Poll(models.Model):
 
 	def __str__(self):
 		return "A poll created at " + str(self.created)
-	def setup(self):
-		self.choices = json.loads(choices)
+	def num_votes(self):
+		return self.pollvote_set.count()
 	def vote(self, user, opt):
 		ex_query = self.pollvote_set.filter(by=user)
 		if ex_query.exists():
@@ -1039,6 +1040,9 @@ class Poll(models.Model):
 		vote = self.pollvote_set.filter(by=user).first()
 		if vote:
 			vote.delete()
+	def setup(self):
+		self.choices = json.loads(choices)
+		self.num_votes = self.num_votes()
 class PollVote(models.Model):
 	id = models.AutoField(primary_key=True)
 	done = models.DateTimeField(auto_now_add=True)

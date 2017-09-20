@@ -999,7 +999,7 @@ var Olv = Olv || {};
             }, this))
         }, this)),
         b.Net.ajax({
-            url: "/notif_count.json",
+            url: "/alive",
             silent: !0,
             cache: !1
         }).done(a.proxy(function(b) {
@@ -2310,12 +2310,12 @@ var Olv = Olv || {};
                 silent: !0
             }) : a.Deferred().resolve().promise()
 			*/
-        } else
+        } /* else
             h = a.Deferred().resolve().promise(),
             i = a.Deferred().resolve().promise();
         h.then(function() {
             //f()
-        }),
+        }); */
 		//a.when(h, i).done(function(b, c)) {
         a.when(h).done(function(b, c) {
             var d = a(a.parseHTML(a.trim(c[0])));
@@ -2395,15 +2395,15 @@ var Olv = Olv || {};
 		changesel("community");
 		gsl = function(e) {
 			e.preventDefault();
-			$('.selected').removeClass('selected');
+			$('.community-switcher-tab.selected').removeClass('selected');
 			$(this).addClass('selected');
 			cl = $(this).attr('class').split(' ')[1],
 			$('.' + cl).removeClass('none')
 			$('.communities:not(.none):not(.'+ cl +')').addClass('none')
 		}
-        $('.gen').click(gsl),
-		$('.game').click(gsl),
-		$('.special').click(gsl);
+        $('.community-switcher-tab.gen').click(gsl),
+		$('.community-switcher-tab.game').click(gsl),
+		$('.community-switcher-tab.special').click(gsl);
     }),
 	b.router.connect("^/communities.search$", function(c) {
 		$('form.search').on('submit', function(s) {

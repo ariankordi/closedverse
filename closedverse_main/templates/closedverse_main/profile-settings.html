@@ -89,12 +89,12 @@
               </li>
               <li class="setting-avatar">
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii{% if user.has_gravatar %} none{% endif %}" src="{% miionly user.mh %}">
-					<img class="icon nnid-icon gravatar{% if not user.has_gravatar %} none{% endif %}" src="{{ user.gravatar }}">
+                    <img class="icon nnid-icon mii{% if profile.has_gravatar %} none{% endif %}" src="{% miionly user.mh %}">
+					<img class="icon nnid-icon gravatar{% if not profile.has_gravatar %} none{% endif %}" src="{{ user.gravatar }}">
                   </div>
                 <p class="settings-label">Do you want the avatar shown beside your content to use the Mii from your Nintendo Network ID or a Gravatar?</p>
-                <label><input type="radio" name="avatar" value="0"{% if not user.has_gravatar %} checked{% endif %}>Mii</label>
-                <label><input type="radio" name="avatar" value="1"{% if user.has_gravatar %} checked{% endif %}>Gravatar</label>
+                <label><input type="radio" name="avatar" value="0"{% if not profile.has_gravatar %} checked{% endif %}>Mii</label>
+                <label><input type="radio" name="avatar" value="1"{% if profile.has_gravatar %} checked{% endif %}>Gravatar</label>
                 <p class="note">Selecting the Gravatar option will cause your avatar to be pulled from the <a href="https://gravatar.com">Gravatar account</a> linked to your email address, and feelings won't be shown in your posts unless you choose to use a Mii instead.</p>
          </li>
 

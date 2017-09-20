@@ -58,7 +58,7 @@ urlpatterns = [
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
 
-	url(r'notif_count\.json$', views.check_notifications, name='check-notifications'),
+	url(r'notif_count\.json|alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),

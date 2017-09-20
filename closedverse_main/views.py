@@ -126,6 +126,8 @@ def login_page(request):
 		#	location = request.META['HTTP_REFERER']
 		#else:
 		location = '/'
+		if request.GET.get('next'):
+			location = request.GET['next']
 		return HttpResponse(location)
 	else:
 		return render(request, 'closedverse_main/login_page.html', {
@@ -229,7 +231,7 @@ def user_view(request, username):
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
-		if len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name'):
+		if (len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name')) and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
 			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
@@ -577,6 +579,8 @@ def post_create(request, community):
 def post_view(request, post):
 	post = get_object_or_404(Post, id=post)
 	post.setup(request)
+	if post.poll:
+		post.poll.setup()
 	if request.user.is_authenticated:
 		post.can_rm = post.can_rm(request)
 		post.is_favorite = post.is_favorite(request)
@@ -776,6 +780,8 @@ def check_notifications(request):
 	n_count = request.user.notification_count()
 	all_count = request.user.get_frs_notif() + n_count
 	msg_count = request.user.msg_count()
+	# Let's update the user's online status
+	request.user.wake()
 	# n for notifications icon, msg for messages icon
 	return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
 @require_http_methods(['POST'])
