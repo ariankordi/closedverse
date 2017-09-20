@@ -1095,10 +1095,8 @@ var Olv = Olv || {};
     b.ModalWindowManager._mask = null,
     b.ModalWindowManager.toggleMask = function(b) {
                 if(a(".mask").length) {
-				a("body").removeClass("masked");
-                a(".mask").remove();
+                	a(".mask").remove();
                 } else {
-	a("body").addClass("masked");
     a("#main-body").append("<div class=mask>");
                 }
     }
@@ -2646,7 +2644,7 @@ mode_post = 0;
             a(document).off("olv:entryform:post:done", f),
             a(document).off("olv:report:done", g)
         })
-/*
+// CCC
 function add(a, b){
 	return a + b;
 }
@@ -2709,7 +2707,7 @@ $('.post-poll .poll-option').on('click', function() {
 $('.post-poll .poll-votes').on('click', function() {
 	b.showMessage("Poll Voters", "Insert list of poll voters here.");
 });
-*/
+// EndC
 
 	if($('.edit-post-button').length) {
 		var t = $("#edit-form");

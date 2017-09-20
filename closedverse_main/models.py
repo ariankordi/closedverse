@@ -92,7 +92,7 @@ class User(models.Model):
 	is_anonymous = False
 	is_authenticated = True
 	
-	recent = models.DateTimeField(auto_now=True)
+	last_login = models.DateTimeField(auto_now=True)
 	created = models.DateTimeField(auto_now_add=True)
 	USERNAME_FIELD = 'username'
 	EMAIL_FIELD = 'email'
@@ -267,7 +267,7 @@ class User(models.Model):
 					post.comment_count = post.get_comments().count()
 		return posts
 	def wake(self):
-		return self.save(update_fields=['recent'])
+		return self.save(update_fields=['last_login'])
 
 	def get_latest_msg(self, me):
 		conversation = Conversation.objects.filter(Q(source=self) & Q(target=me) | Q(target=self) & Q(source=me)).order_by('-created')[:1].first()
@@ -1041,7 +1041,7 @@ class Poll(models.Model):
 		if vote:
 			vote.delete()
 	def setup(self):
-		self.choices = json.loads(choices)
+		self.choices = json.loads(self.choices)
 		self.num_votes = self.num_votes()
 class PollVote(models.Model):
 	id = models.AutoField(primary_key=True)

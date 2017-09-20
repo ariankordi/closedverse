@@ -60,12 +60,14 @@
 	      {% endif %}
 		  
 		  {% if post.poll %}
-		  <div class="post-poll">
+		  <div class="post-poll" id="{{ post.poll.unique_id }}">
 			<a class="poll-votes">{{ post.poll.num_votes }} votes</a>
-				<div class="poll-options{% if post.screenshot %} with-background" style="background-image:url('{{ post.screenshot }}')"{% else %}"{% endif %}>
+				<div class="poll-options{% if post.screenshot %} with-background" style="background-image:url('{{ post.screenshot }}')"
+<div class="poll-background" style="width:50%"></div>{% else %}">{% endif %}
+						{% for choice in post.poll.choices %}
 					<a class="poll-option">
-						{% for opt in post.poll.choices %}
-						<div class="poll-background" style="width:50%"></div>{{ opt }}<span class="percentage">50%</span></a>
+						{{ choice }}<span class="percentage">50%</span>
+					</a>
 						{% endfor %}
 				</div>
 			</div>

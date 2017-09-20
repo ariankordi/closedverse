@@ -21,7 +21,7 @@ class MessageAdmin(admin.ModelAdmin):
 	def get_queryset(self, request):
 		return models.Message.real.get_queryset()
 
-admin.site.unregister(Group)
+#admin.site.unregister(Group)
 
 admin.site.register(models.User)
 admin.site.register(models.Profile)
