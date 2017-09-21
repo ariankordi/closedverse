@@ -5,7 +5,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from datetime import datetime, timedelta
+from datetime import timedelta
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
 from . import util
@@ -156,6 +156,18 @@ class User(models.Model):
 			return (self == request.user)
 		else:
 			return False
+	
+	# This is the coolest one
+	def online_status(self):
+	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
+		if (timezone.now() - timedelta(seconds=32)) > self.last_login:
+			return 2
+		elif (timezone.now() - timedelta(seconds=48)) > self.last_login:
+			return False
+		else:
+			return True
+		
+
 	def num_yeahs(self):
 		return self.yeah_set.filter(by=self).count()
 	def num_posts(self):

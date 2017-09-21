@@ -114,6 +114,14 @@
 				<span>{% time user.created True %}</span>
 			</div>
 		</div>
+		{% if not user.online_status == None %}
+		<div class="data-content">
+			<h4><span>Last seen</span></h4>
+			<div class="note">
+				<span>{% time user.last_login True %}</span>
+			</div>
+		</div>
+		{% endif %}
 		{% if profile.external %}
 		<div class="data-content">
 			<h4><span>"DiscordTag"</span></h4>

@@ -1,5 +1,5 @@
 {% load closedverse_tags %}<div id="sidebar-profile-body"{% if profile.favorite %} class="with-profile-post-image"{% endif %}>
-	<div class="icon-container {% user_class user %}">
+	<div class="icon-container {% user_class user %} {% if user.online_status == True %}online{% elif user.online_status == 2 %}afk{% elif user.online_status == False %}offline{% endif %}">
 		<a href="{% url "main:user-view" user.username %}">
 			<img src="{% avatar user.avatar %}" alt="{{ user.nickname }}" class="icon">
 		</a>
