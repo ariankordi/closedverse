@@ -158,12 +158,14 @@ class User(models.Model):
 			return False
 	
 	# This is the coolest one
-	def online_status(self):
+	def online_status(self, force=False):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
-		if (timezone.now() - timedelta(seconds=32)) > self.last_login:
-			return 2
-		elif (timezone.now() - timedelta(seconds=48)) > self.last_login:
+		if not force and not self.profile().let_presence_view:
+			return None
+		if (timezone.now() - timedelta(seconds=48)) > self.last_login:
 			return False
+		elif (timezone.now() - timedelta(seconds=32)) > self.last_login:
+			return 2
 		else:
 			return True
 		
@@ -278,7 +280,10 @@ class User(models.Model):
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
-	def wake(self):
+	def wake(self, addr=None):
+		if addr and not addr == self.addr:
+			self.addr = addr
+			return self.save(update_fields=['addr', 'last_login'])
 		return self.save(update_fields=['last_login'])
 
 	def get_latest_msg(self, me):
@@ -761,6 +766,7 @@ class Profile(models.Model):
 	favorite = models.ForeignKey(Post, blank=True, null=True)
 	let_yeahnotifs = models.BooleanField(default=True)
 	has_gravatar = models.BooleanField(default=False)
+	let_presence_view = models.BooleanField(default=True)
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username

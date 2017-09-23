@@ -38,6 +38,9 @@ def get_mii(nnid):
 	ftree = html.fromstring(page)
 	miihash = ftree.xpath('//*[@id="sidebar-profile-body"]/div/a/img/@src')[0].split('.net/')[1].split('_n')[0]
 	screenname = ftree.xpath('//*[@id="sidebar-profile-body"]/a/text()')[0]
+	ou_check = ftree.xpath('//*[@id="sidebar-profile-body"]/div/@class')
+	if ou_check and 'official-user' in ou_check[0]:
+		return False
 	if "img/anonymous-mii.png" in miihash:
 		miihash = settings.STATIC_URL + '/img/anonymous-mii.png'
 	

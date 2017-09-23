@@ -32,7 +32,7 @@ urlpatterns = [
 	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
 	
 	url(r'origin', views.origin_id, name='origin-id-get'),
-
+	
 	url(r'communities\.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
@@ -57,13 +57,13 @@ urlpatterns = [
 	url(r'comments/'+ comment +'/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
-
+	
 	url(r'notif_count\.json|alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),
 	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
-
+	
 	
 	url(r'activity/?$', views.activity_feed, name='activity'),
 	url(r'users\.search$', views.user_search, name='user-search'),
@@ -79,5 +79,8 @@ urlpatterns = [
 	url(r'meta/rules/?$', views.help_rules, name='help-rules'),
 	url(r'meta/faq/?$', views.help_faq, name='help-faq'),
 	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
-	url(r'meta/contact/?', views.help_contact, name='help-contact')
+	url(r'meta/contact/?', views.help_contact, name='help-contact'),
+	
+	
+	url(r'users\.json$', views.users_list, name='users-list'),
 ]

@@ -1380,23 +1380,66 @@ content: "F";
   width: 22px;
   height: 22px;
 }
-/*
-.post-permalink-feeling-icon {
-  float: left;
-  display: block;
-  height: @icon-size-offdevice-l + 2;
-  width: @icon-size-offdevice-l + 2;
-  overflow: hidden;
-  .icon {
-    width:@icon-size-offdevice-l;
-    height: @icon-size-offdevice-l;
-    border: 1px solid @color-light-gray;
-    .border-radius(@radius-offdevice);
-    background: #fff;
-  }
+
+.multi-timeline-post-list .post .icon-container.offline:before,
+.multi-timeline-post-list .post .icon-container.online:before,
+.multi-timeline-post-list .post .icon-container.afk:before {
+  width: 5px !important;
+  height: 5px !important;
+  border: 1px solid #fff !important;
 }
 
-*/
+.icon-container.online, .icon-container.offline, .icon-container.afk {
+  position: relative;
+}
+.icon-container.online:before,
+.icon-container.offline:before,
+.icon-container.afk:before {
+  z-index: 1;
+  content: "";
+  position: absolute;
+  display: block;
+  bottom: 7px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #fff;
+  background: #969696;
+  margin-bottom: -6px;
+  border-radius: 20px;
+}
+.icon-container.online:before {
+  background: #01a920;
+}
+.icon-container.afk:before {
+  background: #f7aa50;
+}
+
+/*
+.icon-container.online, .icon-container.offline {
+  position: relative;
+}
+.icon-container.online:before {
+  z-index: 1;
+  content: url("https://pf2m.com/images/online.png");
+  position: absolute;
+  display: block;
+  bottom: 7px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+}
+.icon-container.offline:before {
+  z-index: 1;
+  content: url("https://pf2m.com/images/offline.png");
+  position: absolute;
+  display: block;
+  bottom: 7px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+}*/
+
 .post-permalink-feeling-icon.administrator {
   position: relative;
 }

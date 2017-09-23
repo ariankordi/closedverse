@@ -2,6 +2,8 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
+from django.utils.dateformat import format
+from django.forms.models import model_to_dict
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -727,6 +729,10 @@ def comment_delete_yeah(request, comment):
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
+	if user.username == 'PF2M':
+		if not user.is_following(request.user):
+			if not User.objects.get(id=1).is_following(request.user):
+				request.user.follow_source.create(target_id=1)
 	user.follow(request.user)
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
@@ -781,7 +787,7 @@ def check_notifications(request):
 	all_count = request.user.get_frs_notif() + n_count
 	msg_count = request.user.msg_count()
 	# Let's update the user's online status
-	request.user.wake()
+	request.user.wake(request.META['REMOTE_ADDR'])
 	# n for notifications icon, msg for messages icon
 	return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
 @require_http_methods(['POST'])
@@ -957,11 +963,46 @@ def prefs(request):
 			profile.let_yeahnotifs = True
 		else:
 			profile.let_yeahnotifs = False
+		if request.POST.get('b'):
+			profile.let_presence_view = True
+		else:
+			profile.let_presence_view = False
 		profile.save()
 		return HttpResponse()
 	lights = not (request.session.get('lights', False))
-	arr = [profile.let_yeahnotifs, lights]
+	arr = [profile.let_yeahnotifs, lights, profile.let_presence_view]
 	return JsonResponse(arr, safe=False)
+@login_required
+def users_list(request):
+	offset = 0
+	limit = 50
+	if request.GET.get('o'):
+		offset = int(request.GET['o'])
+	if request.GET.get('l'):
+		limit = int(request.GET['l'])
+	if limit > 250:
+		return HttpResponseBadRequest()
+
+	if request.GET.get('query'):
+		if len(request.GET['query']) < 2:
+			return HttpResponseBadRequest()
+		users = User.search(request.GET['query'], limit, offset, request)
+	else:
+		users = User.objects.filter(staff=False).order_by('-created')[offset:offset + limit]
+	user_list = []
+	for user in users:
+		user_dict = model_to_dict(user)
+		del(user_dict['password'], user_dict['staff'])
+		user_dict['online_status'] = user.online_status(force=True)
+		try:
+			user_dict['origin_info'] = loads(user_dict['origin_info'])
+		except:
+			user_dict['origin_info'] = None
+		user_dict['created'] = format(user.created, 'U')
+		user_dict['last_login'] = format(user.last_login, 'U')
+		user_list.append(user_dict)
+		del(user_dict)
+	return JsonResponse(user_list, safe=False)
 
 @require_http_methods(['POST'])
 @login_required
@@ -972,6 +1013,7 @@ def origin_id(request):
 	if not mii:
 		return HttpResponseBadRequest("The NNID provided doesn't exist.")
 	return HttpResponse(mii[0])
+
 def set_lighting(request):
 	if not request.session.get('lights', False):
 		request.session['lights'] = True
