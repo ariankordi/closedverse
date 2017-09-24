@@ -8,6 +8,9 @@ pip-delete-this-directory.txt
 # My
 closedverse/settings.py
 settings.py
+media
+closedverse_main/media
+closedverse/media
 *.pyc
 *.db3
 *.db

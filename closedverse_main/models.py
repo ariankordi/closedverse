@@ -444,7 +444,7 @@ class Community(models.Model):
 				URLValidator()(value=request.POST['url'])
 			except ValidationError:
 				return 5
-		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
 			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
@@ -580,7 +580,7 @@ class Post(models.Model):
 	def create_comment(self, request):
 		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
-		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
 			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
@@ -1005,7 +1005,7 @@ class Conversation(models.Model):
 			msg.mine = msg.mine(request.user)
 		return msgs
 	def make_message(self, request):
-		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
 			return 6
 		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
