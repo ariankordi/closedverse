@@ -2329,8 +2329,8 @@ var Olv = Olv || {};
             h.abort && h.abort()
         })
 	
-	$('div.post-filter > input[type=checkbox]').on('click', function() {
-		go(d.pathname + "?&my=" + $(this).attr('value'))
+	$('div.post-filter > form > input[type=checkbox]').on('click', function() {
+		go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
 	})
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {

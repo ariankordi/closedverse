@@ -136,11 +136,19 @@ STATICFILES_DIRS = [
 
 STATIC_URL = '/s/'
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
+MEDIA_URL = '/i/'
 
 # Closedverse settings
 # reCAPTCHA v2 keys, None for no reCAPTCHA
 recaptcha_pub = None
 recaptcha_priv = None
+
+# NNID forbidden list. None for no passing.
+nnid_forbiddens = BASE_DIR + '/forbidden.json'
 
 # Memo title and message on communities list
 memo_title = "Closedverse demo"

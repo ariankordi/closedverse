@@ -2,12 +2,15 @@ from lxml import html
 import urllib.request, urllib.error
 import json
 import time
+from PIL import Image, ExifTags
 from datetime import datetime
 from math import floor
 from hashlib import md5
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+#import cloudinary
+#import cloudinary.uploader
+#import cloudinary.api
+import io
+from uuid import uuid4
 import imghdr
 import base64
 from closedverse import settings
@@ -66,13 +69,22 @@ def image_upload(img):
 	what = imghdr.what('', decodedimg)
 	if not what:
 		return 1
-	cloudinary.config( 
-		cloud_name = settings.cloudinary_name, 
-		api_key = settings.cloudinary_key, 
-		api_secret = settings.cloudinary_secret
-	)
-	up = cloudinary.uploader.upload('data:image/'+ what +';base64,' + img)
-	return up.get('secure_url')
+	
+	im = Image.open(io.BytesIO(decodedimg))
+	if hasattr(im, '_getexif'):
+		for orientation in ExifTags.TAGS.keys():
+			if ExifTags.TAGS[orientation] == 'Orientation':
+				break 
+			e = im._getexif()
+			if not e is None:
+				orientation = dict(e.items()).get(orientation)
+		if orientation == 3:   im = im.transpose(Image.ROTATE_180)
+		elif orientation == 6: im = im.transpose(Image.ROTATE_270)
+		elif orientation == 8: im = im.transpose(Image.ROTATE_90)
+	im.thumbnail((1280, 1280), Image.ANTIALIAS)
+	floc = str(uuid4()) + '.png'
+	im.save(settings.MEDIA_ROOT + floc, 'PNG')
+	return settings.MEDIA_URL + floc
 
 def get_gravatar(email):
 	try:

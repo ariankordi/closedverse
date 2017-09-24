@@ -8,7 +8,10 @@
       <span class="symbol activity-headline">Activity Feed</span>
     </h2>
 	<div class="post-filter">
-		<input type="checkbox" value="{% if request.session.activity_no_my %}n{% else %}1{% endif %}"{% if not request.session.activity_no_my %} checked{% endif %}> Show my own posts
+		<form method="GET">
+			<input type="checkbox" name="my" value="{% if request.session.activity_no_my %}n{% else %}1{% endif %}"{% if not request.session.activity_no_my %} checked{% endif %}> Show my own posts
+			<input type="checkbox" name="ds" value="{% if request.session.activity_ds %}n{% else %}1{% endif %}"{% if request.session.activity_ds %} checked{% endif %}> Show one of each person's posts
+		</form>
 	</div>
 
 <form class="search" action="{% url "main:user-search" %}">

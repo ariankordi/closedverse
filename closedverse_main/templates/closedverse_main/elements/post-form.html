@@ -33,9 +33,10 @@
   -->
 	</div>
 
+  {% if user.has_freedom %}
   <input type="text" class="textarea-line url-form" name="url" placeholder="URL/YT video" maxlength="1024">
   {% file_button %}
-
+  {% endif %}
 
   <div class="post-form-footer-options">
 

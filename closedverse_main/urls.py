@@ -1,6 +1,8 @@
 from django.conf.urls import url
+from django.conf.urls.static import static
 
 from . import views
+from closedverse.settings import MEDIA_URL, MEDIA_ROOT 
 
 username = r'(?P<username>[A-Za-z0-9-._]+)'
 community = r'(?P<community>[0-9]+)'
@@ -10,12 +12,14 @@ uuidr = r'[0-9a-f\-]'
 
 app_name = 'main'
 urlpatterns = [
+	# Root
 	url(r'^^$|^communities$|^index.*$$', views.community_list, name='community-list'),
+	# Accounts
 	url(r'login/$', views.login_page, name='login'),
 	url(r'signup/$', views.signup_page, name='signup'),
 	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
-	url(r'settings/profile$', views.profile_settings, name='profile-settings'),
+	# User pages
 	url(r'users/'+ username +'\.follow\.json$', views.user_follow, name='user-follow'),
 	url(r'users/'+ username +'\.unfollow\.json$', views.user_unfollow, name='user-unfollow'),
 	url(r'users/'+ username +'$', views.user_view, name='user-view'),
@@ -24,15 +28,13 @@ urlpatterns = [
 	url(r'users/'+ username +'/following$', views.user_following, name='user-following'),
 	url(r'users/'+ username +'/followers$', views.user_followers, name='user-followers'),
 	url(r'users/'+ username +'/friends$', views.user_friends, name='user-friends'),
-	
+	# User page friends
 	url(r'users/'+ username +'/friend\.new$', views.user_friendrequest_create, name='user-fr-create'),
 	url(r'users/'+ username +'/friend\.accept$', views.user_friendrequest_accept, name='user-fr-accept'),
 	url(r'users/'+ username +'/friend\.reject$', views.user_friendrequest_reject, name='user-fr-reject'),
 	url(r'users/'+ username +'/friend\.cancel$', views.user_friendrequest_cancel, name='user-fr-cancel'),
 	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
-	
-	url(r'origin', views.origin_id, name='origin-id-get'),
-	
+	# Communities
 	url(r'communities\.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
@@ -41,7 +43,7 @@ urlpatterns = [
 	url(r'communities/'+ community +'/favorite$', views.community_favorite_create, name='community-favorite-add'),
 	url(r'communities/'+ community +'/favorite\.rm$', views.community_favorite_rm, name='community-favorite-rm'),
 	url(r'communities/'+ community +'/posts$', views.post_create, name='post-create'),
-	
+	# Posts and comments
 	# Some of these NAMES (not patterns) are hardcoded into models.py
 	url(r'posts/'+ post +'$', views.post_view, name='post-view'),
 	url(r'posts/'+ post +'/yeah$', views.post_add_yeah, name='post-add-yeah'),
@@ -57,22 +59,24 @@ urlpatterns = [
 	url(r'comments/'+ comment +'/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
-	
+	# Notifications
 	url(r'notif_count\.json|alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),
 	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
 	
-	
+	# User meta + messages
 	url(r'activity/?$', views.activity_feed, name='activity'),
 	url(r'users\.search$', views.user_search, name='user-search'),
 	url(r'pref$', views.prefs, name='prefs'),
+	url(r'settings/profile$', views.profile_settings, name='profile-settings'),
 	url(r'messages/?$', views.messages, name='messages'),
 	url(r'messages/(?P<message>'+ uuidr +'+)\.rm$', views.message_rm, name='message-delete'),
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),
 	
+	# Meta/configuration
 	url(r'lights$', views.set_lighting, name='set-lighting'),
 	url(r'complaints$', views.help_complaint, name='complaints'),
 	url(r'server$', views.server_stat, name='server-stat'),
@@ -81,6 +85,13 @@ urlpatterns = [
 	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
 	url(r'meta/contact/?', views.help_contact, name='help-contact'),
 	
-	
+	# "API"
 	url(r'users\.json$', views.users_list, name='users-list'),
-]
+	
+	
+	# Util, right now we are away from the primary appo
+	url(r'origin', views.origin_id, name='origin-id-get'),
+	# :^)
+	#url(r'openverse\.png', views.openverse_logo, name='openverse-logo'),
+
+] + static(MEDIA_URL, document_root=MEDIA_ROOT)

@@ -2,7 +2,7 @@
 {% block main-body %}{% load closedverse_user %}{% load closedverse_community %}
 {% user_sidebar request user user.profile 0 %}
 <div class="main-column post-list-outline">
-<h2 class="label">Favorite communities</h2>
+<h2 class="label">{% if has_other %}{{ user.nickname }}'s favorite{% else %}Favorite{% endif %} communities</h2>
 {% community_page_element favorites None %}
 
 </div>

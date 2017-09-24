@@ -25,8 +25,8 @@
 		  <ul>
 			{% for favorite in favorites %}
 				<li class="test-favorite-community">
-				  <a href="{% url "main:community-view" favorite.community.id %}" class="icon-container">
-					<img src="{{ favorite.community.icon }}" class="icon">
+				  <a href="{% url "main:community-view" favorite.id %}" class="icon-container">
+					<img src="{{ favorite.icon }}" class="icon">
 					
 				  </a>
 				</li>

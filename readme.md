@@ -5,12 +5,12 @@ Meant to be a random out-of-the-blue parody of Openverse that's supposed to be u
 # Requirements
   * Python 3.6.2?
   * Django
-  * urllib
+  * urllib3?
   * lxml
   * passlib
   * bcrypt
   * mysqlclient if you're using mysql
-  * cloudinary if you're going to be using that
+  * pillow
   * imghdr?
   * markdown
 

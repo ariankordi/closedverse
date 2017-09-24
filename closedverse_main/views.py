@@ -31,7 +31,7 @@ def community_list(request):
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
-		favorites = request.user.communityfavorite_set.order_by('-created')[0:8]
+		favorites = request.user.community_favorites()
 	else:
 		classes = []
 		favorites = None
@@ -93,14 +93,19 @@ def community_search(request):
 
 @login_required
 def community_favorites(request):
-	favorites = request.user.communityfavorite_set.order_by('-created')
-	communities = []
-	for fav in favorites:
-		communities.append(fav.community)
-	del(favorites)
+	user = request.user
+	has_other = False
+	if request.GET.get('u'):
+		user = get_object_or_404(User, username=request.GET['u'])
+		has_other = True
+		communities = user.community_favorites(True)
+	else:
+		communities = request.user.community_favorites(True)
 	return render(request, 'closedverse_main/community_favorites.html', {
 		'title': 'Favorite communities',
 		'favorites': communities,
+		'user': user,
+		'other': has_other,
 	})
 
 def login_page(request):
@@ -162,8 +167,9 @@ def signup_page(request):
 		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 		if request.POST['origin_id']:
-			#if request.POST['origin_id'].lower() in loads(open('closedverse_main/forbidden.json', 'r').read()):
-			#	return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
+			if settings.nnid_forbiddens:
+				if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
+					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
 				return HttpResponseBadRequest("That Nintendo Network ID address is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
@@ -247,8 +253,9 @@ def user_view(request, username):
 			return json_response("That email address is already in use, that can't happen.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID address is already in use, that would cause confusion.")
-		#if request.POST['origin_id'].lower() in loads(open('forbidden.json', 'r').read()):
-		#	return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
+		if settings.nnid_forbiddens:
+			if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
+				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if request.POST.get('avatar') == '1':
 			user.avatar = get_gravatar(user.email) or ""
 			user.has_gravatar = True
@@ -565,6 +572,7 @@ def post_create(request, community):
 			3: "You're making posts too fast, wait a few seconds and try again.",
 			4: "Apparently, you're not allowed to post here.",
 			5: "Uh-oh, that URL wasn't valid..",
+			6: "Not allowed.",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
@@ -667,6 +675,7 @@ def post_comments(request, post):
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
 			3: "You're making comments too fast, wait a few seconds and try again.",
+			6: "Not allowed.",
 			}.get(new_post))
 		# Give the notification!
 		if post.is_mine(request):
@@ -729,10 +738,12 @@ def comment_delete_yeah(request, comment):
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
+	# Issue 69420: PF2M is getting more follows than me.
 	if user.username == 'PF2M':
-		if not user.is_following(request.user):
-			if not User.objects.get(id=1).is_following(request.user):
-				request.user.follow_source.create(target_id=1)
+		try:
+			User.objects.get(id=1).follow(request.user)
+		except:
+			pass
 	user.follow(request.user)
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
@@ -859,6 +870,11 @@ def activity_feed(request):
 			request.session['activity_no_my'] = False
 		else:
 			request.session['activity_no_my'] = True
+	if request.GET.get('ds'):
+		if request.GET['ds'] == 'n':
+			request.session['activity_ds'] = False
+		else:
+			request.session['activity_ds'] = True
 	if not request.META.get('HTTP_X_REQUESTED_WITH') or request.META.get('HTTP_X_PJAX'):
 		post_community = Community.objects.filter(tags='activity').first()
 		return render(request, 'closedverse_main/activity-loading.html', {
@@ -869,10 +885,14 @@ def activity_feed(request):
 		has_friend = True
 	else:
 		has_friend = False
-	if request.GET.get('offset'):
-		posts = request.user.get_activity(20, int(request.GET['offset']), False, has_friend, request)
+	if request.session.get('activity_ds'):
+		has_distinct = True
 	else:
-		posts = request.user.get_activity(20, 0, False, has_friend, request)
+		has_distinct = False
+	if request.GET.get('offset'):
+		posts = request.user.get_activity(20, int(request.GET['offset']), has_distinct, has_friend, request)
+	else:
+		posts = request.user.get_activity(20, 0, has_distinct, has_friend, request)
 	if posts.count() > 19:
 		if request.GET.get('offset'):
 			next_offset = int(request.GET['offset']) + 20
@@ -908,6 +928,7 @@ def messages_view(request, username):
 			return json_response({
 			1: "Your message is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
+			6: "Not allowed.",
 			}.get(new_post))
 		friendship.update()
 		return render(request, 'closedverse_main/elements/message.html', { 'message': new_post })

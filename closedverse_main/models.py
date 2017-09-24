@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Max, F
 from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
@@ -156,7 +156,8 @@ class User(models.Model):
 			return (self == request.user)
 		else:
 			return False
-	
+	def has_freedom(self):
+		return self.profile().let_freedom	
 	# This is the coolest one
 	def online_status(self, force=False):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
@@ -266,20 +267,31 @@ class User(models.Model):
 		friend_ids = []
 		for friend in friends:
 			friend_ids.append(friend.other(self))
-		follows = self.follow_source.filter().values_list('target')
+		follows = self.follow_source.filter().values_list('target', flat=True)
 		if not friends_only:
-				friend_ids.append(self.id)
-		posts = Post.objects.filter(
-			Q(creator__in=follows)
-			| Q(creator__in=friend_ids)
-
-			).order_by('-created')[offset:offset + limit]
+			friend_ids.append(self.id)
+		for thing in follows:
+			friend_ids.append(thing)
+		if distinct:
+			posts = Post.objects.annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).order_by('-created')[offset:offset + limit]
+		else:
+			posts = Post.objects.filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.get_comments().count()
 		return posts
+	def community_favorites(self, all=False):
+		if not all:
+			favorites = self.communityfavorite_set.order_by('-created')[:8]
+		else:
+			favorites = self.communityfavorite_set.order_by('-created')
+		communities = []
+		for fav in favorites:
+			communities.append(fav.community)
+		del(favorites)
+		return communities
 	def wake(self, addr=None):
 		if addr and not addr == self.addr:
 			self.addr = addr
@@ -432,6 +444,8 @@ class Community(models.Model):
 				URLValidator()(value=request.POST['url'])
 			except ValidationError:
 				return 5
+		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
@@ -537,6 +551,8 @@ class Post(models.Model):
 	def can_rm(self, request):
 		return request.user.level > 0
 	def give_yeah(self, request):
+		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
+			return False
 		if self.has_yeah(request):
 			return True
 		if not self.can_yeah(request):
@@ -564,6 +580,8 @@ class Post(models.Model):
 	def create_comment(self, request):
 		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
+		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
@@ -689,6 +707,8 @@ class Comment(models.Model):
 		if request.user.level > 0 or self.original_post.is_mine(request):
 			return True
 	def give_yeah(self, request):
+		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
+			return False
 		if self.has_yeah(request):
 			return True
 		if not self.can_yeah(request):
@@ -767,6 +787,7 @@ class Profile(models.Model):
 	let_yeahnotifs = models.BooleanField(default=True)
 	has_gravatar = models.BooleanField(default=False)
 	let_presence_view = models.BooleanField(default=True)
+	let_freedom = models.BooleanField(default=True)
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
@@ -984,6 +1005,8 @@ class Conversation(models.Model):
 			msg.mine = msg.mine(request.user)
 		return msgs
 	def make_message(self, request):
+		if not user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+			return 6
 		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
