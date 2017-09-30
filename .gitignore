@@ -7,6 +7,9 @@ pip-delete-this-directory.txt
 
 # My
 closedverse/settings.py
+# I might remove this one
+closedverse/urls.py
+# //
 settings.py
 media
 closedverse_main/media

@@ -4,7 +4,7 @@
 
 <div class="post-list-outline">
   <a class="post-permalink-button info-ticker" href="{% url "main:post-view" comment.original_post.id %}">
-    <span class="icon-container {% user_class comment.original_post.creator %}"><img src="{% avatar comment.original_post.creator.avatar comment.original_post.feeling %}" class="icon"></span>
+	{% user_icon_container comment.original_post.creator comment.original_post.feeling %}
     <span>View <span class="post-user-description">{{ comment.original_post.creator.nickname }}'s post ({{ comment.original_post.trun|truncatechars:35 }})</span> for this comment.</span>
   </a>
 </div>
@@ -22,7 +22,7 @@
 	{% endif %}
 	  
       <div class="user-content">
-        <a href="{% url "main:user-view" comment.creator.username %}" class="icon-container {% user_class comment.creator %}"><img src="{% avatar comment.creator.avatar comment.feeling %}" class="icon"></a>
+        {% user_icon_container comment.creator comment.feeling %}
         <div class="user-name-content">
           <p class="user-name"><a href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
           <p class="timestamp-container">

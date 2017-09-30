@@ -18,7 +18,7 @@ input[type=text], input[type=password], input[type=email], input:not([type]), se
 }
 .guest .guest-message p {
   color: #ccc;
-  background: #464646;
+  background: #1b1b1b;
 }
 .guest-message .arrow-button {
   border-top: 1px solid #000 !important;

@@ -2,12 +2,13 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.forms.models import model_to_dict
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll
 from .util import get_mii, recaptcha_verify, get_gravatar, filterchars
 from closedverse import settings
 import re
@@ -108,6 +109,7 @@ def community_favorites(request):
 		'other': has_other,
 	})
 
+@csrf_exempt
 def login_page(request):
 	if request.method == 'POST':
 		# If we don't have all of the POST parameters we want..
@@ -166,6 +168,9 @@ def signup_page(request):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
 		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
+		check_others = Profile.objects.filter(user__addr=request.REMOTE_ADDR, let_freedom=False).exists()
+		if check_others:
+			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
 		if request.POST['origin_id']:
 			if settings.nnid_forbiddens:
 				if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
@@ -247,6 +252,8 @@ def user_view(request, username):
 			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
 		if len(request.POST.get('website')) > 255:
 			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'DiscordTag':
+			return json_response("I'm laughing right now.")
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
 		if User.email_in_use(request.POST.get('email'), request):
@@ -274,7 +281,11 @@ def user_view(request, username):
 				user.origin_info = dumps(getmii)
 		user.email = request.POST.get('email')
 		profile.country = request.POST.get('country')
-		profile.weblink = request.POST.get('website')
+		website = request.POST.get('website')
+		if ' ' in website or not '.' in website:
+			profile.weblink = ''
+		else:
+			profile.weblink = website
 		profile.comment = request.POST.get('profile_comment')
 		profile.external = request.POST.get('external')
 		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
@@ -734,6 +745,21 @@ def comment_delete_yeah(request, comment):
 	the_post = get_object_or_404(Comment, id=comment)
 	the_post.remove_yeah(request)
 	return HttpResponse()
+
+@require_http_methods(['POST'])
+@login_required
+def poll_vote(request, poll):
+	the_poll = get_object_or_404(Poll, unique_id=poll)
+	the_poll.vote(request.user, request.POST.get('a'))
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def poll_unvote(request, poll):
+	the_poll = get_object_or_404(Poll, unique_id=poll)
+	the_poll.unvote(request.user)
+	return HttpResponse()
+
+
 @require_http_methods(['POST'])
 @login_required
 def user_follow(request, username):
@@ -804,9 +830,10 @@ def check_notifications(request):
 @require_http_methods(['POST'])
 @login_required
 def notification_setread(request):
-	update = request.user.notification_read()
 	if request.GET.get('fr'):
-		request.user.read_fr()
+		update = request.user.read_fr()
+	else:
+		update = request.user.notification_read()
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -907,10 +934,21 @@ def activity_feed(request):
 	})
 @login_required
 def messages(request):
-	friends = Friendship.get_friendships_message(request.user)
+	if request.GET.get('offset'):
+		friends = Friendship.get_friendships_message(request.user, 20, int(request.GET['offset']))
+	else:
+		friends = Friendship.get_friendships_message(request.user, 20, 0)
+	if len(friends) > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
 	return render(request, 'closedverse_main/messages.html', {
 		'title': 'Messages',
 		'friends': friends,
+		'next': next_offset,
 	})
 @login_required
 def messages_view(request, username):
@@ -1013,7 +1051,7 @@ def users_list(request):
 	user_list = []
 	for user in users:
 		user_dict = model_to_dict(user)
-		del(user_dict['password'], user_dict['staff'])
+		del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
 		user_dict['online_status'] = user.online_status(force=True)
 		try:
 			user_dict['origin_info'] = loads(user_dict['origin_info'])
@@ -1021,9 +1059,21 @@ def users_list(request):
 			user_dict['origin_info'] = None
 		user_dict['created'] = format(user.created, 'U')
 		user_dict['last_login'] = format(user.last_login, 'U')
+		user_dict['avatar'] = User.do_avatar(user_dict['avatar'])
+		user_dict['num_posts'] = [user.num_posts(), reverse('main:user-posts', args=[user.id]), ]
 		user_list.append(user_dict)
 		del(user_dict)
 	return JsonResponse(user_list, safe=False)
+
+@login_required
+def admin_users(request):
+	if not request.user.is_authenticated or request.user.level < 2:
+		raise Http404()
+	return render(request, 'closedverse_main/messages.html', {
+		'title': 'Messages',
+		'friends': friends,
+		'next': next_offset,
+	})
 
 @require_http_methods(['POST'])
 @login_required
@@ -1071,7 +1121,7 @@ def server_stat(request):
 		return JsonResponse(all_stats)
 	return render(request, 'closedverse_main/help/stats.html', all_stats)
 def help_rules(request):
-	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
+	return render(request, 'closedverse_main/help/rules.html', {'title': 'Openverse Rules'})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
 def help_legal(request):
@@ -1080,3 +1130,6 @@ def help_legal(request):
 	return render(request, 'closedverse_main/help/legal.html', {})
 def help_contact(request):
 	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})
+
+def csrf_fail(request, reason):
+	return HttpResponseBadRequest("The CSRF check has failed.\nYour browser might not support cookies, or you need to refresh.")

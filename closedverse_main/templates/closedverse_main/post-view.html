@@ -60,12 +60,12 @@
 	      {% endif %}
 		  
 		  {% if post.poll %}
-		  <div class="post-poll" id="{{ post.poll.unique_id }}">
-			<a class="poll-votes">{{ post.poll.num_votes }} votes</a>
+		  <div class="post-poll" data-action="{% url "main:poll-vote" post.poll.unique_id %}" data-action-unvote="{% url "main:poll-unvote" post.poll.unique_id %}">
+			<a class="poll-votes">{{ post.poll.num_votes }} vote{% if not post.poll.num_votes == 1 %}s{% endif %}</a>
 				<div class="poll-options{% if post.screenshot %} with-background" style="background-image:url('{{ post.screenshot }}')"
 <div class="poll-background" style="width:50%"></div>{% else %}">{% endif %}
 						{% for choice in post.poll.choices %}
-					<a class="poll-option">
+					<a class="poll-option" votes="2">
 						{{ choice }}<span class="percentage">50%</span>
 					</a>
 						{% endfor %}
@@ -113,7 +113,7 @@
 <h2 class="reply-label">Add a Comment</h2>
 {% if not request.user.is_authenticated %}
 <div class="guest-message">
-  <p>You must sign in to post a comment.<br><br>Sign in using a Closedverse account to make posts and comments, as well as give Yeahs and follow users.</p>
+  <p>You must sign in to post a comment.<br><br>Sign in using a Openverse account to make posts and comments, as well as give Yeahs and follow users.</p>
   <a href="{% url "main:signup" %}" class="arrow-button"><span>Create an account</span></a>
   <a href="{% url "main:help-faq" %}" class="arrow-button"><span>FAQ/Frequently Asked Questions</span></a>
 </div>

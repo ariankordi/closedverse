@@ -1,8 +1,10 @@
 //! Modifications by Arian K and Lane B
+/* 'sorry!'
 var splatoon = true
 if(innerWidth <= 480) {
    splatoon = false;
-}
+}*/
+var splatoon = false;
 var pjax_container = '#container'
 /*! jQuery v3.2.1 | (c) JS Foundation and other contributors | jquery.org/license */
 !function(a,b){
@@ -529,7 +531,7 @@ var Olv = Olv || {};
             if (d && "object" == typeof d)
                 return d;
             var e = a.status;
-			if(a.responseText.length < 2 && e == 400) {
+			if((typeof length === undefined || a.responseText.length < 2) && e == 400) {
 			return {
 				error_code: "Bad Request",
 				message: "The request or action sent was invalid. Try again?"
@@ -835,8 +837,15 @@ var Olv = Olv || {};
         },
         submit: function(b, c) {
             b.trigger("olv:form:submit", [c || a()]);
-            var d = b.serializeArray()
-              , e = c && c.is("input, button") && c.prop("name");
+				if($('input[type=file]').length) {
+					var d = new FormData(b[0])
+					d.append('screen', $('input[type=file]')[0].files[0])
+					sucky = true
+				} else {
+					var d = b.serializeArray()
+					sucky = false
+				}
+			var e = c && c.is("input, button") && c.prop("name");
             e && d.push({
                 name: e,
                 value: c.val()
@@ -846,6 +855,10 @@ var Olv = Olv || {};
                 url: b.attr("action"),
                 data: d
             };
+			if(sucky) {
+				f.processData = false;
+				f.contentType = false;
+			}
             return this.send(f, c)
         },
         get: function(a, b, c) {
@@ -1855,7 +1868,7 @@ var Olv = Olv || {};
             e()
         }
         function h(d) {
-            var e = a(d.target).siblings().filter("input")
+            /*var e = a(d.target).siblings().filter("input")
               , f = d.target.files[0];
             if (!f)
                 return void e.val("");
@@ -1866,9 +1879,9 @@ var Olv = Olv || {};
                 e.trigger("olv:entryform:fileselect", c);
                 c.find('textarea[name="body"]').trigger("input")
             }
-            ,
-            b.Form.toggleDisabled(j, !0),
-            g.readAsDataURL(f)
+            ,*/
+            /*b.Form.toggleDisabled(j, !0),
+            g.readAsDataURL(f)*/
         }
         function i(a) {
             k.siblings().filter("input[type=hidden]").val(""),
@@ -2171,7 +2184,7 @@ var Olv = Olv || {};
 						lights_off = a[1] ? ' checked' : '';
 						online_status = a[2] ? ' checked' : '';
 						
-						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Show my online status and my latest time seen to others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Show my latest time seen to others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
 						var g = new b.ModalWindow($('.acc-set'));g.open();
 						$('.ac-send').click(function() {
 							b.Form.post('/pref', $('#feedback-form').serializeArray())
@@ -2193,7 +2206,7 @@ var Olv = Olv || {};
 	}),
     b.init.done(function(a) {
         if (a("#global-menu-news").length) {
-            a("#global-menu-news").on("click", function(b) {
+            a("#global-menu-news > a").on("click", function(b) {
                 a(b.currentTarget).find(".badge").hide()
             });
             var c = b.UpdateChecker.getInstance();
@@ -2301,7 +2314,8 @@ var Olv = Olv || {};
                     a(".content-load-error-window").removeClass("none")
                 }, 5e3)
             });
-			/* G
+			
+			/*
             var l = "friend" !== b.Cookie.get("view_activity_filter");
 			i = l ? b.Net.ajax({
                 type: "GET",
@@ -2309,14 +2323,15 @@ var Olv = Olv || {};
                 silent: !0
             }) : a.Deferred().resolve().promise()
 			*/
-        } /* else
+			
+        }  else
             h = a.Deferred().resolve().promise(),
-            i = a.Deferred().resolve().promise();
+            //i = a.Deferred().resolve().promise();
         h.then(function() {
-            //f()
-        }); */
-		//a.when(h, i).done(function(b, c)) {
-        a.when(h).done(function(b, c) {
+            f()
+        }); 
+		/*
+		a.when(h).done(function(b) {
             var d = a(a.parseHTML(a.trim(c[0])));
             e.each(function(b, c) {
                 var e = d.get(b);
@@ -2328,6 +2343,7 @@ var Olv = Olv || {};
         e.done(function() {
             h.abort && h.abort()
         })
+		*/
 	
 	$('div.post-filter > form > input[type=checkbox]').on('click', function() {
 		go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
@@ -2453,6 +2469,7 @@ var Olv = Olv || {};
 	}),
 	b.router.connect("^/messages(\/)?$", function(a, c, d) {
 	   changesel("message");
+	   b.Content.autopagerize(".list-content-with-icon-and-text", d)
 	}),
 	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
 		changesel("message");
@@ -2646,9 +2663,8 @@ mode_post = 0;
             a(document).off("olv:report:done", g)
         })
 // CCC
-function add(a, b){
-	return a + b;
-}
+if($('.post-poll').length) {
+add = function(a, b){ return a + b; }
 function recalculateVotes(pollOptions){
 	var voteArray = [];
 	for(var j = 0; j < pollOptions.length; j++) {
@@ -2659,7 +2675,8 @@ function recalculateVotes(pollOptions){
     	voteArray.push(votes);
     }
   }
-	pollOptions.siblings('.poll-votes').text(voteArray.reduce(add, 0) + ' votes');
+	var voteCount = voteArray.reduce(add, 0)
+	pollOptions.siblings('.poll-votes').text(voteCount + ' vote' + (voteCount == 1 ? '' : 's'));
 	for(var i = 0; i < pollOptions.length; i++) {
 		var voteArrayCopy = voteArray;
 		voteArrayCopy.slice(i, 1);
@@ -2671,14 +2688,11 @@ function recalculateVotes(pollOptions){
 }
 
 function pollSuccess(response) {
-	var pollOptions = $('.post-poll[post-id=114] .poll-option');
+	var pollOptions = $('.post-poll .poll-option');
 	for(i = 0; i < response.votes.length; i++) {
 		pollOptions.eq(i).attr('votes', response.votes[i]);
   }
 	recalculateVotes(pollOptions);
-}
-function pollError(response) {
-	Olv.showMessage("Error", "There was an error trying to update your vote. Please try again.");
 }
 
 $('.post-poll .poll-option').on('click', function() {
@@ -2687,28 +2701,22 @@ $('.post-poll .poll-option').on('click', function() {
 		$(this).addClass('selected');
 		recalculateVotes($(this).siblings('.poll-option').addBack());
 		$(this).parents('.post-poll').addClass('selected');
-    $.ajax('/posts/' + $(this).parents('.post-poll').attr('post-id') + '/vote/' + parseInt($(this).index()), {
-			method: 'post',
-			dataType: 'json',
-    	success: pollSuccess,
-			error: pollError
-    });
+    b.Form.post($(this).parents('.post-poll').attr('data-action'), {'a': parseInt($(this).index())}).done(pollSuccess)
+
   } else {
   	$(this).parents('.post-poll').removeClass('selected');
 		$(this).removeClass('selected');
 		recalculateVotes($(this).siblings('.poll-option').addBack());
-		$.ajax('/posts/' + $(this).parents('.post-poll').attr('post-id') + '/vote/0', {
-			method: 'post',
-    	dataType: 'json',
-    	success: pollSuccess,
-			error: pollError
-		});
+		
+		b.Form.post($(this).parents('.post-poll').attr('data-action-unvote'), {'a': '0'}).done(pollSuccess)
+
   }
 });
 $('.post-poll .poll-votes').on('click', function() {
 	b.showMessage("Poll Voters", "Insert list of poll voters here.");
 });
 // EndC
+}
 
 	if($('.edit-post-button').length) {
 		var t = $("#edit-form");

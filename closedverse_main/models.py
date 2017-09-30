@@ -76,8 +76,8 @@ class User(models.Model):
 	username = models.CharField(max_length=32, unique=True)
 	nickname = models.CharField(max_length=64, null=True)
 	password = models.CharField(max_length=128)
-	email = models.EmailField(null=True, blank=True, default="")
-	avatar = models.CharField(max_length=1200, blank=True, default="")
+	email = models.EmailField(null=True, blank=True, default='')
+	avatar = models.CharField(max_length=1200, blank=True, default='')
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 
@@ -150,6 +150,8 @@ class User(models.Model):
 			5: "O-PHP-enverse Man",
 			10: "Friendship ended with PHP / Now PYTHON is my best friend",
 			}.get(self.level, '')
+			if first:
+				first = 'official ' + first
 			return [first, second]
 	def is_me(self, request):
 		if request.user.is_authenticated:
@@ -161,8 +163,8 @@ class User(models.Model):
 	# This is the coolest one
 	def online_status(self, force=False):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
-		if not force and not self.profile().let_presence_view:
-			return None
+		#if not force and not self.profile().let_presence_view:
+		#	return None
 		if (timezone.now() - timedelta(seconds=48)) > self.last_login:
 			return False
 		elif (timezone.now() - timedelta(seconds=32)) > self.last_login:
@@ -208,7 +210,7 @@ class User(models.Model):
 		if type == 2:
 			yeahs = self.yeah_set.filter().order_by('-created')[offset:offset + limit]
 		else:
-			yeahs = self.yeah_set.filter(type=type).order_by('-created')[offset:offset + limit]
+			yeahs = self.yeah_set.filter(type=type, post__is_rm=False).order_by('-created')[offset:offset + limit]
 		return yeahs
 	def get_following(self, limit=50, offset=0, request=None):
 		return self.follow_source.filter().order_by('-created')[offset:offset + limit]
@@ -235,7 +237,7 @@ class User(models.Model):
 	def get_fr(self, other):
 		return FriendRequest.objects.filter(Q(source=self) & Q(target=other) | Q(target=self) & Q(source=other)).exclude(finished=True)
 	def get_frs_target(self):
-		return FriendRequest.objects.filter(target=self, finished=False)
+		return FriendRequest.objects.filter(target=self, finished=False).order_by('-created')
 	def get_frs_notif(self):
 		return FriendRequest.objects.filter(target=self, finished=False, read=False).count()
 	def reject_fr(self, target):
@@ -273,7 +275,7 @@ class User(models.Model):
 		for thing in follows:
 			friend_ids.append(thing)
 		if distinct:
-			posts = Post.objects.annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		else:
 			posts = Post.objects.filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		if request:
@@ -317,7 +319,7 @@ class User(models.Model):
 			'contact': request.build_absolute_uri(reverse('main:help-contact')),
 			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
 		})
-		subj = 'Closedverse password reset for "{0}"'.format(self.username)
+		subj = 'Openverse password reset for "{0}"'.format(self.username)
 		return send_mail(subject=subj, message="Bro, do you even HTML E-Mail?", html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
 		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
 
@@ -343,14 +345,31 @@ class User(models.Model):
 		except:
 			return False
 		return user
+	
+	def do_avatar(avatar, feeling=0):
+		if bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
+			feeling = {
+			0: 'normal',
+			1: 'happy',
+			2: 'like',
+			3: 'surprised',
+			4: 'frustrated',
+			5: 'puzzled',
+			}.get(feeling, "normal")
+			url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(avatar, feeling)
+			return url
+		elif not avatar:
+			return settings.STATIC_URL + '/img/anonymous-mii.png'
+		else:
+			return avatar
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	name = models.CharField(max_length=255)
-	description = models.TextField(blank=True, default="")
-	ico = models.URLField(blank=True)
-	banner = models.URLField(blank=True)
+	description = models.TextField(blank=True, default='')
+	ico = models.CharField(max_length=255, blank=True)
+	banner = models.CharField(max_length=255, blank=True)
 	# Type: 0 - general, 1 - game, 2 - special 
 	type = models.SmallIntegerField(default=0, choices=((0, 'general'), (1, 'game'), (2, 'special'), (3, 'hide')))
 	# Platform - 0/none, 1/3DS, 2/Wii U, 3/both
@@ -444,14 +463,14 @@ class Community(models.Model):
 				URLValidator()(value=request.POST['url'])
 			except ValidationError:
 				return 5
-		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
-		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
+		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
 		upload = None
 		drawing = None
-		if request.POST.get('screenshot'):
-			upload = util.image_upload(request.POST['screenshot'])
+		if request.FILES.get('screen'):
+			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
 		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
@@ -497,8 +516,8 @@ class Post(models.Model):
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
-	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
-	url = models.URLField(max_length=1200, blank=True, default="")
+	screenshot = models.CharField(max_length=1200, null=True, blank=True, default='')
+	url = models.URLField(max_length=1200, null=True, blank=True, default='')
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
@@ -580,14 +599,14 @@ class Post(models.Model):
 	def create_comment(self, request):
 		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
-		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
 		drawing = None
-		if request.POST.get('screenshot'):
-			upload = util.image_upload(request.POST['screenshot'])
+		if request.FILES.get('screen'):
+			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
 		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
@@ -619,15 +638,6 @@ class Post(models.Model):
 		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
 			self.has_edit = True
 		return self.save()
-	def rm(self, request):
-		if request and not self.is_mine(request) and not self.can_rm(request):
-			return False
-		self.is_rm = True
-		if self.is_mine(request):
-			self.status = 1
-		else:
-			self.status = 2
-		return self.save()
 	def is_favorite(self, request):
 		profile = request.user.profile()
 		if profile.favorite == self:
@@ -649,6 +659,17 @@ class Post(models.Model):
 		if profile.favorite == self:
 			profile.favorite = None
 		return profile.save()
+	def rm(self, request):
+		if request and not self.is_mine(request) and not self.can_rm(request):
+			return False
+		if self.is_favorite(request):
+			self.unfavorite(request)
+		self.is_rm = True
+		if self.is_mine(request):
+			self.status = 1
+		else:
+			self.status = 2
+		self.save()
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
@@ -661,7 +682,7 @@ class Comment(models.Model):
 	community = models.ForeignKey(Community)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
-	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
+	screenshot = models.CharField(max_length=1200, null=True, blank=True, default='')
 	drawing = models.CharField(max_length=200, null=True, blank=True)
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
@@ -774,20 +795,21 @@ class Profile(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	user = models.ForeignKey(User)
-	comment = models.TextField(blank=True, default="")
-	country = models.CharField(max_length=120, blank=True, default="")
+	comment = models.TextField(blank=True, default='')
+	country = models.CharField(max_length=120, blank=True, default='')
 	birthday = models.DateField(null=True, blank=True)
 	# 0 - show, 1 - friends only, 2 - hide
 	id_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
 	relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
-	weblink = models.CharField(max_length=1200, blank=True, default="")
+	weblink = models.CharField(max_length=1200, blank=True, default='')
 	gameskill = models.SmallIntegerField(default=0)
-	external = models.CharField(max_length=255, blank=True, default="")
+	external = models.CharField(max_length=255, blank=True, default='')
 	favorite = models.ForeignKey(Post, blank=True, null=True)
 	let_yeahnotifs = models.BooleanField(default=True)
 	has_gravatar = models.BooleanField(default=False)
 	let_presence_view = models.BooleanField(default=True)
 	let_freedom = models.BooleanField(default=True)
+	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children')
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
@@ -913,7 +935,7 @@ class Complaint(models.Model):
 	(1, 'Suggestion'),
 	(2, 'Want'),
 	))
-	body = models.TextField(blank=True, default="")
+	body = models.TextField(blank=True, default='')
 	sex = models.SmallIntegerField(null=True, choices=((0, 'girl'), (1, 'privileged one'), (2, '(none)'),
 	))
 	created = models.DateTimeField(auto_now_add=True)
@@ -928,7 +950,7 @@ class FriendRequest(models.Model):
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='fr_source')
 	target = models.ForeignKey(User, related_name='fr_target')
-	body = models.TextField(blank=True, null=True, default="")
+	body = models.TextField(blank=True, null=True, default='')
 	read = models.BooleanField(default=False)
 	finished = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
@@ -961,14 +983,17 @@ class Friendship(models.Model):
 			return Conversation.objects.create(source=self.source, target=self.target)
 		return conv.first()
 
-	def get_friendships(user, limit=50, offset=0):
+	def get_friendships(user, limit=50, offset=0, latest=False):
 		if not limit:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')
-		return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
+		if latest:
+			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]
+		else:
+			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
 	def find_friendship(first, second):
 		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created').first()
-	def get_friendships_message(user):
-		friends_list = Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')
+	def get_friendships_message(user, limit=20, offset=0):
+		friends_list = Friendship.get_friendships(user, limit, offset, True)
 		friends = []
 		for friend in friends_list:
 			friends.append(friend.other(user))
@@ -1005,14 +1030,14 @@ class Conversation(models.Model):
 			msg.mine = msg.mine(request.user)
 		return msgs
 	def make_message(self, request):
-		if not request.user.has_freedom and (request.POST.get('url') or request.POST.get('screenshot')):
+		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
 		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
 			return 1
 		upload = None
 		drawing = None
-		if request.POST.get('screenshot'):
-			upload = util.image_upload(request.POST['screenshot'])
+		if request.FILES.get('screen'):
+			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
 		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
@@ -1029,8 +1054,8 @@ class Message(models.Model):
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
-	screenshot = models.URLField(max_length=1200, null=True, blank=True, default="")
-	url = models.URLField(max_length=1200, blank=True, default="")
+	screenshot = models.CharField(max_length=1200, null=True, blank=True, default='')
+	url = models.URLField(max_length=1200, null=True, blank=True, default='')
 	created = models.DateTimeField(auto_now_add=True)
 	read = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
@@ -1092,7 +1117,7 @@ class PollVote(models.Model):
 	by = models.ForeignKey(User)
 	
 	def __str__(self):
-		return "A vote on option " + str(choice) + " for poll \"" + self.poll + "\" by " + str(self.by)
+		return "A vote on option " + str(self.choice) + " for poll \"" + str(self.poll) + "\" by " + str(self.by)
 
 class RedFlag(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -1102,8 +1127,17 @@ class RedFlag(models.Model):
 	user = models.ForeignKey(User, blank=True, null=True)
 	type = models.SmallIntegerField(choices=((0, 'Post'), (1, 'Comment'), (2, 'User'), ))
 	reason = models.SmallIntegerField(choices=((0, "Actual harassment"), (1, "Spam"), (2, "I don't like this"), (3, "Personal info"), (4, "Obscene use of swearing"), (5, "NSFW where not allowed"), (6, "Overly advertising/spam"), (7, "Please delete this")))
-	reasoning = models.TextField(default="", null=True, blank=True)
+	reasoning = models.TextField(default='', null=True, blank=True)
 	
 	def __str__(self):
 		return "Report on a " + self.get_type_display() + " for " + self.get_reason_display() + ": " + str(self.reasoning)
 	
+# Fun
+class ThermostatTouch(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	who = models.ForeignKey(User, blank=True, null=True)
+	lvl = models.IntegerField(default=1)
+	
+	def __str__(self):
+		return str(created) + " touched the thermostat, setting it to " + str(lvl) + " degrees celsius"

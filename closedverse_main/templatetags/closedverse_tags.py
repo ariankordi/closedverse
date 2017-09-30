@@ -1,27 +1,13 @@
 from django import template
-import re
+from closedverse_main.models import User
 from closedverse_main.util import HumanTime
 from closedverse import settings
 
 register = template.Library()
 
 @register.simple_tag
-def avatar(avatar, feeling=0, miionly=False):
-	if bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
-		feeling = {
-		0: 'normal',
-		1: 'happy',
-		2: 'like',
-		3: 'surprised',
-		4: 'frustrated',
-		5: 'puzzled',
-		}.get(feeling, "normal")
-		url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(avatar, feeling)
-		return url
-	elif not avatar:
-		return settings.STATIC_URL + '/img/anonymous-mii.png'
-	else:
-		return avatar
+def avatar(avatar, feeling=0):
+	return User.do_avatar(avatar, feeling)
 @register.simple_tag
 def miionly(avatar):
 	if not avatar or not bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):

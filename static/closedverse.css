@@ -1296,89 +1296,40 @@ content: "F";
   -o-border-radius: 5px;
   border-radius: 5px;
 }
-.icon-container.administrator {
+.icon-container.official {
   position: relative;
 }
-.icon-container.developer {
-  position: relative;
-}
-.icon-container.openverse {
-  position: relative;
-}
-.icon-container.urapp {
-  position: relative;
-}
-.icon-container.moderator {
-  position: relative;
-}
-.icon-container.donator {
-  position: relative;
-}
-.icon-container.tester {
-  position: relative;
+.icon-container.official:after {
+  position: absolute;
+  display: block;
+  margin-top: -4px;
+  margin-left: -4px;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
 }
 .icon-container.administrator:after {
   content: url("/s/img/administrator.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.developer:after {
   content: url("/s/img/developer.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.openverse:after {
   content: url("/s/img/open-dev.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.urapp:after {
   content: url("/s/img/open-zsdev.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.moderator:after {
   content: url("/s/img/moderator.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.donator:after {
   content: url("/s/img/donator.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 .icon-container.tester:after {
   content: url("/s/img/tester.png");
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
 }
 
 .multi-timeline-post-list .post .icon-container.offline:before,
@@ -2816,6 +2767,12 @@ canvas {
 .form-buttons {
   margin-top: 20px;
   text-align: center;
+}
+.form-buttons.three button {
+  margin-bottom: 10px;
+}
+.form-buttons.three {
+  margin-bottom: -14px;
 }
 .form-buttons input {
   display: inline-block;
@@ -5132,7 +5089,7 @@ div#activity-feed-tutorial.no-content p.tleft {
 }
 .screenshot-container img {
   vertical-align: bottom;
-  width: 100%;
+  max-width: 100%;
 }
 .screenshot-container.video {
   position: relative;
@@ -5710,8 +5667,8 @@ div#activity-feed-tutorial.no-content p.tleft {
   text-align: center;
 }
 .multi-timeline-post-list .post .screenshot-container img {
-  height: 157px;
-  width: auto;
+    max-height: 100%;
+    max-width: auto;
   margin: 0 auto;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
@@ -8945,7 +8902,7 @@ display: block !important;
   top: 0px;
   left: 0px;
   z-index: 2000;
-  background: transparent url("https://splatoon.nintendo.net/assets/en/loading/@2x-se6335ab797-cb27d69f23a4d1112bc2a0d272538f39dd3017be20e5f2e3f4a460bd0071b68d.png") 0 0 no-repeat;
+  background: transparent url("/s/img/load.png") 0 0 no-repeat;
   animation: woomy 0.36s steps(17) infinite;
 }
 @keyframes woomy {

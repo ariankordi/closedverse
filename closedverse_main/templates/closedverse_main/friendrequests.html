@@ -21,6 +21,9 @@
       </div>
 
     </div>
+	{% for fr in friendrequests %}
+			{% fr_accept fr %}
+	{% endfor %}
 	<div class="list news-list">
 	{% if friendrequests %}
 		{% for fr in friendrequests %}
@@ -31,7 +34,6 @@
 				<button class="button received-request-button" type="button">View friend request</button>
 			</div>
 		</div>
-		{% fr_accept fr %}
 		{% endfor %}
 	{% else %}
 		{% nocontent "No friend requests yet." %}

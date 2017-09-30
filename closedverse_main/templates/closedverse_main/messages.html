@@ -8,7 +8,7 @@
     <h2 class="label">Messages</h2>
 	<div class="list">
 		{% if friends %}
-				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="">
+				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
 		{% for friend in friends %}
 					<li class="trigger{% if not friend.get_latest_msg.mine and friend.get_latest_msg.read == False %} notify{% endif %}" data-href="{% url "main:messages-view" friend.username %}">
 						{% user_icon_container friend %}
@@ -32,7 +32,6 @@
 	{% else %}
 		{% nocontent "You don't have any friends yet." %}
 	{% endif %}
-
 	</div>
   </div>
 </div>

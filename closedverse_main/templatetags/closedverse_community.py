@@ -46,10 +46,10 @@ def feeling_selector(val=0):
 		'val': val,
 	}
 @register.inclusion_tag('closedverse_main/elements/comment-form.html')
-def comment_form(post, myself=None):
+def comment_form(post, user=None):
 	return {
 		'post': post,
-		'myself': myself,
+		'user': user,
 	}
 @register.inclusion_tag('closedverse_main/elements/memo-drawboard.html')
 def memo_drawboard():

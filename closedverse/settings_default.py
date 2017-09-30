@@ -125,6 +125,7 @@ USE_L10N = True
 USE_TZ = True
 
 AUTH_USER_MODEL = 'closedverse_main.User'
+CSRF_FAILURE_VIEW = 'closedverse_main.views.csrf_fail'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/login/' 
 

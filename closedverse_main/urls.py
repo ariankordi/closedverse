@@ -59,6 +59,10 @@ urlpatterns = [
 	url(r'comments/'+ comment +'/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
+	# Post-meta: polls
+	url(r'poll/(?P<poll>'+ uuidr +'+).vote', views.poll_vote, name='poll-vote'),
+	url(r'poll/(?P<poll>'+ uuidr +'+).unvote', views.poll_unvote, name='poll-unvote'),
+	
 	# Notifications
 	url(r'notif_count\.json|alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
