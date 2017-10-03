@@ -1,7 +1,7 @@
 {% load closedverse_tags %}<li class="trigger" data-href="{% url "main:user-view" user.username %}">
     {% user_icon_container user %}
 
-{% if not user.is_following %}
+{% if request.user.is_authenticated and not user.is_following %}
 <div class="toggle-button">
     <button type="button" data-action="{% url "main:user-follow" user.username %}" class="follow-button button symbol relationship-button">Follow</button>
       <button type="button" class="button follow-done-button relationship-button symbol none" disabled="">Follow</button>

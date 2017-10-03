@@ -1,7 +1,7 @@
 {% load closedverse_user %}<div class="list follow-list">
   <ul class="list-content-with-icon-and-text arrow-list" id="friend-list-content" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
   {% for user in users %}
-  {% profile_user user %}
+  {% profile_user user request %}
   {% endfor %}
   </ul>
 </div>

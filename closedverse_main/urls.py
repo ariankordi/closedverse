@@ -89,6 +89,10 @@ urlpatterns = [
 	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
 	url(r'meta/contact/?', views.help_contact, name='help-contact'),
 	
+	# Manage
+	url(r'man/users', views.admin_users, name='admin-users'),
+	
+	
 	# "API"
 	url(r'users\.json$', views.users_list, name='users-list'),
 	

@@ -3,8 +3,6 @@ from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.dateformat import format
-from django.forms.models import model_to_dict
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -109,7 +107,6 @@ def community_favorites(request):
 		'other': has_other,
 	})
 
-@csrf_exempt
 def login_page(request):
 	if request.method == 'POST':
 		# If we don't have all of the POST parameters we want..
@@ -1011,6 +1008,7 @@ def messages_read(request, username):
 @login_required
 def message_rm(request, message):
 	message = get_object_or_404(Message, unique_id=message)
+	print('this is message ' + str(message.id) + '; ' + str(message.unique_id) )
 	message.rm(request)
 	return HttpResponse()
 
@@ -1048,31 +1046,15 @@ def users_list(request):
 		users = User.search(request.GET['query'], limit, offset, request)
 	else:
 		users = User.objects.filter(staff=False).order_by('-created')[offset:offset + limit]
-	user_list = []
-	for user in users:
-		user_dict = model_to_dict(user)
-		del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
-		user_dict['online_status'] = user.online_status(force=True)
-		try:
-			user_dict['origin_info'] = loads(user_dict['origin_info'])
-		except:
-			user_dict['origin_info'] = None
-		user_dict['created'] = format(user.created, 'U')
-		user_dict['last_login'] = format(user.last_login, 'U')
-		user_dict['avatar'] = User.do_avatar(user_dict['avatar'])
-		user_dict['num_posts'] = [user.num_posts(), reverse('main:user-posts', args=[user.id]), ]
-		user_list.append(user_dict)
-		del(user_dict)
-	return JsonResponse(user_list, safe=False)
+	return JsonResponse(User.format_queryset(users), safe=False)
 
 @login_required
 def admin_users(request):
 	if not request.user.is_authenticated or request.user.level < 2:
 		raise Http404()
-	return render(request, 'closedverse_main/messages.html', {
-		'title': 'Messages',
-		'friends': friends,
-		'next': next_offset,
+	return render(request, 'closedverse_main/man/users.html', {
+		'title': 'User management',
+		
 	})
 
 @require_http_methods(['POST'])

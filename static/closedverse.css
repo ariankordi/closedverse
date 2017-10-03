@@ -8894,6 +8894,7 @@ html.os-mac > pre::-webkit-scrollbar {
 display: block !important;
 }
 
+/*
 #splatoon {
   display: block;
   position: fixed;
@@ -8908,7 +8909,64 @@ display: block !important;
 @keyframes woomy {
   100% { background-position: 0 -1700px; }
 }
+*/
 #nprogress{pointer-events:none;}
 #nprogress .bar{background:linear-gradient(45deg, #322ff3, #b50096);position:fixed;z-index:1031;top:0;left:0;width:100%;height:4px;}
 #nprogress .peg{display:block;position:absolute;right:0px;width:100px;height:100%;box-shadow:0 0 10px #b50096,0 0 4px #b50096;opacity:1.0;-webkit-transform:rotate(3deg) translate(0px,-4px);-ms-transform:rotate(3deg) translate(0px,-4px);transform:rotate(3deg) translate(0px,-4px);}
 .nprogress-custom-parent{overflow:hidden;position:relative;}.nprogress-custom-parent #nprogress .spinner,.nprogress-custom-parent #nprogress .bar{position:absolute;}
+
+.spinner {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: box;
+    display: flex;
+    -webkit-box-pack: center;
+    -o-box-pack: center;
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -o-box-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center
+}
+.spinner-inner {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 32px
+}
+.spinner-wandering-cubes .spinner-item {
+    background-color: #738bd7;
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    -webkit-animation: spinner-wandering-cubes 1.8s infinite ease-in-out;
+    animation: spinner-wandering-cubes 1.8s infinite ease-in-out
+}
+.spinner-wandering-cubes .spinner-item:last-child {
+    -webkit-animation-delay: -.9s;
+    animation-delay: -.9s
+}
+@keyframes spinner-wandering-cubes {
+    25% {
+        -webkit-transform: translateX(22px) rotate(-90deg) scale(.5);
+        transform: translateX(22px) rotate(-90deg) scale(.5)
+    }
+    50% {
+        -webkit-transform: translateX(22px) translateY(22px) rotate(-180deg);
+        transform: translateX(22px) translateY(22px) rotate(-180deg)
+    }
+    75% {
+        -webkit-transform: translateX(0) translateY(22px) rotate(-270deg) scale(.5);
+        transform: translateX(0) translateY(22px) rotate(-270deg) scale(.5)
+    }
+    to {
+        -webkit-transform: rotate(-1turn);
+        transform: rotate(-1turn)
+    }
+}

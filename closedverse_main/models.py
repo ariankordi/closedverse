@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Q, QuerySet, Max, F
 from django.utils import timezone
+from django.forms.models import model_to_dict
+from django.utils.dateformat import format
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from datetime import timedelta
@@ -362,6 +364,23 @@ class User(models.Model):
 			return settings.STATIC_URL + '/img/anonymous-mii.png'
 		else:
 			return avatar
+	def format_queryset(users):
+		user_list = []
+		for user in users:
+			user_dict = model_to_dict(user)
+			del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
+			user_dict['online_status'] = user.online_status(force=True)
+			try:
+				user_dict['origin_info'] = loads(user_dict['origin_info'])
+			except:
+				user_dict['origin_info'] = None
+			user_dict['created'] = user.created
+			user_dict['last_login'] = user.last_login
+			user_dict['avatar'] = User.do_avatar(user_dict['avatar'])
+			user_dict['num_posts'] = [user.num_posts(), reverse('main:user-posts', args=[user.id]), ]
+			user_list.append(user_dict)
+			del(user_dict)
+		return user_list
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -597,11 +616,11 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
-		if request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if not self.is_mine(request) and request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
-		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
+		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
 		upload = None
 		drawing = None
@@ -972,7 +991,7 @@ class Friendship(models.Model):
 	def __str__(self):
 		return "friendship with " + str(self.source) + " and " + str(self.target)
 	def update(self):
-		return self.save()
+		return self.save(update_fields=['latest'])
 	def other(self, user):
 		if self.source == user:
 			return self.target
@@ -1032,7 +1051,7 @@ class Conversation(models.Model):
 	def make_message(self, request):
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
-		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('painting')):
+		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
 		upload = None
 		drawing = None
@@ -1078,8 +1097,9 @@ class Message(models.Model):
 			return True
 		return False
 	def rm(self, request):
-		self.is_rm = True
-		return self.save()
+		if self.conversation.source == request.user or self.conversation.target == request.user:
+			self.is_rm = True
+			return self.save()
 
 	def makeopt(ls):
 		if len(ls) < 1:

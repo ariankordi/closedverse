@@ -60,11 +60,13 @@ def profile_user_list(users, next_offset=None, request=None):
 	return {
 		'users': users,
 		'next': next_offset,
+		'request': request,
 	}
 @register.inclusion_tag('closedverse_main/elements/profile-user.html')
-def profile_user(user):
+def profile_user(user, request):
 	return {
 		'user': user,
+		'request': request,
 	}
 
 @register.inclusion_tag('closedverse_main/elements/user-notification.html')

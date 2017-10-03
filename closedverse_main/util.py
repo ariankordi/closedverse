@@ -2,10 +2,12 @@ from lxml import html
 import urllib.request, urllib.error
 import json
 import time
+import os.path
 from PIL import Image, ExifTags
 from datetime import datetime
 from math import floor
-from hashlib import md5
+from hashlib import md5, sha1
+# lol bye Cloudinary, see you another day
 #import cloudinary
 #import cloudinary.uploader
 #import cloudinary.api
@@ -73,19 +75,26 @@ def image_upload(img, stream=False):
 			return 1
 	
 	im = Image.open(io.BytesIO(decodedimg))
+	# Taken from https://coderwall.com/p/nax6gg/fix-jpeg-s-unexpectedly-rotating-when-saved-with-pil
 	if hasattr(im, '_getexif'):
-		for orientation in ExifTags.TAGS.keys():
-			if ExifTags.TAGS[orientation] == 'Orientation':
-				break 
-			e = im._getexif()
-			if not e is None:
-				orientation = dict(e.items()).get(orientation)
-		if orientation == 3:   im = im.transpose(Image.ROTATE_180)
-		elif orientation == 6: im = im.transpose(Image.ROTATE_270)
-		elif orientation == 8: im = im.transpose(Image.ROTATE_90)
+		orientation = 0x0112
+		exif = im._getexif()
+		if exif is not None:
+			orientation = exif.get(orientation)
+			rotations = {
+				3: Image.ROTATE_180,
+				6: Image.ROTATE_270,
+				8: Image.ROTATE_90
+			}
+			if orientation in rotations:
+				im = im.transpose(rotations[orientation])
 	im.thumbnail((1280, 1280), Image.ANTIALIAS)
-	floc = str(uuid4()) + '.png'
-	im.save(settings.MEDIA_ROOT + floc, 'PNG')
+	# I know some people have aneurysms when they see people actually using SHA1 in the real world, for anything in general.
+	# Yes, we are really using it. Sorry if that offends you. It's just fast and I don't feel I need anything more random, since we are talking about IMAGES.
+	imhash = sha1(im.tobytes()).hexdigest()
+	floc = imhash + '.png'
+	if not os.path.exists(settings.MEDIA_ROOT + floc):
+		im.save(settings.MEDIA_ROOT + floc, 'PNG')
 	return settings.MEDIA_URL + floc
 
 def get_gravatar(email):

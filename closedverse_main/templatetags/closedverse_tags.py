@@ -2,6 +2,7 @@ from django import template
 from closedverse_main.models import User
 from closedverse_main.util import HumanTime
 from closedverse import settings
+import re
 
 register = template.Library()
 

@@ -42,7 +42,7 @@
 				<textarea name="body" class="textarea-text textarea " maxlength="2200" placeholder="Edit your comment." data-required="">{{ comment.body }}</textarea>
 			</div>
 				<div class="post-form-footer-options">
-					<label class="spoiler-button symbol"><input id="is_spoiler" name="is_spoiler" type="checkbox" value="1">Spoilers</label>
+					<label class="spoiler-button symbol"><input id="is_spoiler" name="is_spoiler" type="checkbox" value="1"{% if comment.spoils %} checked{% endif %}>Spoilers</label>
 				</div>
 				<div class="form-buttons">
 					<button type="button" class="cancel-button gray-button">Cancel</button>
