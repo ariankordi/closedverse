@@ -165,7 +165,7 @@ def signup_page(request):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
 		if request.POST.get('email') and User.email_in_use(request.POST['email']):
 			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
-		check_others = Profile.objects.filter(user__addr=request.REMOTE_ADDR, let_freedom=False).exists()
+		check_others = Profile.objects.filter(user__addr=request.META['REMOTE_ADDR'], let_freedom=False).exists()
 		if check_others:
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
 		if request.POST['origin_id']:
@@ -1029,8 +1029,11 @@ def prefs(request):
 	lights = not (request.session.get('lights', False))
 	arr = [profile.let_yeahnotifs, lights, profile.let_presence_view]
 	return JsonResponse(arr, safe=False)
+
 @login_required
-def users_list(request):
+def users_list(request, type):
+	if not request.user.is_authenticated or request.user.level < 2:
+		raise Http404()
 	offset = 0
 	limit = 50
 	if request.GET.get('o'):
@@ -1045,8 +1048,19 @@ def users_list(request):
 			return HttpResponseBadRequest()
 		users = User.search(request.GET['query'], limit, offset, request)
 	else:
-		users = User.objects.filter(staff=False).order_by('-created')[offset:offset + limit]
-	return JsonResponse(User.format_queryset(users), safe=False)
+		users = User.objects.filter().order_by('-created').exclude(staff=True, level__gte=request.user.level)[offset:offset + limit]
+	# I don't know if this will work or not, it might break cURL and such but whom cares anyway
+	if type == 'html':
+		if users.count() > 19:
+			next_offset = offset + 20
+		else:
+			next_offset = None
+		return render(request, 'closedverse_main/man/admin-user-list.html', {
+			'users': User.format_queryset(users),
+			'next': next_offset,
+		})
+	else:
+		return JsonResponse(User.format_queryset(users), safe=False)
 
 @login_required
 def admin_users(request):

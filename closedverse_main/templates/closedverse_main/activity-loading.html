@@ -1,5 +1,5 @@
 {% extends "closedverse_main/layout.html" %}
-{% load static %}{% load closedverse_user %}{% load closedverse_community %}
+{% load static %}{% load closedverse_user %}{% load closedverse_community %}{% load closedverse_tags %}
 {% block main-body %}
 {% user_sidebar request user user.profile 0 True %}
 <div class="main-column">
@@ -28,7 +28,7 @@
   <div id="js-main">
     <div class="activity-feed content-loading-window">
       <div>
-        <span class=spinner><span class="spinner-inner spinner-wandering-cubes"><span class=spinner-item></span><span class=spinner-item></span></span></span>
+        {% discordapp_spinner %}
         <p class="tleft"><span>Loading activity feed...</span></p>
       </div>
     </div>

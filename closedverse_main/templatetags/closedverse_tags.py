@@ -25,11 +25,17 @@ def user_class(user):
 def user_level(user):
 	return user.get_class()[1]
 @register.inclusion_tag('closedverse_main/elements/user-icon-container.html')
-def user_icon_container(user, feeling=0):
+def user_icon_container(user, feeling=0, has_uclass=True):
+	if not has_uclass:
+		uclass = ''
+		url = user['avatar']
+	else:
+		uclass = user_class(user)
+		url = avatar(user.avatar, feeling)
 	return {
-	'uclass': user_class(user),
+	'uclass': uclass,
 	'user': user,
-	'url': avatar(user.avatar, feeling),
+	'url': url,
 	}
 @register.inclusion_tag('closedverse_main/elements/no-content.html')
 def nocontent(text='', style=''):
@@ -71,4 +77,9 @@ def print_names(names):
 	return {
 		'nameallmn': len(names) - 4,
 		'names': names,
+	}
+@register.inclusion_tag('closedverse_main/elements/discordapp-spinner.html')
+def discordapp_spinner():
+	return {
+		
 	}

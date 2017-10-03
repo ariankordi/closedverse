@@ -3073,6 +3073,12 @@ mode_post = 0;
 			});
 		})
 	}),
+    	b.router.connect("^/man/users$", function(c, d, e) {
+		b.Form.get('/users.html').done(function(a) {
+			$('.user-loads').html(a);
+			b.Content.autopagerize('#user-man-list', e);
+		})
+	}),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
 		changesel('mymenu')
 			// If we are on profile settings..

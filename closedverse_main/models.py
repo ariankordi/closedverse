@@ -11,6 +11,7 @@ from datetime import timedelta
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
 from . import util
+from random import getrandbits
 import uuid, json, base64
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -43,9 +44,11 @@ class UserManager(BaseUserManager):
 			user.avatar = nn[0]
 			user.origin_id = nn[2]
 			user.origin_info = json.dumps(nn)
+			# TODO- REPLACE THIS WITH has_mh
 			user.has_gravatar = False
 		else:
-			user.avatar = util.get_gravatar(email) or ""
+			user.avatar = util.get_gravatar(email) or ('s' if getrandbits(1) else '')
+			# THIS TOO			
 			user.has_gravatar = True
 		user.set_password(password)
 		user.save(using=self._db)
@@ -224,6 +227,11 @@ class User(models.Model):
 		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
+	# Admin can-manage	
+	def can_manage(self, me):
+		if (self.level >= me.level) or self.is_staff():
+			return False
+		return True
 	def friend_state(self, other):
 		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
 		query1 = other.fr_source.filter(target=self, finished=False).exists()
@@ -362,6 +370,8 @@ class User(models.Model):
 			return url
 		elif not avatar:
 			return settings.STATIC_URL + '/img/anonymous-mii.png'
+		elif avatar == 's':
+			return settings.STATIC_URL + '/img/anonymous-mii-sad.png'
 		else:
 			return avatar
 	def format_queryset(users):
