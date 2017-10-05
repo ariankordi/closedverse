@@ -54,7 +54,7 @@
       View all comments ({{ post.comment_count }})
     </div>
 {% endif %}
-  <div id="{{ post.recent_comment.unique_id }}" data-href="{% url "main:post-view" post.id %}" tabindex="0" class="recent-reply trigger">
+  <div id="{{ post.recent_comment.unique_id }}" tabindex="0" class="recent-reply trigger">
     {% user_icon_container post.recent_comment.creator post.recent_comment.feeling %}
     <p class="user-name"><a href="{% url "main:user-view" post.recent_comment.creator.username %}">{{ post.recent_comment.creator.nickname }}</a></p>
     <p class="timestamp-container">

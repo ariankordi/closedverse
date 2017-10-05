@@ -1078,11 +1078,22 @@ def users_list(request, type):
 
 @login_required
 def admin_users(request):
-	if not request.user.is_authenticated or not request.user.is_staff() or request.user.level < 2:
+	if not request.user.can_manage():
 		raise Http404()
 	return render(request, 'closedverse_main/man/users.html', {
 		'title': 'User management',
 		
+	})
+@login_required
+def user_manager(request, user):
+	if not request.user.can_manage():
+		raise Http404()
+	user = get_object_or_404(User, unique_id=user)
+	return JsonResponse({
+		'id': user.id,
+		'is_active': user.is_active(),
+		'addr': user.addr,
+		'shared_addrs': User.format_queryset(user.find_shared_ip())
 	})
 
 @require_http_methods(['POST'])

@@ -232,11 +232,11 @@ class User(models.Model):
 		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
-	# Admin can-manage	
-	def can_manage(self, me):
-		if (self.level >= me.level) or self.is_staff():
-			return False
-		return True
+	# Admin can-manage
+	def can_manage(self):
+		if (self.level >= 2) or self.is_staff():
+			return True	
+		return False
 	def friend_state(self, other):
 		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
 		query1 = other.fr_source.filter(target=self, finished=False).exists()
@@ -337,6 +337,8 @@ class User(models.Model):
 		subj = 'Openverse password reset for "{0}"'.format(self.username)
 		return send_mail(subject=subj, message="Bro, do you even HTML E-Mail?", html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
 		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
+	def find_shared_ip(self):
+		return User.objects.filter(addr=self.addr).exclude(id=self.id)
 
 	def search(query='', limit=50, offset=0, request=None):
 		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
@@ -389,6 +391,7 @@ class User(models.Model):
 				user_dict['origin_info'] = loads(user_dict['origin_info'])
 			except:
 				user_dict['origin_info'] = None
+			user_dict['unique_id'] = str(user.unique_id)
 			user_dict['created'] = user.created
 			user_dict['last_login'] = user.last_login
 			user_dict['avatar'] = User.do_avatar(user_dict['avatar'])

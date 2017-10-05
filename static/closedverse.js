@@ -497,7 +497,7 @@ var Olv = Olv || {};
             if (d && "object" == typeof d)
                 return d;
             var e = a.status;
-			if((typeof a.responseText.length === undefined || a.responseText.length < 2) && e == 400) {
+			if((typeof a.responseText === undefined || a.responseText.length < 2) && e == 400) {
 			return {
 				error_code: "Bad Request",
 				message: "The request or action sent was invalid. Try again?"
@@ -2977,6 +2977,12 @@ mode_post = 0;
 		b.Form.get('/users.html').done(function(a) {
 			$('.user-loads').html(a);
 			b.Content.autopagerize('#user-man-list', e);
+			$('button.user-manage').click(function() {
+				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
+					alert('We got user ' + a.id);
+					console.log(a);
+				})
+			})
 		})
 	}),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {

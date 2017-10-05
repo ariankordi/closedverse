@@ -1,7 +1,7 @@
 {% load closedverse_user %}{% load closedverse_tags %}<div class="list follow-list">
   <ul class="list-content-with-icon-and-text arrow-list" id="user-man-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
   {% for user in users %}
-  <li class="trigger" data-href="{% url "main:user-view" user.username %}">
+  <li class="trigger" data-href="{% url "main:user-view" user.username %}" data-action="{% url "main:user-manager" user.unique_id %}">
     {% user_icon_container user 0 False %}
 
 	<div class="toggle-button">

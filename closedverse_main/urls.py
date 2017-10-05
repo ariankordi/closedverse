@@ -20,8 +20,9 @@ urlpatterns = [
 	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
 	# User pages
-	url(r'users/'+ username +'\.follow\.json$', views.user_follow, name='user-follow'),
-	url(r'users/'+ username +'\.unfollow\.json$', views.user_unfollow, name='user-unfollow'),
+	url(r'users/(?P<user>'+ uuidr +'+).manager', views.user_manager, name='user-manager'),
+	url(r'users/'+ username +'.follow.json$', views.user_follow, name='user-follow'),
+	url(r'users/'+ username +'.unfollow.json$', views.user_unfollow, name='user-unfollow'),
 	url(r'users/'+ username +'$', views.user_view, name='user-view'),
 	url(r'users/'+ username +'/posts$', views.user_posts, name='user-posts'),
 	url(r'users/'+ username +'/yeahs$', views.user_yeahs, name='user-yeahs'),
@@ -29,36 +30,36 @@ urlpatterns = [
 	url(r'users/'+ username +'/followers$', views.user_followers, name='user-followers'),
 	url(r'users/'+ username +'/friends$', views.user_friends, name='user-friends'),
 	# User page friends
-	url(r'users/'+ username +'/friend\.new$', views.user_friendrequest_create, name='user-fr-create'),
-	url(r'users/'+ username +'/friend\.accept$', views.user_friendrequest_accept, name='user-fr-accept'),
-	url(r'users/'+ username +'/friend\.reject$', views.user_friendrequest_reject, name='user-fr-reject'),
-	url(r'users/'+ username +'/friend\.cancel$', views.user_friendrequest_cancel, name='user-fr-cancel'),
-	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
+	url(r'users/'+ username +'/friend.new$', views.user_friendrequest_create, name='user-fr-create'),
+	url(r'users/'+ username +'/friend.accept$', views.user_friendrequest_accept, name='user-fr-accept'),
+	url(r'users/'+ username +'/friend.reject$', views.user_friendrequest_reject, name='user-fr-reject'),
+	url(r'users/'+ username +'/friend.cancel$', views.user_friendrequest_cancel, name='user-fr-cancel'),
+	url(r'users/'+ username +'/friend.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
 	# Communities
-	url(r'communities\.search$', views.community_search, name='community-search'),
+	url(r'communities.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
 	url(r'communities/all$', views.community_all, name='community-viewall'),
 	url(r'communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
 	url(r'communities/'+ community +'/favorite$', views.community_favorite_create, name='community-favorite-add'),
-	url(r'communities/'+ community +'/favorite\.rm$', views.community_favorite_rm, name='community-favorite-rm'),
+	url(r'communities/'+ community +'/favorite.rm$', views.community_favorite_rm, name='community-favorite-rm'),
 	url(r'communities/'+ community +'/posts$', views.post_create, name='post-create'),
 	# Posts and comments
 	# Some of these NAMES (not patterns) are hardcoded into models.py
 	url(r'posts/'+ post +'$', views.post_view, name='post-view'),
 	url(r'posts/'+ post +'/yeah$', views.post_add_yeah, name='post-add-yeah'),
-	url(r'posts/'+ post +'/yeah\.delete$', views.post_delete_yeah, name='post-delete-yeah'),
+	url(r'posts/'+ post +'/yeah.delete$', views.post_delete_yeah, name='post-delete-yeah'),
 	url(r'posts/'+ post +'/comments$', views.post_comments, name='post-comments'),
 	url(r'posts/'+ post +'/comments$', views.post_comments, name='post-comments'),
 	url(r'posts/'+ post +'/change$', views.post_change, name='post-change'),
 	url(r'posts/'+ post +'/profile$', views.post_setprofile, name='post-set-profile'),
-	url(r'posts/'+ post +'/profile\.no', views.post_unsetprofile, name='post-unset-profile'),
-	url(r'posts/'+ post +'\.rm$', views.post_rm, name='post-rm'),
+	url(r'posts/'+ post +'/profile.no', views.post_unsetprofile, name='post-unset-profile'),
+	url(r'posts/'+ post +'.rm$', views.post_rm, name='post-rm'),
 	url(r'comments/'+ comment +'$', views.comment_view, name='comment-view'),
 	url(r'comments/'+ comment +'/yeah$', views.comment_add_yeah, name='comment-add-yeah'),
-	url(r'comments/'+ comment +'/yeah\.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
+	url(r'comments/'+ comment +'/yeah.delete$', views.comment_delete_yeah, name='comment-delete-yeah'),
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
-	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
+	url(r'comments/'+ comment +'.rm$', views.comment_rm, name='comment-rm'),
 	# Post-meta: polls
 	url(r'poll/(?P<poll>'+ uuidr +'+).vote', views.poll_vote, name='poll-vote'),
 	url(r'poll/(?P<poll>'+ uuidr +'+).unvote', views.poll_unvote, name='poll-unvote'),
@@ -68,15 +69,15 @@ urlpatterns = [
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),
-	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
+	url(r'notifications/(?P<notification>'+ uuidr +'+).rm$', views.notification_delete, name='notification-delete'),
 	
 	# User meta + messages
 	url(r'activity/?$', views.activity_feed, name='activity'),
-	url(r'users\.search$', views.user_search, name='user-search'),
+	url(r'users.search$', views.user_search, name='user-search'),
 	url(r'pref$', views.prefs, name='prefs'),
 	url(r'settings/profile$', views.profile_settings, name='profile-settings'),
 	url(r'messages/?$', views.messages, name='messages'),
-	url(r'messages/(?P<message>'+ uuidr +'+)\.rm$', views.message_rm, name='message-delete'),
+	url(r'messages/(?P<message>'+ uuidr +'+).rm$', views.message_rm, name='message-delete'),
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),
 	
@@ -94,12 +95,12 @@ urlpatterns = [
 	
 	
 	# "API"
-	url(r'users\.(json|html)$', views.users_list, name='users-list'),
+	url(r'users.(json|html)$', views.users_list, name='users-list'),
 
 	
 	# Util, right now we are away from the primary appo
 	url(r'origin', views.origin_id, name='origin-id-get'),
 	# :^)
-	#url(r'openverse\.png', views.openverse_logo, name='openverse-logo'),
+	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
 
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)
