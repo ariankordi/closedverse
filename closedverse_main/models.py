@@ -52,6 +52,11 @@ class UserManager(BaseUserManager):
 			user.has_gravatar = True
 		user.set_password(password)
 		user.save(using=self._db)
+		if util.getipintel(addr) > 0.994:
+			freedom = False
+		else:
+			freedom = True
+		Profile.objects.create(user=user, let_freedom=freedom)
 		return user
 		
 	def create_superuser(self, username, password):
@@ -485,7 +490,7 @@ class Community(models.Model):
 	def create_post(self, request):
 		if not self.post_perm(request):
 			return 4
-		if request.user.post_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if Post.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if request.POST.get('url'):
 			try:
@@ -626,7 +631,7 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
-		if not self.is_mine(request) and request.user.comment_set.filter(created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if not self.is_mine(request) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
@@ -1061,6 +1066,8 @@ class Conversation(models.Model):
 	def make_message(self, request):
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
+		if Message.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=2)).exists():
+			return 3
 		if len(request.POST['body']) > 50000 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
 		upload = None

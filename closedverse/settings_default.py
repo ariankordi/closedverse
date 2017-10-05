@@ -155,6 +155,10 @@ nnid_forbiddens = BASE_DIR + '/forbidden.json'
 memo_title = "Closedverse demo"
 memo_msg = "Heyyyy!"
 
+# E-mail to use for getipintel.net, because we're using that
+# None for no IP checking (recommended)
+ipintel_email = None
+
 # Cloudinary environment, because we're using that
 cloudinary_key = None
 cloudinary_secret = None

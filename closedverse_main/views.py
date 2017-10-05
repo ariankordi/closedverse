@@ -184,7 +184,6 @@ def signup_page(request):
 			mii = None
 			gravatar = True
 		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST['email'], addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
-		Profile.objects.create(user=make)
 		login(request, make)
 		return HttpResponse("/")
 	else:
@@ -770,7 +769,8 @@ def user_follow(request, username):
 	user.follow(request.user)
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
-	return HttpResponse()
+	followct = request.user.num_following()
+	return JsonResponse({'following_count': followct})
 @require_http_methods(['POST'])
 @login_required
 def user_unfollow(request, username):
@@ -814,16 +814,29 @@ def user_friendrequest_delete(request, username):
 	request.user.delete_friend(user)
 	return HttpResponse()
 
+# Notifications work differently since the Openverse rebranding.
+# They used to respond with a JSON for values for unread notifications and messages.
+# NOW we send the unread notifications in bytes, and then the unread messages in bytes, 2 bytes. The JS is using charCodeAt() 
+# Yes, this limits the amount of unread notifications and messages anyone could ever have, ever, to 255
 def check_notifications(request):
 	if not request.user.is_authenticated:
-		return JsonResponse({'success': True})
+		#return JsonResponse({'success': True})
+		return HttpResponse()
 	n_count = request.user.notification_count()
 	all_count = request.user.get_frs_notif() + n_count
 	msg_count = request.user.msg_count()
 	# Let's update the user's online status
 	request.user.wake(request.META['REMOTE_ADDR'])
-	# n for notifications icon, msg for messages icon
-	return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
+	# Let's just now return the JSON only for Accept: HTML
+	if 'html' in request.META.get('HTTP_ACCEPT'):
+		return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
+	# And then return binary for anything else
+	# Edge cases, anyone? (yes this isn't good but it works)
+	try:
+		binary_notifications = bytes([all_count]) + bytes([msg_count])
+	except ValueError:
+		binary_notifications = bytes([255]) + bytes([255])
+	return HttpResponse(binary_notifications, content_type='application/octet-stream')
 @require_http_methods(['POST'])
 @login_required
 def notification_setread(request):
@@ -963,6 +976,7 @@ def messages_view(request, username):
 			return json_response({
 			1: "Your message is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
+			3: "Sorry, but you're sending messages too fast.",
 			6: "Not allowed.",
 			}.get(new_post))
 		friendship.update()
@@ -1032,7 +1046,7 @@ def prefs(request):
 
 @login_required
 def users_list(request, type):
-	if not request.user.is_authenticated or request.user.level < 2:
+	if not request.user.is_authenticated or not request.user.is_staff() or request.user.level < 2:
 		raise Http404()
 	offset = 0
 	limit = 50
@@ -1064,7 +1078,7 @@ def users_list(request, type):
 
 @login_required
 def admin_users(request):
-	if not request.user.is_authenticated or request.user.level < 2:
+	if not request.user.is_authenticated or not request.user.is_staff() or request.user.level < 2:
 		raise Http404()
 	return render(request, 'closedverse_main/man/users.html', {
 		'title': 'User management',

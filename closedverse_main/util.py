@@ -108,3 +108,15 @@ def filterchars(str):
 	if "\u202e" in str:
 		return str.split("\u202e")[1]
 	return str
+	
+def getipintel(addr):
+	# My router's IP prefix is 192.168.1.*, so this works in debug
+	if settings.ipintel_email and not '192.168' in addr:
+		try:
+			site = urllib.request.urlopen('https://check.getipintel.net/check.php?ip={0}&contact={1}'
+			.format(addr, settings.ipintel_email))
+		except:
+			return 0
+		return float(site.read().decode())
+	else:
+		return 0

@@ -64,7 +64,7 @@ urlpatterns = [
 	url(r'poll/(?P<poll>'+ uuidr +'+).unvote', views.poll_unvote, name='poll-unvote'),
 	
 	# Notifications
-	url(r'notif_count\.json|alive$', views.check_notifications, name='check-notifications'),
+	url(r'alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/set_read$', views.notification_setread, name='set-read'),

@@ -13,7 +13,7 @@
   Followed by {% print_names notification.all_users %}.
   {% endif %}
     <span class="timestamp"> {% time notification.latest %}</span>
-{% if notification.type == 4 and not notification.source.is_following %}
+{% if notification.type == 4 and not notification.source.is_following and not notification.all_users|length > 1 %}
 <div class="toggle-button">
     <button type="button" data-action="{% url "main:user-follow" notification.source.username %}" class="follow-button button symbol">Follow</button>
       <button type="button" class="button follow-done-button relationship-button symbol none" disabled="">Follow</button>

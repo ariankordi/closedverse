@@ -13,6 +13,7 @@
   font-weight: normal;
   font-style: normal;
 }
+/* Clarification: I put this here because without it the layout would shift on my Mac. Sorry. */
 html.os-mac::-webkit-scrollbar { 
 display: none !important; 
 }
@@ -49,6 +50,7 @@ td {
 input,
 textarea {
   font-size: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 table {
   border-collapse: collapse;
@@ -881,7 +883,6 @@ left: 10% !important;
 #global-menu #global-my-menu .my-menu-account-setting:before {
   content: "Y";
 }
-/*Not done yet*/
 #global-menu #global-my-menu .my-menu-openman:before {
   content: "w";
 }
@@ -1991,6 +1992,10 @@ font-size: 18px;
   color: #0080ff;
   content: "Q";
 }
+.arrow-list .toggle-button .user-manage:before {
+  color: #0080ff;
+  content: "Y";
+}
 .list .toggle-button .friend-button:before {
   color: #0080ff;
   content: "F";
@@ -3009,6 +3014,7 @@ border-top: 1px solid #78c9ff;
   background: #fff;
   border: 1px solid #dddddd;
   border-top: none;
+/*text-align: center;*/
 }
 .dialog .window-body-content {
   display: inline-block;
@@ -8894,7 +8900,7 @@ html.os-mac > pre::-webkit-scrollbar {
 display: block !important;
 }
 
-/*
+
 #splatoon {
   display: block;
   position: fixed;
@@ -8909,7 +8915,7 @@ display: block !important;
 @keyframes woomy {
   100% { background-position: 0 -1700px; }
 }
-*/
+
 #nprogress{pointer-events:none;}
 #nprogress .bar{background:linear-gradient(45deg, #322ff3, #b50096);position:fixed;z-index:1031;top:0;left:0;width:100%;height:4px;}
 #nprogress .peg{display:block;position:absolute;right:0px;width:100px;height:100%;box-shadow:0 0 10px #b50096,0 0 4px #b50096;opacity:1.0;-webkit-transform:rotate(3deg) translate(0px,-4px);-ms-transform:rotate(3deg) translate(0px,-4px);transform:rotate(3deg) translate(0px,-4px);}
