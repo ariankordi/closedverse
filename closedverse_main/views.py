@@ -260,21 +260,21 @@ def user_view(request, username):
 			if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
 				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if request.POST.get('avatar') == '1':
-			user.avatar = get_gravatar(user.email) or ""
-			user.has_gravatar = True
+			user.avatar = get_gravatar(user.email) or ''
+			user.has_mh = False
 		elif request.POST.get('avatar') == '0':
-			user.has_gravatar = False
+			user.has_mh = True
 			if not request.POST.get('origin_id'):
-				user.origin_id = None
-				user.origin_info = None
-				user.avatar = ""
+				profile.origin_id = None
+				profile.origin_info = None
+				user.avatar = ''
 			else:
 				getmii = get_mii(request.POST.get('origin_id'))
 				if not getmii:
 					return json_response('NNID not found')
 				user.avatar = getmii[0]
-				user.origin_id = getmii[2]
-				user.origin_info = dumps(getmii)
+				profile.origin_id = getmii[2]
+				profile.origin_info = dumps(getmii)
 		user.email = request.POST.get('email')
 		profile.country = request.POST.get('country')
 		website = request.POST.get('website')
@@ -580,6 +580,7 @@ def post_create(request, community):
 			4: "Apparently, you're not allowed to post here.",
 			5: "Uh-oh, that URL wasn't valid..",
 			6: "Not allowed.",
+			7: "Please don't spam.",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
@@ -600,7 +601,7 @@ def post_view(request, post):
 		post.poll.setup()
 	if request.user.is_authenticated:
 		post.can_rm = post.can_rm(request)
-		post.is_favorite = post.is_favorite(request)
+		post.is_favorite = post.is_favorite(request.user)
 	if post.is_mine:
 		title = 'Your post'
 	else:
@@ -642,13 +643,13 @@ def post_change(request, post):
 @login_required
 def post_setprofile(request, post):
 	the_post = get_object_or_404(Post, id=post)
-	the_post.favorite(request)
+	the_post.favorite(request.user)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
 def post_unsetprofile(request, post):
 	the_post = get_object_or_404(Post, id=post)
-	the_post.unfavorite(request)
+	the_post.unfavorite(request.user)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -685,7 +686,7 @@ def post_comments(request, post):
 			6: "Not allowed.",
 			}.get(new_post))
 		# Give the notification!
-		if post.is_mine(request):
+		if post.is_mine(request.user):
 			users = []
 			all_comment_count = post.get_comments().count()
 			if all_comment_count > 20:
@@ -717,7 +718,7 @@ def comment_view(request, comment):
 		title = 'Your comment'
 	else:
 		title = '{0}\'s comment'.format(comment.creator.nickname)
-	if comment.original_post.is_mine(request):
+	if comment.original_post.is_mine(request.user):
 		title += ' on your post'
 	else:
 		title += ' on {0}\'s post'.format(comment.original_post.creator.nickname)
@@ -818,6 +819,7 @@ def user_friendrequest_delete(request, username):
 # They used to respond with a JSON for values for unread notifications and messages.
 # NOW we send the unread notifications in bytes, and then the unread messages in bytes, 2 bytes. The JS is using charCodeAt() 
 # Yes, this limits the amount of unread notifications and messages anyone could ever have, ever, to 255
+# Edit: Now, if a user has no unread messages OR unread notifications, no data is returned
 def check_notifications(request):
 	if not request.user.is_authenticated:
 		#return JsonResponse({'success': True})
@@ -831,6 +833,10 @@ def check_notifications(request):
 	if 'html' in request.META.get('HTTP_ACCEPT'):
 		return JsonResponse({'success': True, 'n': all_count, 'msg': msg_count})
 	# And then return binary for anything else
+	# Wait a sec: if there's no new messages/notifications, send nothing back
+	if not all_count and not msg_count:
+		return HttpResponse(content_type='application/octet-stream')
+	# But, if there are, let's keep going
 	# Edge cases, anyone? (yes this isn't good but it works)
 	try:
 		binary_notifications = bytes([all_count]) + bytes([msg_count])
@@ -1035,13 +1041,13 @@ def prefs(request):
 		else:
 			profile.let_yeahnotifs = False
 		if request.POST.get('b'):
-			profile.let_presence_view = True
+			request.user.hide_online = True
 		else:
-			profile.let_presence_view = False
+			request.user.hide_online = False
 		profile.save()
 		return HttpResponse()
 	lights = not (request.session.get('lights', False))
-	arr = [profile.let_yeahnotifs, lights, profile.let_presence_view]
+	arr = [profile.let_yeahnotifs, lights, request.user.hide_online]
 	return JsonResponse(arr, safe=False)
 
 @login_required

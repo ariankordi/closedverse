@@ -63,9 +63,9 @@
 		</div>
         <p class="note">Actually, you don't have to put a DiscordTag here, you can put anything here. Discord sure is popular though.</p>
       </li>
-	  	  {% if user.origin_id %}
+	  	  {% if profile.origin_id %}
       <li>
-        <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID? ({{ user.origin_id }})</label></p>
+        <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID? ({{ profile.origin_id }})</label></p>
         <div class="select-content">
           <div class="select-button">
             <select name="id_visibility" id="id_visibility">
@@ -80,21 +80,21 @@
 		<li class="setting-nnid">
                 <p class="settings-label">Nintendo Network ID</p>
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
+                    <img class="icon nnid-icon mii" src="{% miionly user.avatar user.has_mh %}">
                 </div>
-                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not user.origin_id %} (None){% endif %}" value="{% if user.origin_id %}{{ user.origin_id }}{% endif %}" data-action="{% url "main:origin-id-get" %}">
+                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-action="{% url "main:origin-id-get" %}">
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>
               </li>
               <li class="setting-avatar">
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii{% if profile.has_gravatar %} none{% endif %}" src="{% miionly user.mh %}">
-					<img class="icon nnid-icon gravatar{% if not profile.has_gravatar %} none{% endif %}" src="{{ user.gravatar }}">
+                    <img class="icon nnid-icon mii{% if not user.has_mh %} none{% endif %}" src="{% miionly user.avatar user.has_mh %}">
+					<img class="icon nnid-icon gravatar{% if user.has_mh %} none{% endif %}" src="{{ user.gravatar }}">
                   </div>
                 <p class="settings-label">Do you want the avatar shown beside your content to use the Mii from your Nintendo Network ID or a Gravatar?</p>
-                <label><input type="radio" name="avatar" value="0"{% if not profile.has_gravatar %} checked{% endif %}>Mii</label>
-                <label><input type="radio" name="avatar" value="1"{% if profile.has_gravatar %} checked{% endif %}>Gravatar</label>
+                <label><input type="radio" name="avatar" value="0"{% if user.has_mh %} checked{% endif %}>Mii</label>
+                <label><input type="radio" name="avatar" value="1"{% if not user.has_mh %} checked{% endif %}>Gravatar</label>
                 <p class="note">Selecting the Gravatar option will cause your avatar to be pulled from the <a href="https://gravatar.com">Gravatar account</a> linked to your email address, and feelings won't be shown in your posts unless you choose to use a Mii instead.</p>
          </li>
 

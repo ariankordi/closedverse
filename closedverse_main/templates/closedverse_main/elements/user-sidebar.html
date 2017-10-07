@@ -99,7 +99,7 @@
 		<div class="data-content">
 			<h4><span>NNID</span></h4>
 			<div class="note">
-				<span>{% if profile.origin_id == 1 %}Private{% elif not profile.origin_id %}None{% else %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id }}">{{ profile.origin_id }}</a>{% endif %}</span>
+				<span>{% if profile.origin_id_public == 1 %}Private{% elif not profile.origin_id_public %}None{% else %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id_public }}">{{ profile.origin_id_public }}</a>{% endif %}</span>
 			</div>
 		</div>
 		<div class="data-content">
@@ -114,7 +114,7 @@
 				<span>{% time user.created True %}</span>
 			</div>
 		</div>
-		{% if profile.let_presence_view %}
+		{% if not user.hide_online %}
 		<div class="data-content">
 			<h4><span>Last seen</span></h4>
 			<div class="note">

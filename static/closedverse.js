@@ -497,7 +497,7 @@ var Olv = Olv || {};
             if (d && "object" == typeof d)
                 return d;
             var e = a.status;
-			if((typeof a.responseText === undefined || a.responseText.length < 2) && e == 400) {
+			if((!('responseText' in a) || a.responseText.length < 2) && e == 400) {
 			return {
 				error_code: "Bad Request",
 				message: "The request or action sent was invalid. Try again?"
@@ -530,8 +530,8 @@ var Olv = Olv || {};
                 error_code: 1219999,
                 message: b.loc("olv.portal.error.500.for_offdevice")
             } : {
-                error_code: 1219998,
-                message: b.loc("olv.portal.error.network_unavailable.for_offdevice")
+                error_code: "Connection error",
+                message: "Couldn't connect to the Internet, try again later."
             }
 			break;
 			}
@@ -2118,29 +2118,32 @@ var Olv = Olv || {};
                 n: {},
 				msg: {}
             }, function(b, c) {
-                // Notification
-				var d = a("#global-menu-news")
-                  , e = d.find(".badge");
-                0 === e.length && (e = a("<span>", {
-                    "class": "badge"
-                }),
-                e.hide().appendTo(d.find("a")));
-                var f = 0;
-                    f += b[0].charCodeAt()
-                e.text(f),
-                e.toggle(f > 0)
-				
-				// Message
-			    var g = a("#global-menu-message")
-                  , h = g.find(".badge");
-                0 === h.length && (h = a("<span>", {
-                    "class": "badge"
-                }),
-                h.hide().appendTo(g.find("a")));
-                var j = 0;
-                    j += b[1].charCodeAt()
-                h.text(j),
-                h.toggle(j > 0)
+				// If the response isn't blank..
+				if(b) {
+					// Notification
+					var d = a("#global-menu-news")
+					  , e = d.find(".badge");
+					0 === e.length && (e = a("<span>", {
+						"class": "badge"
+					}),
+					e.hide().appendTo(d.find("a")));
+					var f = 0;
+						f += b[0].charCodeAt()
+					e.text(f),
+					e.toggle(f > 0)
+					
+					// Message
+					var g = a("#global-menu-message")
+					  , h = g.find(".badge");
+					0 === h.length && (h = a("<span>", {
+						"class": "badge"
+					}),
+					h.hide().appendTo(g.find("a")));
+					var j = 0;
+						j += b[1].charCodeAt()
+					h.text(j),
+					h.toggle(j > 0)
+				}
             }),
             a(document).on("pjax:complete", function(a) {
                 c.resetInterval()

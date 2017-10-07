@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 import re
 
-feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'))
+feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (69, 'easter egg'), )
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'))
 
 class UserManager(BaseUserManager):
@@ -40,23 +40,24 @@ class UserManager(BaseUserManager):
 		addr = addr,
 		email = email,
 		)
+		profile = Profile.objects.model()
 		if nn:
 			user.avatar = nn[0]
-			user.origin_id = nn[2]
-			user.origin_info = json.dumps(nn)
-			# TODO- REPLACE THIS WITH has_mh
-			user.has_gravatar = False
+			profile.origin_id = nn[2]
+			profile.origin_info = json.dumps(nn)
+			user.has_mh = True
 		else:
 			user.avatar = util.get_gravatar(email) or ('s' if getrandbits(1) else '')
-			# THIS TOO			
-			user.has_gravatar = True
+			
+			user.has_mh = False
 		user.set_password(password)
 		user.save(using=self._db)
 		if util.getipintel(addr) > 0.994:
-			freedom = False
+			profile.let_freedom = False
 		else:
-			freedom = True
-		Profile.objects.create(user=user, let_freedom=freedom)
+			profile.let_freedom = True
+		profile.user = user
+		profile.save()
 		return user
 		
 	def create_superuser(self, username, password):
@@ -87,14 +88,17 @@ class User(models.Model):
 	nickname = models.CharField(max_length=64, null=True)
 	password = models.CharField(max_length=128)
 	email = models.EmailField(null=True, blank=True, default='')
+	has_mh = models.BooleanField(default=False)
 	avatar = models.CharField(max_length=1200, blank=True, default='')
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 
+	# Remove these
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
 	origin_info = models.CharField(max_length=255, null=True, blank=True)
-
-	#Todo: move origin id and origin info to profile at some point
+	# //
+	
+	hide_online = models.BooleanField(default=False)
 	
 	staff = models.BooleanField(default=False)
 	active = models.BooleanField(default=True)
@@ -138,7 +142,7 @@ class User(models.Model):
 			return settings.STATIC_URL + '/img/anonymous-mii.png'
 		return g
 	def mh(self):
-		if not self.origin_info:
+		if not self.profile().origin_info:
 			return None
 		try:
 			infodecode = json.loads(self.origin_info)
@@ -175,6 +179,8 @@ class User(models.Model):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
 		#if not force and not self.profile().let_presence_view:
 		#	return None
+		if self.hide_online:
+			return None
 		if (timezone.now() - timedelta(seconds=48)) > self.last_login:
 			return False
 		elif (timezone.now() - timedelta(seconds=32)) > self.last_login:
@@ -315,6 +321,22 @@ class User(models.Model):
 			return self.save(update_fields=['addr', 'last_login'])
 		return self.save(update_fields=['last_login'])
 
+	def has_postspam(self, body, screenshot=None, drawing=None):
+		latest_post = self.post_set.filter().order_by('-created')[:1]
+		if not latest_post:
+			return False
+		latest_post = latest_post.first()
+		if drawing and latest_post.drawing:
+			if drawing == latest_post.drawing:
+				return True
+		elif latest_post.screenshot and screenshot and not drawing:
+			if latest_post.screenshot == screenshot and latest_post.body == body:
+				return True
+		elif latest_post.body and body and not latest_post.screenshot and not latest_post.drawing:
+			if latest_post.body == body:
+				return True
+		return False
+		
 	def get_latest_msg(self, me):
 		conversation = Conversation.objects.filter(Q(source=self) & Q(target=me) | Q(target=self) & Q(source=me)).order_by('-created')[:1].first()
 		if not conversation:
@@ -388,7 +410,7 @@ class User(models.Model):
 			del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
 			user_dict['online_status'] = user.online_status(force=True)
 			try:
-				user_dict['origin_info'] = loads(user_dict['origin_info'])
+				user_dict['origin_info'] = loads(user.profile().origin_info)
 			except:
 				user_dict['origin_info'] = None
 			user_dict['unique_id'] = str(user.unique_id)
@@ -514,6 +536,9 @@ class Community(models.Model):
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
+		# Check for spam using our OWN ALGO!!!!!!!!!
+		if request.user.has_postspam(request.POST.get('body'), upload, drawing):
+			return 7
 		new_post = self.post_set.create(body=request.POST.get('body'), creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'))
 		new_post.is_mine = True
 		return new_post
@@ -585,9 +610,9 @@ class Post(models.Model):
 		except:
 			return False
 		return thing
-	def is_mine(self, request):
-		if request.user.is_authenticated:
-			return (self.creator.unique_id == request.user.unique_id)
+	def is_mine(self, user):
+		if user.is_authenticated:
+			return (self.creator == user)
 		else:
 			return False
 	def yeah_notification(self, request):
@@ -601,7 +626,7 @@ class Post(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			return not self.is_mine(request)
+			return not self.is_mine(request.user)
 		else:
 			return False
 	def can_rm(self, request):
@@ -634,7 +659,7 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
-		if not self.is_mine(request) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
@@ -659,7 +684,7 @@ class Post(models.Model):
 			return False
 		return comments.first()
 	def change(self, request):
-		if not self.is_mine(request) or self.has_edit:
+		if not self.is_mine(request.user) or self.has_edit:
 			return 1
 		if not request.POST.get('body') or len(request.POST['body']) > 2200:
 			return 1
@@ -675,34 +700,34 @@ class Post(models.Model):
 		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
 			self.has_edit = True
 		return self.save()
-	def is_favorite(self, request):
-		profile = request.user.profile()
+	def is_favorite(self, user):
+		profile = user.profile()
 		if profile.favorite == self:
 			return True
 		else:
 			return False
-	def favorite(self, request):
-		if not self.is_mine(request):
+	def favorite(self, user):
+		if not self.is_mine(user):
 			return False
-		profile = request.user.profile()
+		profile = user.profile()
 		if profile.favorite == self:
 			return False
 		profile.favorite = self
 		return profile.save()
-	def unfavorite(self, request):
-		if not self.is_mine(request):
+	def unfavorite(self, user):
+		if not self.is_mine(user):
 			return False
-		profile = request.user.profile()
+		profile = user.profile()
 		if profile.favorite == self:
 			profile.favorite = None
 		return profile.save()
 	def rm(self, request):
-		if request and not self.is_mine(request) and not self.can_rm(request):
+		if request and not self.is_mine(request.user) and not self.can_rm(request):
 			return False
-		if self.is_favorite(request):
-			self.unfavorite(request)
+		if self.is_favorite(request.user):
+			self.unfavorite(request.user)
 		self.is_rm = True
-		if self.is_mine(request):
+		if self.is_mine(request.user):
 			self.status = 1
 		else:
 			self.status = 2
@@ -710,7 +735,7 @@ class Post(models.Model):
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
-		self.is_mine = self.is_mine(request)
+		self.is_mine = self.is_mine(request.user)
 	
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -744,9 +769,9 @@ class Comment(models.Model):
 			return '(drawing)'
 		else:
 			return self.body
-	def is_mine(self, request):
-		if request.user.is_authenticated:
-			return (self.creator.unique_id == request.user.unique_id)
+	def is_mine(self, user):
+		if user.is_authenticated:
+			return (self.creator == user)
 		else:
 			return False
 	def number_yeahs(self):
@@ -758,11 +783,11 @@ class Comment(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			return not self.is_mine(request)
+			return not self.is_mine(request.user)
 		else:
 			return False
 	def can_rm(self, request):
-		if request.user.level > 0 or self.original_post.is_mine(request):
+		if request.user.level > 0 or self.original_post.is_mine(request.user):
 			return True
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
@@ -781,7 +806,7 @@ class Comment(models.Model):
 	def owner_post(self):
 		return (self.creator == self.original_post.creator)
 	def change(self, request):
-		if not self.is_mine(request) or self.has_edit:
+		if not self.is_mine(request.user) or self.has_edit:
 			return 1
 		if not request.POST.get('body') or len(request.POST['body']) > 2200:
 			return 1
@@ -798,10 +823,10 @@ class Comment(models.Model):
 			self.has_edit = True
 		return self.save()
 	def rm(self, request):
-		if request and not self.is_mine(request) and not self.can_rm(request):
+		if request and not self.is_mine(request.user) and not self.can_rm(request):
 			return False
 		self.is_rm = True
-		if self.is_mine(request):
+		if self.is_mine(request.user):
 			self.status = 1
 		else:
 			self.status = 2
@@ -809,7 +834,7 @@ class Comment(models.Model):
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
-		self.is_mine = self.is_mine(request)
+		self.is_mine = self.is_mine(request.user)
 
 class Yeah(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
@@ -832,25 +857,27 @@ class Profile(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	user = models.ForeignKey(User)
+
+	origin_id = models.CharField(max_length=16, null=True, blank=True)
+	origin_info = models.CharField(max_length=255, null=True, blank=True)
+
 	comment = models.TextField(blank=True, default='')
 	country = models.CharField(max_length=120, blank=True, default='')
-	birthday = models.DateField(null=True, blank=True)
+	#birthday = models.DateField(null=True, blank=True)
 	# 0 - show, 1 - friends only, 2 - hide
 	id_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
-	relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
+	#relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
 	weblink = models.CharField(max_length=1200, blank=True, default='')
-	gameskill = models.SmallIntegerField(default=0)
+	#gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default='')
 	favorite = models.ForeignKey(Post, blank=True, null=True)
 	let_yeahnotifs = models.BooleanField(default=True)
-	has_gravatar = models.BooleanField(default=False)
-	let_presence_view = models.BooleanField(default=True)
 	let_freedom = models.BooleanField(default=True)
 	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children')
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
-	def origin_id(self, user=None):
+	def origin_id_public(self, user=None):
 		if user == self.user:
 			return self.user.origin_id
 		if self.id_visibility == 2:
@@ -871,7 +898,7 @@ class Profile(models.Model):
 			return True
 		return False
 	def setup(self, request):
-		self.origin_id = self.origin_id(request.user)
+		self.origin_id_public = self.origin_id_public(request.user)
 
 class Follow(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

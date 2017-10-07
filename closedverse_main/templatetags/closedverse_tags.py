@@ -10,8 +10,8 @@ register = template.Library()
 def avatar(avatar, feeling=0):
 	return User.do_avatar(avatar, feeling)
 @register.simple_tag
-def miionly(avatar):
-	if not avatar or not bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
+def miionly(avatar, has_mh):
+	if not avatar or not has_mh:
 		return settings.STATIC_URL + '/img/anonymous-mii.png'
 	else:
 		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(avatar)
@@ -54,7 +54,9 @@ def empathy_txt(feeling=0, has=False):
 	3: 'Yeah!?',
 	4: 'Yeah...',
 	5: 'Yeah...',
-	}.get(feeling)
+	69: 'olv.portal.miitoo.',
+	}.get(feeling, 'Yeah!')
+	# olv.portal.miitoo is going to be the only easter egg in this thing ever
 @register.inclusion_tag('closedverse_main/elements/p_username.html')
 def p_username(user):
 	return {
