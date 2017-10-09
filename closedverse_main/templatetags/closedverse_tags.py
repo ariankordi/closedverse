@@ -7,8 +7,8 @@ import re
 register = template.Library()
 
 @register.simple_tag
-def avatar(avatar, feeling=0):
-	return User.do_avatar(avatar, feeling)
+def avatar(user, feeling=0):
+	return user.do_avatar(feeling)
 @register.simple_tag
 def miionly(avatar, has_mh):
 	if not avatar or not has_mh:
@@ -31,7 +31,7 @@ def user_icon_container(user, feeling=0, has_uclass=True):
 		url = user['avatar']
 	else:
 		uclass = user_class(user)
-		url = avatar(user.avatar, feeling)
+		url = avatar(user, feeling)
 	return {
 	'uclass': uclass,
 	'user': user,

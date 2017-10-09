@@ -20,3 +20,26 @@
   {% endfor %}
   </ul>
 </div>
+<div id="user-man-template" class="dialog none" data-is-template="1">
+<div class="dialog-inner">
+  <div class="window">
+    <h1 class="window-title">Manage %</h1>
+    <div class="window-body">
+		<div class="user-info"></div>
+      <p class="description">
+          You are about to report a post with content which violates the Miiverse Code of Conduct. This report will be sent to Nintendo&#39;s Miiverse administrators and not to the creator of the post.      </p>
+      <form method="post" action="/posts/AYMHAAADAAADV44dlOCufQ/violations">
+        
+        <p class="select-button-label">Violation Type: </p>
+        <textarea name="body" class="textarea" maxlength="100" data-placeholder="Enter a reason for the report."></textarea>
+        <p class="post-id">Post ID: 3DB-NBL7-DPU-2NL8-APF-GDUY</p>
+        <div class="form-buttons">
+          <input type="button" class="olv-modal-close-button gray-button" value="Cancel">
+          <input type="submit" class="post-button black-button" value="Submit Report">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+

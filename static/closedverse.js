@@ -2079,7 +2079,7 @@ var Olv = Olv || {};
 						lights_off = a[1] ? ' checked' : '';
 						online_status = a[2] ? ' checked' : '';
 						
-						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Show my latest time seen to others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Hide my latest time seen and online status from others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
 						var g = new b.ModalWindow($('.acc-set'));g.open();
 						$('.ac-send').click(function() {
 							b.Form.post('/pref', $('#feedback-form').serializeArray())
@@ -2347,10 +2347,11 @@ var Olv = Olv || {};
 		})
 		$('div[data-modal-types=accept-friend-request] .ok-button.post-button').on('click', function(a){
 					a.preventDefault();
+					b.Form.toggleDisabled($(this), true);
 				b.Form.post($(a.target).parents().eq(4).attr('data-action')).done(function(){
+								b.Form.toggleDisabled($(this), false);
 								fr.close();
 								reload();
-								
 							})
 			})
 		$('div[data-modal-types=accept-friend-request] .cancel-button').on('click', function(a){
@@ -2360,7 +2361,9 @@ var Olv = Olv || {};
                     okLabel: "Yes"
                 })
 						$('.ok-button.black-button').on('click', function() {
+							b.Form.toggleDisabled($(this), true);
 							b.Form.post($(a.target).parents().eq(4).attr('data-reject-action')).done(function(){
+								b.Form.toggleDisabled($(this), false);
 								fr.close();
 								reload()
 							})
@@ -2435,6 +2438,21 @@ mode_post = 0;
 				})
 		})
 	}
+
+	$('button.msg-update').click(function(e){
+			msglist = $('.list.messages')
+			NProgress.start();
+			msglist.prepend(discordapp_spinner);
+			$.ajax({
+				url: window.location.href,
+				headers: {
+					"X-AUTOPAGERIZE": !0
+				}
+			}).done(function(g) {
+				NProgress.done();
+				msglist.replaceWith(g);
+			});
+		});
 			
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
@@ -2487,6 +2505,8 @@ mode_post = 0;
         e.done(function() {
             h.off("olv:entryform:post:done", g)
         })
+		// I might do this again later
+		/*
 		$('button.reload-btn').click(function(e){
 				NProgress.start();
 				$.ajax({
@@ -2494,11 +2514,12 @@ mode_post = 0;
                     headers: {
                         "X-AUTOPAGERIZE": !0
                     }
-                }).done(function(b) {
+                }).done(function(m) {
 					NProgress.done();
-                    $('.js-post-list').replaceWith(b)
+                    $('.js-post-list').replaceWith(m);
 				});
 		});
+		*/
     }),
     b.router.connect("^/communities/[0-9]+(/artwork(/hot|/new)?|/topic(/new|/open)?)$", function(c, d, e) {
 		changesel("community");
@@ -2831,60 +2852,65 @@ mode_post = 0;
 			a.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=post-friend-request]'));fr.open();
 		})
-		$('div[data-modal-types=post-friend-request] input.post-button').on('click', function(a){
-					a.preventDefault();
+		$('div[data-modal-types=post-friend-request] input.post-button').on('click', function(g){
+					g.preventDefault();
+					b.Form.toggleDisabled($(this), true);
 					b.Form.post($('.friend-button.create').attr('data-action'), $('div[data-modal-types=post-friend-request] form').serializeArray()).done(function() {
-					fr.close();
-					reload()
+						fr.close();
+						b.Form.toggleDisabled($(this), false);
+						reload()
 				})
 			})
 		
-		$('.friend-button.accept').on('click', function(a) {
-			a.preventDefault()
+		$('.friend-button.accept').on('click', function(g) {
+			g.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=accept-friend-request]'));fr.open();
 		})
-		$('div[data-modal-types=accept-friend-request] .ok-button.post-button').on('click', function(a){
-					a.preventDefault();
+		$('div[data-modal-types=accept-friend-request] .ok-button.post-button').on('click', function(g){
+					g.preventDefault();
+					b.Form.toggleDisabled($(this), true);
 				b.Form.post($('div[data-modal-types=accept-friend-request]').attr('data-action')).done(function(){
+								b.Form.toggleDisabled($(this), false);
 								fr.close();
 								reload();
-								
 							})
 			})
-		$('div[data-modal-types=accept-friend-request] .cancel-button').on('click', function(a){
-					a.preventDefault();
+		$('div[data-modal-types=accept-friend-request] .cancel-button').on('click', function(g){
+					g.preventDefault();
 				b.showConfirm('Reject Friend Request', 'Are you sure you really want to reject '+ b.SimpleDialog.htmlLineBreak($('div[data-modal-types=accept-friend-request]').attr('data-screen-name')) +'\'s friend request?', {
                     cancelLabel: "No",
                     okLabel: "Yes"
                 })
-						$('.ok-button.black-button').on('click', function(a) {
+						$('.ok-button.black-button').on('click', function(g) {
 							b.Form.post($('div[data-modal-types=accept-friend-request]').attr('data-reject-action')).done(function(){
 								fr.close();
 								reload()
 							})
 					})
 			})
-		$('.friend-button.cancel').on('click', function(a) {
-			a.preventDefault()
+		$('.friend-button.cancel').on('click', function(g) {
+			g.preventDefault()
 			b.showConfirm('Cancel Friend Request', 'Are you sure you really want to cancel your friend request to '+ b.SimpleDialog.htmlLineBreak($('.friend-button.cancel').attr('data-screen-name')) +'?', {
                     cancelLabel: "No",
                     okLabel: "Yes"
                 })
-						$('.ok-button.black-button').on('click', function(a) {
+						$('.ok-button.black-button').on('click', function(g) {
 							b.Form.post($('.friend-button.cancel').attr('data-action')).done(function(){
 								reload()
 							})
 					})
 		})
-		$('.friend-button.delete').on('click', function(a) {
-			a.preventDefault()
+		$('.friend-button.delete').on('click', function(g) {
+			g.preventDefault()
 			b.showConfirm('Unfriend', 'Are you sure you really want to unfriend '+ b.SimpleDialog.htmlLineBreak($('.friend-button.delete').attr('data-screen-name')) +"? Your messages will not be deleted.", {
                     cancelLabel: "No",
                     okLabel: "Yes"
                 })
-						$('.ok-button.black-button').on('click', function(a) {
+						$('.ok-button.black-button').on('click', function(g) {
+							b.Form.toggleDisabled($(this), true);
 							b.Form.post($('.friend-button.delete').attr('data-action')).done(function(){
-								reload()
+								b.Form.toggleDisabled($(this), false);
+								reload();
 							})
 					})
 		})
@@ -2977,12 +3003,19 @@ mode_post = 0;
 		})
 	}),
     	b.router.connect("^/man/users$", function(c, d, e) {
+			function openUserModal(user) {
+				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.name + '"');
+				$('#user-man-template > div > div > div > div.user-info').html(user.html)
+				var g = new b.ModalWindow($('#user-man-template'));g.open();
+			}
 		b.Form.get('/users.html').done(function(a) {
 			$('.user-loads').html(a);
 			b.Content.autopagerize('#user-man-list', e);
 			$('button.user-manage').click(function() {
+				NProgress.start();
 				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
-					alert('We got user ' + a.id);
+					NProgress.done();
+					openUserModal(a)
 					console.log(a);
 				})
 			})

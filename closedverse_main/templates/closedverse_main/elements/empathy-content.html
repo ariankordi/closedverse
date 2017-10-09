@@ -1,6 +1,6 @@
 {% load closedverse_tags %}<div id="empathy-content"{% if not yeahs %} class="none"{% endif %}>
-{% if myself.is_authenticated %}<a href="{% url "main:user-view" myself.username %}" class="post-permalink-feeling-icon visitor {% user_class myself %}"{% if not has_yeah %} style="display: none;"{% endif %}><img src="{% avatar myself.avatar %}" class="user-icon"></a>{% endif %}
+{% if myself.is_authenticated %}<a href="{% url "main:user-view" myself.username %}" class="post-permalink-feeling-icon visitor {% user_class myself %}"{% if not has_yeah %} style="display: none;"{% endif %}><img src="{% avatar myself %}" class="user-icon"></a>{% endif %}
 {% for yeah in yeahs %}{% if not myself.is_authenticated or not yeah.by == myself %}
-<a href="{% url "main:user-view" yeah.by.username %}" class="post-permalink-feeling-icon {% user_class yeah.by %}"><img src="{% avatar yeah.by.avatar yeah.feeling %}" class="user-icon"></a>
+<a href="{% url "main:user-view" yeah.by.username %}" class="post-permalink-feeling-icon {% user_class yeah.by %}"><img src="{% avatar yeah.by yeah.feeling %}" class="user-icon"></a>
 {% endif %}{% endfor %}
 </div>

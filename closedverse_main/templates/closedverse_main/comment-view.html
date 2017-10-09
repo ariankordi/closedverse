@@ -4,7 +4,7 @@
 
 <div class="post-list-outline">
   <a class="post-permalink-button info-ticker" href="{% url "main:post-view" comment.original_post.id %}">
-	<span class="icon-container"><img src="{% avatar comment.original_post.creator.avatar comment.original_post.feeling %}" class="icon"></span>
+	<span class="icon-container"><img src="{% avatar comment.original_post.creator comment.original_post.feeling %}" class="icon"></span>
     <span>View <span class="post-user-description">{{ comment.original_post.creator.nickname }}'s post ({{ comment.original_post.trun|truncatechars:35 }})</span> for this comment.</span>
   </a>
 </div>

@@ -4965,6 +4965,12 @@ div#activity-feed-tutorial.no-content p.tleft {
 .messages .post.my {
   background-color: #e6fbff;
 }
+button.msg-update {
+  padding: 4px 4px 4px;
+  font-size: 12px;
+  margin-right: 0;
+  margin-top: -25px;
+}
 .post .post-subtype-label {
   color: #323232;
   float: right;
@@ -7435,6 +7441,14 @@ margin: 10px 0px 15px !important;
     margin-bottom: 15px;
     max-height: 240px;
   }
+
+	button.msg-update {
+	  max-width: 50px;
+	  padding: 4px 4px 4px 4px;
+	  font-size: 12px;
+	  margin-right: 0;
+	  margin-top: -20px;
+	}
 }
 @media screen and (min-width: 660px) and (max-width: 980px) {
 }

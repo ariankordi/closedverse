@@ -29,7 +29,7 @@
 		  {% if request.user.unique_id %}
           <li id="global-menu-list">
             <ul>
-              <li id="global-menu-mymenu"><a href="{% url "main:user-view" request.user.username %}"><span class="icon-container {% user_class request.user %}"><img src="{% avatar request.user.avatar %}" alt="User Page"></span><span>User Page</span></a></li>
+              <li id="global-menu-mymenu"><a href="{% url "main:user-view" request.user.username %}"><span class="icon-container {% user_class request.user %}"><img src="{% avatar request.user %}" alt="User Page"></span><span>User Page</span></a></li>
 			  <li id="global-menu-feed"><a href="{% url "main:activity" %}" class="symbol"><span>Activity Feed</span></a></li>
               <li id="global-menu-community"><a href="/" class="symbol"><span>Communities</span></a></li>
 			  <li id="global-menu-message"><a href="{% url "main:messages" %}" class="symbol"><span>Messages</span></a></li>

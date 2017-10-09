@@ -135,7 +135,7 @@ class User(models.Model):
 	def check_password(self, raw_password):
 		return bcrypt_sha256.using(rounds=13).verify(raw_password, hash=self.password)
 	def profile(self):
-		return self.profile_set.get(user=self)
+		return self.profile_set.filter(user=self).first()
 	def gravatar(self):
 		g = util.get_gravatar(self.email)
 		if not g:
@@ -187,7 +187,24 @@ class User(models.Model):
 			return 2
 		else:
 			return True
-		
+	def do_avatar(self, feeling=0):
+		if self.has_mh:
+			feeling = {
+			0: 'normal',
+			1: 'happy',
+			2: 'like',
+			3: 'surprised',
+			4: 'frustrated',
+			5: 'puzzled',
+			}.get(feeling, "normal")
+			url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(self.avatar, feeling)
+			return url
+		elif not self.avatar:
+			return settings.STATIC_URL + '/img/anonymous-mii.png'
+		elif self.avatar == 's':
+			return settings.STATIC_URL + '/img/anonymous-mii-sad.png'
+		else:
+			return self.avatar
 
 	def num_yeahs(self):
 		return self.yeah_set.filter(by=self).count()
@@ -212,7 +229,7 @@ class User(models.Model):
 	def unfollow(self, source):
 		if not self.is_following(source) or source == self:
 			return False
-		return self.follow_target.get(source=source, target=self).delete()
+		return self.follow_target.filter(source=source, target=self).delete()
 	def get_posts(self, limit=50, offset=0, request=None):
 		posts = self.post_set.filter().order_by('-created')[offset:offset + limit]
 		if request:
@@ -381,28 +398,11 @@ class User(models.Model):
 	def get_from_passwd(passwd):
 		try:
 			user = User.objects.get(password=base64.urlsafe_b64decode(passwd))
+		# Too lazy to make except cases
 		except:
 			return False
 		return user
-	
-	def do_avatar(avatar, feeling=0):
-		if bool(re.compile(r'^[a-z0-9]{11,13}$').match(avatar)):
-			feeling = {
-			0: 'normal',
-			1: 'happy',
-			2: 'like',
-			3: 'surprised',
-			4: 'frustrated',
-			5: 'puzzled',
-			}.get(feeling, "normal")
-			url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(avatar, feeling)
-			return url
-		elif not avatar:
-			return settings.STATIC_URL + '/img/anonymous-mii.png'
-		elif avatar == 's':
-			return settings.STATIC_URL + '/img/anonymous-mii-sad.png'
-		else:
-			return avatar
+
 	def format_queryset(users):
 		user_list = []
 		for user in users:
@@ -416,7 +416,7 @@ class User(models.Model):
 			user_dict['unique_id'] = str(user.unique_id)
 			user_dict['created'] = user.created
 			user_dict['last_login'] = user.last_login
-			user_dict['avatar'] = User.do_avatar(user_dict['avatar'])
+			user_dict['avatar'] = user.do_avatar()
 			user_dict['num_posts'] = [user.num_posts(), reverse('main:user-posts', args=[user.id]), ]
 			user_list.append(user_dict)
 			del(user_dict)
@@ -504,7 +504,7 @@ class Community(models.Model):
 			return request.user.communityfavorite_set.create(community=self)
 	def favorite_rm(self, request):
 		if self.has_favorite(request):
-			return request.user.communityfavorite_set.get(community=self).delete()
+			return request.user.communityfavorite_set.filter(community=self).delete()
 
 
 	def setup(self, request):

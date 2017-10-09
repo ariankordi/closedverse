@@ -1,14 +1,28 @@
 from django.contrib import admin
 #from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.forms import ModelForm, PasswordInput
+from closedverse_main import models
 from closedverse import settings
 
 from . import models
+
+"""
+class UserForm(ModelForm):
+	class Meta:
+		model = models.User
+		fields = '__all__'
+		widgets = {
+			'password': PasswordInput(),
+		}
+"""
 
 class UserAdmin(admin.ModelAdmin):
 	#search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', )
 	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', 'origin_id')
 	exclude = ('has_mh', )
+	# Not yet
+	#form = UserForm
 
 class ProfileAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', )

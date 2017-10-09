@@ -32,7 +32,7 @@
   <div class="window">
     <h1 class="window-title">Send friend request to {{ user.nickname }}</h1>
     <div class="window-body">
-      <p class="description">Friend Request: <img width="36px" height="36px" src="{% avatar user.avatar %}">{{ user.nickname }}</p>
+      <p class="description">Friend Request: <img width="36px" height="36px" src="{% avatar user %}">{{ user.nickname }}</p>
       <form method="post">
         
         <textarea name="body" class="textarea" maxlength="2200" data-placeholder="Write a friend request here." placeholder="Write a friend request here."></textarea>

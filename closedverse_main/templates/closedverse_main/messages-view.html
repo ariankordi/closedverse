@@ -3,8 +3,9 @@
 {% block main-body %}
 {% user_sidebar request user user.profile 0 True %}
 <div class="main-column messages"><div class="post-list-outline">
-  <h2 class="label">{{ title }}</h2>
-  <input type="hidden" message-read="{% url "main:messages-read" other.username %}">
+  <h2 class="label">{{ title }}
+	<button class="button msg-update">Update</button>
+  </h2>
   
 	{% message_form request other %}
   

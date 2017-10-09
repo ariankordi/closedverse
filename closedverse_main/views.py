@@ -15,9 +15,11 @@ from json import dumps, loads
 
 def json_response(msg='', code=0, httperr=400):
 	thing = {
-	'success': False,
+	# success would be false, but 0 is faster I think (Miiverse used 0 because Perl doesn't have bools)
+	'success': 0,
 	'errors': [
 			{
+			# We should remove this Miiverse formatting at some point
 			'message': msg,
 			'error_code': code,
 			}
@@ -27,6 +29,7 @@ def json_response(msg='', code=0, httperr=400):
 	return JsonResponse(thing, safe=False, status=400)
 
 def community_list(request):
+	"""Lists communities / main page."""
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -45,6 +48,7 @@ def community_list(request):
 		'settings': settings,
 	})
 def community_all(request):
+	"""All communities, with pagination"""
 	offset = int(request.GET.get('offset', 0))
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -69,6 +73,7 @@ def community_all(request):
 	})
 
 def community_search(request):
+	"""Community searching"""
 	query = request.GET.get('query')
 	if not query or len(query) < 2:
 		raise Http404()
@@ -92,6 +97,7 @@ def community_search(request):
 
 @login_required
 def community_favorites(request):
+	"""Favorite communities, can be used for self by default or other users"""
 	user = request.user
 	has_other = False
 	if request.GET.get('u'):
@@ -108,6 +114,7 @@ def community_favorites(request):
 	})
 
 def login_page(request):
+	"""Login page! using our own user objects."""
 	if request.method == 'POST':
 		# If we don't have all of the POST parameters we want..
 		if not (request.POST['username'] and request.POST['password']): 
@@ -141,6 +148,7 @@ def login_page(request):
 			'classes': ['no-login-btn']
 		})
 def signup_page(request):
+	"""Signup page, lots of checks here"""
 	if request.method == 'POST':
 		if settings.recaptcha_pub:
 			if not recaptcha_verify(request, settings.recaptcha_priv):
@@ -150,7 +158,7 @@ def signup_page(request):
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (tried to match with r'^[A-Za-z0-9-._]{1,32}$')")
 		try:
-			al_exist = User.objects.get(username=request.POST['username'])
+			al_exist = User.objects.get(username__iexact=request.POST['username'])
 		except User.DoesNotExist:
 			al_exist = None
 		if al_exist:
@@ -195,6 +203,7 @@ def signup_page(request):
 			'classes': ['no-login-btn'],
 		})
 def forgot_passwd(request):
+	"""Password email page / post endpoint."""
 	if request.method == 'POST' and request.POST.get('email'):
 		try:
 			user = User.objects.get(email=request.POST['email'])
@@ -225,10 +234,14 @@ def forgot_passwd(request):
 	})
 
 def logout_page(request):
+	"""Password email page / post endpoint."""
 	logout(request)
-	return redirect("/")
+	if request.GET.get('next'):
+		return redirect(request.GET['next'])
+	return redirect('/')
 
 def user_view(request, username):
+	"""The user view page, has recent posts/yeahs."""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My profile'
@@ -311,6 +324,7 @@ def user_view(request, username):
 	})
 
 def user_posts(request, username):
+	"""User posts page"""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My posts'
@@ -345,6 +359,7 @@ def user_posts(request, username):
 			'next': next_offset,
 		})
 def user_yeahs(request, username):
+	"""User's Yeahs page"""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My yeahs'
@@ -387,6 +402,7 @@ def user_yeahs(request, username):
 		})
 
 def user_following(request, username):
+	"""User following page"""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My follows'
@@ -423,6 +439,7 @@ def user_following(request, username):
 			'next': next_offset,
 		})
 def user_followers(request, username):
+	"""User followers page"""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My followers'
@@ -460,6 +477,7 @@ def user_followers(request, username):
 		})
 
 def user_friends(request, username):
+	"""User friends list page - uses some special math I think"""
 	user = get_object_or_404(User, username__iexact=username)
 	if user.is_me(request):
 		title = 'My friends'
@@ -499,6 +517,7 @@ def user_friends(request, username):
 
 @login_required
 def profile_settings(request):
+	"""Profile settings, POSTs to user_view"""
 	profile = request.user.profile()
 	profile.setup(request)
 	user = request.user
@@ -510,10 +529,12 @@ def profile_settings(request):
 	})
 
 def special_community_tag(request, tag):
+	"""For community URIs such as /communities/changelog"""
 	communities = get_object_or_404(Community, tags=tag)
 	return redirect(reverse('main:community-view', args=[communities.id]))
 
 def community_view(request, community):
+	"""View an individual community"""
 	communities = get_object_or_404(Community, id=community)
 	communities.setup(request)
 	if not communities.clickable():
@@ -761,12 +782,13 @@ def poll_unvote(request, poll):
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
-	# Issue 69420: PF2M is getting more follows than me.
-	if user.username == 'PF2M':
-		try:
-			User.objects.get(id=1).follow(request.user)
-		except:
-			pass
+	if settings.PROD:
+		# Issue 69420: PF2M is getting more follows than me.
+		if user.username == 'PF2M':
+			try:
+				User.objects.get(id=1).follow(request.user)
+			except:
+				pass
 	user.follow(request.user)
 	# Give the notification!
 	Notification.give_notification(request.user, 4, user)
@@ -776,6 +798,17 @@ def user_follow(request, username):
 @login_required
 def user_unfollow(request, username):
 	user = get_object_or_404(User, username=username)
+	if settings.PROD:
+		# Issue 69420 is still active
+		if user.id == 1:
+			try:
+				pf2m = User.objects.get(username='PF2M')
+			except User.DoesNotExist:
+				pass
+			else:
+				pf2m.unfollow(request.user)
+				user.unfollow(request.user)
+				return json_response("why :( i'm crying right now why would you do that\ni hope you're happy how could you live like this")
 	user.unfollow(request.user)
 	return HttpResponse()
 @require_http_methods(['POST'])
@@ -1045,6 +1078,7 @@ def prefs(request):
 		else:
 			request.user.hide_online = False
 		profile.save()
+		request.user.save()
 		return HttpResponse()
 	lights = not (request.session.get('lights', False))
 	arr = [profile.let_yeahnotifs, lights, request.user.hide_online]
@@ -1097,9 +1131,11 @@ def user_manager(request, user):
 	user = get_object_or_404(User, unique_id=user)
 	return JsonResponse({
 		'id': user.id,
+		'name': user.get_full_name(),
 		'is_active': user.is_active(),
 		'addr': user.addr,
-		'shared_addrs': User.format_queryset(user.find_shared_ip())
+		'shared_addrs': User.format_queryset(user.find_shared_ip()),
+		'html': loader.get_template('closedverse_main/elements/user-sidebar-info.html').render({'user': user}, request)
 	})
 
 @require_http_methods(['POST'])
