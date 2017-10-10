@@ -113,7 +113,7 @@
 <h2 class="reply-label">Add a Comment</h2>
 {% if not request.user.is_authenticated %}
 <div class="guest-message">
-  <p>You must sign in to post a comment.<br><br>Sign in using a Openverse account to make posts and comments, as well as give Yeahs and follow users.</p>
+  <p>You must sign in to post a comment.<br><br>Sign in using a Closedverse account to make posts and comments, as well as give Yeahs and follow users.</p>
   <a href="{% url "main:signup" %}" class="arrow-button"><span>Create an account</span></a>
   <a href="{% url "main:help-faq" %}" class="arrow-button"><span>FAQ/Frequently Asked Questions</span></a>
 </div>

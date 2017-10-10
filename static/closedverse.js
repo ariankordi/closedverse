@@ -221,12 +221,12 @@ $(document).on('touchstart', function() {
 });
 $('#artwork-canvas').on('mousedown touchstart', artworkDrawOnce);
 $('#memo-drawboard-page button').contextmenu(function() { $(this).click(); return false });
-$('.artwork-clear').click(artworkClear);
-$('.artwork-undo').click(artworkUndo);
-$('.artwork-pencil, .artwork-eraser, .artwork-fill').click(artworkToolUpdate);
-$('.artwork-color').click(artworkColorUpdate);
-$('.artwork-zoom').click(artworkZoomUpdate);
-$('.artwork-lock').click(function(){
+$('.artwork-clear').on('click',artworkClear);
+$('.artwork-undo').on('click',artworkUndo);
+$('.artwork-pencil, .artwork-eraser, .artwork-fill').on('click',artworkToolUpdate);
+$('.artwork-color').on('click',artworkColorUpdate);
+$('.artwork-zoom').on('click',artworkZoomUpdate);
+$('.artwork-lock').on('click',function(){
     if(!$(this).hasClass('selected')) {
         $('.memo-canvas').addClass('locked');
         $(this).addClass('selected');
@@ -235,7 +235,7 @@ $('.artwork-lock').click(function(){
         $(this).removeClass('selected');
     }
 });
-$('.memo-finish-btn').click(function(){
+$('.memo-finish-btn').on('click',function(){
 	var dataURL = canvas.toDataURL();
         if(typeof dataURL !== undefined) {
         $("input[type=hidden][name=painting]").val(dataURL.split(",")[1]);
@@ -800,7 +800,7 @@ var Olv = Olv || {};
         },
         submit: function(b, c) {
             b.trigger("olv:form:submit", [c || a()]);
-				if($('input[type=file]').length) {
+				if(a('input[type=file]').length) {
 					var d = new FormData(b[0])
 					d.append('screen', $('input[type=file]')[0].files[0])
 					sucky = true
@@ -2081,7 +2081,7 @@ var Olv = Olv || {};
 						
 						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Hide my latest time seen and online status from others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
 						var g = new b.ModalWindow($('.acc-set'));g.open();
-						$('.ac-send').click(function() {
+						$('.ac-send').on('click',function() {
 							b.Form.post('/pref', $('#feedback-form').serializeArray())
 							g.close();
 							$('.acc-set').remove();
@@ -2316,9 +2316,9 @@ var Olv = Olv || {};
 			$('.' + cl).removeClass('none')
 			$('.communities:not(.none):not(.'+ cl +')').addClass('none')
 		}
-        $('.community-switcher-tab.gen').click(gsl),
-		$('.community-switcher-tab.game').click(gsl),
-		$('.community-switcher-tab.special').click(gsl);
+        $('.community-switcher-tab.gen').on('click',gsl),
+		$('.community-switcher-tab.game').on('click',gsl),
+		$('.community-switcher-tab.special').on('click',gsl);
     }),
 	b.router.connect("^/communities.search$", function(c) {
 		$('form.search').on('submit', function(s) {
@@ -2429,17 +2429,17 @@ mode_post = 0;
 
 	rm_btn = $('.rm-post-button')
 	if(rm_btn.length) {
-		rm_btn.click(function(){
+		rm_btn.on('click',function(){
 			thingy = $(this)
 			b.showConfirm("Delete message", "Really delete this message?")
-				$('.ok-button').click(function(){
+				$('.ok-button').on('click',function(){
 					b.Form.post(thingy.attr('data-action'))
 					thingy.parent().parent().remove()
 				})
 		})
 	}
 
-	$('button.msg-update').click(function(e){
+	$('button.msg-update').on('click',function(e){
 			msglist = $('.list.messages')
 			NProgress.start();
 			msglist.prepend(discordapp_spinner);
@@ -2507,7 +2507,7 @@ mode_post = 0;
         })
 		// I might do this again later
 		/*
-		$('button.reload-btn').click(function(e){
+		$('button.reload-btn').on('click',function(e){
 				NProgress.start();
 				$.ajax({
                     url: window.location.href,
@@ -2644,9 +2644,9 @@ $('.post-poll .poll-votes').on('click', function() {
 						$('#post-edit').toggleClass('none')
 						$('#the-post').toggleClass('none')
 					}
-		$('.cancel-button').click(function(){et()})
+		$('.cancel-button').on('click',function(){et()})
 				b.EntryForm.setupFormStatus(t, e);
-		$('.edit-post-button').click(function(){
+		$('.edit-post-button').on('click',function(){
 			if($('.post-content-memo').length) {
 				b.showMessage("", "You can't edit a drawing at this time.")
 			} else {
@@ -2654,7 +2654,7 @@ $('.post-poll .poll-votes').on('click', function() {
 					b.Form.toggleDisabled(submit_btn, true)
 			}
 		})
-		submit_btn.click(function(a) {
+		submit_btn.on('click',function(a) {
 			a.preventDefault()
 			b.Form.toggleDisabled($(this), true)
 			cereal = t.serializeArray()
@@ -2665,9 +2665,9 @@ $('.post-poll .poll-votes').on('click', function() {
 	}
 	rm_btn = $('.rm-post-button')
 	if(rm_btn.length) {
-		rm_btn.click(function(){
+		rm_btn.on('click',function(){
 			b.showConfirm("Delete post", "Really delete this post?")
-				$('.ok-button').click(function(){
+				$('.ok-button').on('click',function(){
 					b.Form.post(rm_btn.attr('data-action')).done(b.showMessage("", "Deleted."))
 				})
 		})
@@ -2675,17 +2675,17 @@ $('.post-poll .poll-votes').on('click', function() {
 	fav_btn = $('.profile-post-button')
 	if(fav_btn.length) {
 			if(fav_btn.hasClass('done')) {
-				fav_btn.click(function(){
+				fav_btn.on('click',function(){
 					b.showConfirm("Profile post unset", "Unset your profile picture?")
-						$('.ok-button').click(function(){
+						$('.ok-button').on('click',function(){
 							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.removeClass('done',reload()))
 						})
 				})
 			}
 			else {
-				fav_btn.click(function(){
+				fav_btn.on('click',function(){
 					b.showConfirm("Profile post", "Set this as your profile picture?")
-						$('.ok-button').click(function(){
+						$('.ok-button').on('click',function(){
 							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.addClass('done'),reload())
 						})
 				})
@@ -2748,9 +2748,9 @@ mode_post = 0;
 							$('#post-edit').toggleClass('none')
 							$('#the-post').toggleClass('none')
 						}
-			$('.cancel-button').click(function(){et()})
+			$('.cancel-button').on('click',function(){et()})
 					b.EntryForm.setupFormStatus(t, e);
-			$('.edit-post-button').click(function(){
+			$('.edit-post-button').on('click',function(){
 				if($('.reply-content-memo').length) {
 					b.showMessage("", "You can't edit a drawing at this time.")
 				} else {
@@ -2758,7 +2758,7 @@ mode_post = 0;
 						b.Form.toggleDisabled(submit_btn, true)
 				}
 			})
-			submit_btn.click(function(a) {
+			submit_btn.on('click',function(a) {
 				a.preventDefault()
 				b.Form.toggleDisabled($(this), true)
 				cereal = t.serializeArray()
@@ -2769,9 +2769,9 @@ mode_post = 0;
 		}
 			rm_btn = $('.rm-post-button')
 			if(rm_btn.length) {
-				rm_btn.click(function(){
+				rm_btn.on('click',function(){
 					b.showConfirm("Delete post", "Really delete this post?")
-						$('.ok-button').click(function(){
+						$('.ok-button').on('click',function(){
 							b.Form.post(rm_btn.attr('data-action')).done(b.showMessage("", "Deleted."))
 						})
 				})
@@ -2985,7 +2985,7 @@ mode_post = 0;
 		})
 	}),
 	b.router.connect("^/server$", function() {
-		$('button.reload-btn').click(function(e){
+		$('button.reload-btn').on('click',function(e){
 			NProgress.start();
 			var thing = $.getJSON(window.location.href, { json: '1' }, function(tt) {
 				NProgress.done();
@@ -3004,14 +3004,23 @@ mode_post = 0;
 	}),
     	b.router.connect("^/man/users$", function(c, d, e) {
 			function openUserModal(user) {
-				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.name + '"');
-				$('#user-man-template > div > div > div > div.user-info').html(user.html)
+				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.username + '"');
+				$('div.user-info').html(user.html);
+				$('input[name=username]').val(user.username);
+				$('input[name=nickname]').val(user.nickname);
+				$('input[name=nickname]').val(user.nickname);
+				if(user.is_active) {
+					$('input[name=active]').attr('checked','');
+				} else {
+					$('input[name=active]').removeAttr('checked');
+				}
+				
 				var g = new b.ModalWindow($('#user-man-template'));g.open();
 			}
 		b.Form.get('/users.html').done(function(a) {
 			$('.user-loads').html(a);
 			b.Content.autopagerize('#user-man-list', e);
-			$('button.user-manage').click(function() {
+			$('button.user-manage').on('click',function() {
 				NProgress.start();
 				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
 					NProgress.done();

@@ -806,9 +806,10 @@ def user_unfollow(request, username):
 			except User.DoesNotExist:
 				pass
 			else:
-				pf2m.unfollow(request.user)
-				user.unfollow(request.user)
-				return json_response("why :( i'm crying right now why would you do that\ni hope you're happy how could you live like this")
+				if pf2m.is_following(request.user):
+					pf2m.unfollow(request.user)
+					user.unfollow(request.user)
+					return json_response("i'm crying")
 	user.unfollow(request.user)
 	return HttpResponse()
 @require_http_methods(['POST'])
@@ -848,7 +849,7 @@ def user_friendrequest_delete(request, username):
 	request.user.delete_friend(user)
 	return HttpResponse()
 
-# Notifications work differently since the Openverse rebranding.
+# Notifications work differently since the Openverse rebranding. (that we changed back)
 # They used to respond with a JSON for values for unread notifications and messages.
 # NOW we send the unread notifications in bytes, and then the unread messages in bytes, 2 bytes. The JS is using charCodeAt() 
 # Yes, this limits the amount of unread notifications and messages anyone could ever have, ever, to 255
@@ -1131,7 +1132,8 @@ def user_manager(request, user):
 	user = get_object_or_404(User, unique_id=user)
 	return JsonResponse({
 		'id': user.id,
-		'name': user.get_full_name(),
+		'username': user.username,
+		'nickname': user.nickname,
 		'is_active': user.is_active(),
 		'addr': user.addr,
 		'shared_addrs': User.format_queryset(user.find_shared_ip()),
@@ -1184,7 +1186,7 @@ def server_stat(request):
 		return JsonResponse(all_stats)
 	return render(request, 'closedverse_main/help/stats.html', all_stats)
 def help_rules(request):
-	return render(request, 'closedverse_main/help/rules.html', {'title': 'Openverse Rules'})
+	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
 def help_legal(request):

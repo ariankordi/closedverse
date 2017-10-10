@@ -373,7 +373,7 @@ class User(models.Model):
 			'contact': request.build_absolute_uri(reverse('main:help-contact')),
 			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
 		})
-		subj = 'Openverse password reset for "{0}"'.format(self.username)
+		subj = 'Closedverse password reset for "{0}"'.format(self.username)
 		return send_mail(subject=subj, message="Bro, do you even HTML E-Mail?", html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
 		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
 	def find_shared_ip(self):

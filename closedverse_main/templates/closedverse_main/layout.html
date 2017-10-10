@@ -4,14 +4,14 @@
   <head>
     <meta charset="utf-8">
 	{% endif %}
-    <title>{% if title %}{{ title }} - Openverse{% else %}Openverse{% endif %}</title>
+    <title>{% if title %}{{ title }} - Closedverse{% else %}Closedverse{% endif %}</title>
     {% if not request.META.HTTP_X_PJAX %}
 	<meta http-equiv="content-style-type" content="text/css">
     <meta http-equiv="content-script-type" content="text/javascript">
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-title" content="Openverse">
-    <meta name="description" content="Openverse, formerly Closedverse, is a social network: designed by PF2M, programmed by Arian Kordi. With Miiverse DNA, style and familiar assets such as Miiverse's interface and Miis, you're sure to have fun here!">
+    <meta name="apple-mobile-web-app-title" content="Closedverse">
+    <meta name="description" content="Openverse is a social network: designed by PF2M, programmed by Arian Kordi. With Miiverse DNA, style and familiar assets such as Miiverse's interface and Miis, you're sure to have fun here!">
 	<link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}">
     <link rel="stylesheet" type="text/css" href="{% static "closedverse.css" %}">
 	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "blueness.css" %}">
@@ -25,7 +25,7 @@
     <div id="wrapper"{% if not request.user.is_authenticated %} class="guest"{% endif %}>
       <div id="sub-body">
         <menu id="global-menu">
-          <li id="global-menu-logo"><h1><a href="/"><img src="{% static "img/menu-logo.png" %}" alt="Openverse"></a></h1></li>
+          <li id="global-menu-logo"><h1><a href="/"><img src="{% static "img/menu-logo.png" %}" alt="Closedverse"></a></h1></li>
 		  {% if request.user.unique_id %}
           <li id="global-menu-list">
             <ul>
@@ -38,10 +38,10 @@
                 <menu id="global-my-menu" class="invisible none">
                   <li><a href="{% url "main:profile-settings" %}" class="symbol my-menu-profile-setting"><span>Profile settings</span></a></li>
                   <li><a href="#" class="symbol my-menu-account-setting"><span>Account preferences</span></a></li>
-                  <li><a href="{% url "main:special-community-tag" "announcements" %}" class="symbol my-menu-openman"><span>Openverse Announcements</span></a></li>
-                  <li><a href="{% url "main:special-community-tag" "changelog" %}" class="symbol my-menu-openman"><span>Openverse Changelog</span></a></li>
+                  <li><a href="{% url "main:special-community-tag" "announcements" %}" class="symbol my-menu-openman"><span>Closedverse Announcements</span></a></li>
+                  <li><a href="{% url "main:special-community-tag" "changelog" %}" class="symbol my-menu-openman"><span>Closedverse Changelog</span></a></li>
                   <li><a href="{% url "main:help-faq" %}" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>
-				  <li><a href="{% url "main:help-rules" %}" class="symbol my-menu-guide"><span>Openverse Rules</span></a></li>
+				  <li><a href="{% url "main:help-rules" %}" class="symbol my-menu-guide"><span>Closedverse Rules</span></a></li>
                   <li><a href="#" class="symbol my-menu-white-power"><span>Feedback/bug report</span></a></li>
                   <li><a href="{% url "main:server-stat" %}" class="symbol my-menu-openman"><span>Server Statistics</span></a></li>
 				  <li>

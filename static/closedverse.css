@@ -334,6 +334,9 @@ body {
   color: #646464;
   text-decoration: underline;
 }
+.list > li span {
+  padding: 5px !important;
+}
 .post-list.empty,
 .album-list.empty,
 .list > .no-content,
@@ -8959,7 +8962,7 @@ display: block !important;
     height: 32px
 }
 .spinner-wandering-cubes .spinner-item {
-    background-color: #738bd7;
+    background-color: #0080ff;
     width: 10px;
     height: 10px;
     position: absolute;
