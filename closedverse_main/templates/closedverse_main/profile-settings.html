@@ -80,7 +80,7 @@
 		<li class="setting-nnid">
                 <p class="settings-label">Nintendo Network ID</p>
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii" src="{% miionly user.avatar user.has_mh %}">
+                    <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
                 </div>
                   <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-action="{% url "main:origin-id-get" %}">
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
@@ -89,7 +89,7 @@
               </li>
               <li class="setting-avatar">
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii{% if not user.has_mh %} none{% endif %}" src="{% miionly user.avatar user.has_mh %}">
+                    <img class="icon nnid-icon mii{% if not user.has_mh %} none{% endif %}" src="{% miionly user.mh %}">
 					<img class="icon nnid-icon gravatar{% if user.has_mh %} none{% endif %}" src="{{ user.gravatar }}">
                   </div>
                 <p class="settings-label">Do you want the avatar shown beside your content to use the Mii from your Nintendo Network ID or a Gravatar?</p>

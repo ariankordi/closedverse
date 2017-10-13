@@ -81,14 +81,14 @@ urlpatterns = [
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),
 	
-	# Meta/configuration
+	# Help/configuration
 	url(r'lights$', views.set_lighting, name='set-lighting'),
 	url(r'complaints$', views.help_complaint, name='complaints'),
 	url(r'server$', views.server_stat, name='server-stat'),
-	url(r'meta/rules/?$', views.help_rules, name='help-rules'),
-	url(r'meta/faq/?$', views.help_faq, name='help-faq'),
-	url(r'meta/legal/?$', views.help_legal, name='help-legal'),
-	url(r'meta/contact/?', views.help_contact, name='help-contact'),
+	url(r'help/rules/?$', views.help_rules, name='help-rules'),
+	url(r'help/faq/?$', views.help_faq, name='help-faq'),
+	url(r'help/legal/?$', views.help_legal, name='help-legal'),
+	url(r'help/contact/?', views.help_contact, name='help-contact'),
 	
 	# Manage
 	url(r'man/users', views.admin_users, name='admin-users'),

@@ -181,7 +181,7 @@ def signup_page(request):
 				if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
 					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
-				return HttpResponseBadRequest("That Nintendo Network ID address is already in use, that would cause confusion.")
+				return HttpResponseBadRequest("That Nintendo Network ID is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
 			if not mii:
 				return HttpResponseBadRequest("The NNID provided doesn't exist.")
@@ -268,7 +268,7 @@ def user_view(request, username):
 		if User.email_in_use(request.POST.get('email'), request):
 			return json_response("That email address is already in use, that can't happen.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
-			return json_response("That Nintendo Network ID address is already in use, that would cause confusion.")
+			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
 		if settings.nnid_forbiddens:
 			if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
 				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")

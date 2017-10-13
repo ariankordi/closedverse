@@ -21,3 +21,8 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 	url(r'^', include('closedverse_main.urls'))
 ]
+if True:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

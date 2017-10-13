@@ -2118,8 +2118,10 @@ var Olv = Olv || {};
                 n: {},
 				msg: {}
             }, function(b, c) {
-				// If the response isn't blank..
-				if(b) {
+				// If the response is blank, set both of the counts as 0.
+				if(!b) {
+				b = [unescape('\x00'), unescape('\x00')];
+				}
 					// Notification
 					var d = a("#global-menu-news")
 					  , e = d.find(".badge");
@@ -2143,7 +2145,6 @@ var Olv = Olv || {};
 						j += b[1].charCodeAt()
 					h.text(j),
 					h.toggle(j > 0)
-				}
             }),
             a(document).on("pjax:complete", function(a) {
                 c.resetInterval()

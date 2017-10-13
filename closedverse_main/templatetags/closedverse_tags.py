@@ -10,11 +10,11 @@ register = template.Library()
 def avatar(user, feeling=0):
 	return user.do_avatar(feeling)
 @register.simple_tag
-def miionly(avatar, has_mh):
-	if not avatar or not has_mh:
+def miionly(mh):
+	if not mh:
 		return settings.STATIC_URL + '/img/anonymous-mii.png'
 	else:
-		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(avatar)
+		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(mh)
 @register.simple_tag
 def time(stamp, full=False):
 	return HumanTime(stamp.timestamp(), full) or "Less than a minute ago"

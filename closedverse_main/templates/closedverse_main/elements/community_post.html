@@ -50,7 +50,7 @@
 {% if post.recent_comment %}
 	<div class="recent-reply-content">
 {% if post.comment_count > 1 %}
-<div class="recent-reply-read-more-container" data-href="{% url "main:post-view" post.id %}" tabindex="0">
+<div class="recent-reply-read-more-container" tabindex="0">
       View all comments ({{ post.comment_count }})
     </div>
 {% endif %}

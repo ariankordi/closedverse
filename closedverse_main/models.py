@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q, QuerySet, Max, F
+from django.db.models import Q, QuerySet, Max, F, Count
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.utils.dateformat import format
@@ -19,7 +19,7 @@ from django.urls import reverse
 import re
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (69, 'easter egg'), )
-post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'))
+post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
@@ -145,7 +145,7 @@ class User(models.Model):
 		if not self.profile().origin_info:
 			return None
 		try:
-			infodecode = json.loads(self.origin_info)
+			infodecode = json.loads(self.profile().origin_info)
 		except:
 			return None
 		return infodecode[0]
@@ -153,7 +153,7 @@ class User(models.Model):
 			first = {
 			1: 'urapp',
 			2: 'moderator',
-			3: 'admin',
+			3: 'administrator',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
@@ -188,7 +188,7 @@ class User(models.Model):
 		else:
 			return True
 	def do_avatar(self, feeling=0):
-		if self.has_mh:
+		if self.has_mh and self.avatar:
 			feeling = {
 			0: 'normal',
 			1: 'happy',
@@ -385,16 +385,16 @@ class User(models.Model):
 		if not addr:
 			return False
 		if request:
-			return User.objects.filter(email=addr).exclude(id=request.user.id).exists()
+			return User.objects.filter(email__iexact=addr).exclude(id=request.user.id).exists()
 		else:
-			return User.objects.filter(email=addr).exists()
+			return User.objects.filter(email__iexact=addr).exists()
 	def nnid_in_use(id, request=None):
 		if not id:
 			return False
 		if request:
-			return User.objects.filter(origin_id=id).exclude(id=request.user.id).exists()
+			return Profile.objects.filter(origin_id__iexact=id).exclude(user__id=request.user.id).exists()
 		else:
-			return User.objects.filter(origin_id=id).exists()
+			return Profile.objects.filter(origin_id=id).exists()
 	def get_from_passwd(passwd):
 		try:
 			user = User.objects.get(password=base64.urlsafe_b64decode(passwd))
@@ -697,7 +697,7 @@ class Post(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
+		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
 			self.has_edit = True
 		return self.save()
 	def is_favorite(self, user):
@@ -736,6 +736,16 @@ class Post(models.Model):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request.user)
+
+
+
+	def max_yeahs():
+		try:
+			max_yeahs_post = Post.objects.annotate(num_yeahs=Count('yeah')).aggregate(max_yeahs=Max('num_yeahs'))['max_yeahs']
+		except:
+			return None
+		the_post = Post.objects.annotate(num_yeahs=Count('yeah')).filter(num_yeahs=max_yeahs_post).order_by('-created')
+		return the_post.first()
 	
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -819,7 +829,7 @@ class Comment(models.Model):
 		self.body = request.POST['body']
 		self.spoils = request.POST.get('is_spoiler', False)
 		self.feeling = request.POST.get('feeling_id', 0)
-		if not timezone.now() < self.created + timezone.timedelta(minutes=5):
+		if not timezone.now() < self.created + timezone.timedelta(minutes=2):
 			self.has_edit = True
 		return self.save()
 	def rm(self, request):
@@ -885,10 +895,10 @@ class Profile(models.Model):
 		elif self.id_visibility == 1:
 			if not Friendship.find_friendship(self.user, user):
 				return 1
-			return self.user.origin_id
-		elif not self.user.origin_id:
+			return self.origin_id
+		elif not self.origin_id:
 			return None
-		return self.user.origin_id
+		return self.origin_id
 	def got_fullurl(self):
 		if self.weblink:
 			try:
@@ -1198,7 +1208,18 @@ class RedFlag(models.Model):
 	
 	def __str__(self):
 		return "Report on a " + self.get_type_display() + " for " + self.get_reason_display() + ": " + str(self.reasoning)
+
+# Login attempts: for incorrect passwords
+class LoginAttempt(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	user = models.ForeignKey(User)
+	success = models.BooleanField(default=False)
+	addr = models.CharField(max_length=64, null=True, blank=True)
 	
+	def __str__(self):
+		return 'A login attempt to ' + self.user + ' from ' + self.addr + ', ' + str(self.success)
+		
 # Fun
 class ThermostatTouch(models.Model):
 	id = models.AutoField(primary_key=True)

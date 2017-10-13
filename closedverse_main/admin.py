@@ -18,15 +18,13 @@ class UserForm(ModelForm):
 """
 
 class UserAdmin(admin.ModelAdmin):
-	#search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', )
-	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', 'origin_id')
+	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', )
 	exclude = ('has_mh', )
 	# Not yet
 	#form = UserForm
 
 class ProfileAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', )
-	#search_fields = ('id', 'unique_id', 'origin_id', )
+	search_fields = ('id', 'unique_id', 'origin_id', )
 	raw_id_fields = ('user', 'favorite', )
 
 class ComplaintAdmin(admin.ModelAdmin):
