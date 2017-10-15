@@ -6,8 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll
-from .util import get_mii, recaptcha_verify, get_gravatar, filterchars
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation
+from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime
 from closedverse import settings
 import re
 from django.urls import reverse
@@ -16,10 +16,11 @@ from json import dumps, loads
 def json_response(msg='', code=0, httperr=400):
 	thing = {
 	# success would be false, but 0 is faster I think (Miiverse used 0 because Perl doesn't have bools)
+	# it also should be removed
 	'success': 0,
 	'errors': [
 			{
-			# We should remove this Miiverse formatting at some point
+			# We should drop this Miiverse formatting at some point
 			'message': msg,
 			'error_code': code,
 			}
@@ -30,6 +31,11 @@ def json_response(msg='', code=0, httperr=400):
 
 def community_list(request):
 	"""Lists communities / main page."""
+	# Fix this ; put something in settings signifying if the server supports HTTPS or not
+	if not settings.DEBUG:
+		# Let's try to redirect to HTTPS for non-Nintendo stuff.
+		if not 'Nintendo' in request.META.get('HTTP_USER_AGENT'):
+			return redirect('https://{0}{1}'.format(request.get_host(), request.META['REQUEST_URI']))
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -49,7 +55,10 @@ def community_list(request):
 	})
 def community_all(request):
 	"""All communities, with pagination"""
-	offset = int(request.GET.get('offset', 0))
+	try:
+		offset = int(request.GET.get('offset', '0'))
+	except ValueError:
+		offset = 0
 	if request.user.is_authenticated:
 		classes = ['guest-top']
 	else:
@@ -61,6 +70,11 @@ def community_all(request):
 		has_next = True
 	else:
 		has_next = False
+	if gen.count() < 1 or game.count() < 1:
+		has_back = True
+	else:
+		has_back = False
+	back = offset - 12
 	next = offset + 12
 	return render(request, 'closedverse_main/community_all.html', {
 		'title': 'All Communities',
@@ -130,7 +144,7 @@ def login_page(request):
 		if not user:
 			return HttpResponse("Invalid password.", status=401)
 		if not user.is_active():
-			return HttpResponseForbidden("This user isn't active.")
+			return HttpResponseForbidden("This user was disabled {0}.".format(HumanTime(user.last_login)))
 		login(request, user)
 		
 		# Then, let's get the referrer and either return that or the root.
@@ -253,7 +267,7 @@ def user_view(request, username):
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
-		if (len(request.POST.get('screen_name')) > 32 or not request.POST.get('screen_name')) and not request.user.is_staff():
+		if (len(request.POST.get('screen_name')) > 32 or request.POST.get('screen_name')) and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
 			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
@@ -261,8 +275,10 @@ def user_view(request, username):
 			return json_response('Region is too long (length '+str(len(request.POST.get('country')))+', max 255)')
 		if len(request.POST.get('website')) > 255:
 			return json_response('Web URL is too long (length '+str(len(request.POST.get('website')))+', max 255)')
+		# Kinda unneeded but gdsjkgdfsg
 		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'DiscordTag':
 			return json_response("I'm laughing right now.")
+		
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
 		if User.email_in_use(request.POST.get('email'), request):
@@ -428,6 +444,7 @@ def user_following(request, username):
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': following,
+			'request': request,
 			'next': next_offset,
 		})
 	else:
@@ -465,6 +482,7 @@ def user_followers(request, username):
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': followers,
+			'request': request,
 			'next': next_offset,
 		})
 	else:
@@ -504,6 +522,7 @@ def user_friends(request, username):
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': friends,
+			'request': request,
 			'next': next_offset,
 		})
 	else:
@@ -581,7 +600,7 @@ def community_favorite_rm(request, community):
 @require_http_methods(['POST'])
 @login_required
 def post_create(request, community):
-	if request.method == 'POST':
+	if request.method == 'POST' and request.is_ajax():
 		# Required
 		if not (request.POST.get('community')):
 			return HttpResponseBadRequest()
@@ -694,7 +713,7 @@ def comment_rm(request, comment):
 @login_required
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
-	if request.method == 'POST':
+	if request.method == 'POST' and request.is_ajax():
 		# Method of Post
 		new_post = post.create_comment(request)
 		if not new_post:
@@ -1034,18 +1053,20 @@ def messages_view(request, username):
 		else:
 			next_offset = None
 		if request.META.get('HTTP_X_AUTOPAGERIZE'):
-			return render(request, 'closedverse_main/elements/message-list.html', {
-				'messages': messages,
-				'next': next_offset,
-			})
-		response = loader.get_template('closedverse_main/messages-view.html').render({
-				'title': 'Conversation with {0} ({1})'.format(other.nickname, other.username),
-				'other': other,
-				'conversation': conversation,
+			response = loader.get_template('closedverse_main/message-list.html').render({
 				'messages': messages,
 				'next': next_offset,
 			}, request)
-		conversation.set_read(request.user)
+		else:
+			response = loader.get_template('closedverse_main/messages-view.html').render({
+					'title': 'Conversation with {0} ({1})'.format(other.nickname, other.username),
+					'other': other,
+					'conversation': conversation,
+					'messages': messages,
+					'next': next_offset,
+				}, request)
+		if not request.GET.get('offset'):
+			conversation.set_read(request.user)
 		return HttpResponse(response)
 @require_http_methods(['POST'])
 @login_required
@@ -1105,17 +1126,17 @@ def users_list(request, type):
 	else:
 		users = User.objects.filter().order_by('-created').exclude(staff=True, level__gte=request.user.level)[offset:offset + limit]
 	# I don't know if this will work or not, it might break cURL and such but whom cares anyway
-	if type == 'html':
-		if users.count() > 19:
-			next_offset = offset + 20
-		else:
-			next_offset = None
-		return render(request, 'closedverse_main/man/admin-user-list.html', {
-			'users': User.format_queryset(users),
-			'next': next_offset,
-		})
+	#if type == 'html':
+	if users.count() > 19:
+		next_offset = offset + 20
 	else:
-		return JsonResponse(User.format_queryset(users), safe=False)
+		next_offset = None
+	return render(request, 'closedverse_main/man/admin-user-list.html', {
+		'users': users,
+		'next': next_offset,
+	})
+	#else:
+	#	return JsonResponse(User.format_queryset(users), safe=False)
 
 @login_required
 def admin_users(request):

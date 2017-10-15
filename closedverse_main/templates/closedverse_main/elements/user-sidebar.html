@@ -2,7 +2,7 @@
 {% if user.is_authenticated %}<div id="sidebar" class="{% if general %}general{% else %}user{% endif %}-sidebar">
   <div class="sidebar-container">
       {% if profile.favorite.screenshot %}
-	  <a href="{% url "main:post-view" profile.favorite.id %}" id="sidebar-cover" style="background-image:url({{ profile.favorite.screenshot }})">
+	  <a href="{% url "main:post-view" profile.favorite_id %}" id="sidebar-cover" style="background-image:url({{ profile.favorite.screenshot }})">
         <img src="{{ profile.favorite.screenshot }}" class="sidebar-cover-image">
       </a>
 	  {% endif %}

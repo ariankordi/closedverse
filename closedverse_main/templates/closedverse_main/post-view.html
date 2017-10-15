@@ -5,7 +5,7 @@
 
   <header class="community-container">    
     <h1 class="community-container-heading">
-      <a {% if post.community.clickable %}href="{% url "main:community-view" post.community.id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
+      <a {% if post.community.clickable %}href="{% url "main:community-view" post.community_id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a>
     </h1>
   </header>
   {% if post.is_mine or post.can_rm %}

@@ -1,11 +1,11 @@
 {% load closedverse_user %}{% load closedverse_tags %}<div class="list follow-list">
-  <ul class="list-content-with-icon-and-text arrow-list" id="user-man-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
+  <ul class="list-content-with-icon-and-text arrow-list" id="user-man-list" data-next-page-url="{% if next %}?o={{ next }}{% endif %}">
   {% for user in users %}
   <li class="trigger" data-href="{% url "main:user-view" user.username %}" data-action="{% url "main:user-manager" user.unique_id %}">
-    {% user_icon_container user 0 False %}
+    {% user_icon_container user 0 %}
 
 	<div class="toggle-button">
-      		<button type="button" class="button user-manage symbol">Manage</button>
+      	<button type="button" class="button user-manage symbol">Manage</button>
 	</div>
 
   <div class="body">
@@ -20,28 +20,3 @@
   {% endfor %}
   </ul>
 </div>
-<div id="user-man-template" class="dialog none" data-is-template="1">
-<div class="dialog-inner">
-  <div class="window">
-    <h1 class="window-title"></h1>
-    <div class="window-body">
-		<div class="user-info"></div>
-        <form>
-			<div class="center-input">
-				<input type="text" name="username" placeholder="Username" value=""><br>
-				<input type="text" name="nickname" placeholder="Nickname" value=""><br>
-			</div>
-			<br>
-			<input type="checkbox" name="active" value="1"> Is active<br>
-		</form>
-      <form>
-        <div class="form-buttons">
-          <input type="button" class="olv-modal-close-button gray-button" value="Close">
-          <input type="submit" class="post-button black-button" value="Save">
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-</div>
-

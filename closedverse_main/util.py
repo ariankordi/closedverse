@@ -1,5 +1,9 @@
 from lxml import html
+# Todo: move all requests to using requests instead of urllib3
 import urllib.request, urllib.error
+import requests
+from lxml import etree
+
 import json
 import time
 import os.path
@@ -36,9 +40,10 @@ def HumanTime(date, full=False):
 		return str(nounits) + ' ' + text + ' ago';
 
 
-def get_mii(nnid):
+def get_mii(id):
+	# Using Miiverse off-device server
 	try:
-		page = urllib.request.urlopen('https://miiverse.nintendo.net/users/{0}/favorites'.format(nnid)).read()
+		page = urllib.request.urlopen('https://miiverse.nintendo.net/users/{0}/favorites'.format(id)).read()
 	except urllib.error.HTTPError:
 		return False
 	ftree = html.fromstring(page)
@@ -50,7 +55,33 @@ def get_mii(nnid):
 	if "img/anonymous-mii.png" in miihash:
 		miihash = settings.STATIC_URL + '/img/anonymous-mii.png'
 	
-	return [miihash, screenname, nnid]
+	# Using AccountWS, not being used now
+	"""
+	dmca = {
+		'X-Nintendo-Client-ID': 'a2efa818a34fa16b8afbc8a74eba3eda',
+		'X-Nintendo-Client-Secret': 'c91cdb5658bd4954ade78533a339cf9a',
+	}
+	nnid = requests.get('https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + sys.argv[1], headers=dmca)
+	nnid_dec = etree.fromstring(nnid.content)
+	del(nnid)
+	pid = nnid_dec[0][1].text
+	if not pid:
+		return False
+	del(nnid_dec)
+	mii = requests.get('https://accountws.nintendo.net/v1/api/miis?pids=' + pid, headers=dmca)
+	try:
+		mii_dec = etree.fromstring(mii.content)
+	# Can't be fucked to put individual exceptions to catch here
+	except:
+		return False
+	del(mii)
+	miihash = mii_dec[0][2][0][0].text.split('.net/')[1].split('_')[0]
+	screenname = mii_dec[0][3].text
+	nnid = mii_dec[0][6].text
+	del(mii_dec)
+	"""
+	
+	return [miihash, screenname, id]
 
 
 def recaptcha_verify(request, key):
@@ -105,6 +136,8 @@ def get_gravatar(email):
 	return page.geturl()
 
 def filterchars(str):
+	if str.isspace():
+		return 'None'
 	if "\u202e" in str:
 		return str.split("\u202e")[1]
 	return str

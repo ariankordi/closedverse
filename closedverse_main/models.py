@@ -236,7 +236,7 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
-					post.comment_count = post.get_comments().count()
+					post.comment_count = post.number_comments()
 		return posts
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
@@ -320,7 +320,7 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
-					post.comment_count = post.get_comments().count()
+					post.comment_count = post.number_comments()
 		return posts
 	def community_favorites(self, all=False):
 		if not all:
@@ -951,9 +951,9 @@ class Notification(models.Model):
 			4: 'main:user-view',
 		}.get(self.type)
 		if self.type == 0 or self.type == 2 or self.type == 3:
-			what_id = self.context_post.id
+			what_id = self.context_post_id
 		elif self.type == 1:
-			what_id = self.context_comment.id
+			what_id = self.context_comment_id
 		elif self.type == 4:
 			what_id = self.source.username
 		return reverse(what_type, args=[what_id])

@@ -17,6 +17,7 @@
 html.os-mac::-webkit-scrollbar { 
 display: none !important; 
 }
+body.modal-open { position: fixed; }
 body {
   position: relative;
   font-size: 28px;

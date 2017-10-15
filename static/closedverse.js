@@ -1,14 +1,15 @@
 //! Modifications by Arian K and Lane B
-/*
 var splatoon = true
 if(innerWidth <= 480) {
    splatoon = false;
-}*/
-var splatoon = false;
+}
 var pjax_container = '#container'
 
 function go(a) {
 $.pjax({url: a, container: pjax_container});
+}
+function lo(cation) {
+location.href = cation;
 }
 function reload() {
 $.pjax.reload(pjax_container);
@@ -21,18 +22,20 @@ if(a !== undefined) {
 	}
 }
 function prlinkConf() {
-$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="go(\''+ass+'\');$(\'.linkconfirmsuck\').remove()">Yes</button></div></div></div></div></div>');
+$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="lo(\''+ass+'\');$(\'.linkconfirmsuck\').remove()">Yes</button></div></div></div></div></div>');
 var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
 }
 function lights() {
 $('#darkness').prop('disabled',function(a,b){return !b})
 Olv.Form.get('/lights')
 }
+var fixe = false;
 function openDrawboardModal() {
-	if(innerWidth <= 400) {
-		Olv.showMessage("", "It appears you might be using a mobile device right now.\nPlease note that drawings are not optimized for mobile at the moment, and you'll only be able to draw straight lines for the time being.\nThis is an issue I have only experienced on iOS though, you might not have issues with other browsers. If you know how to fix it, let me know. Thanks.");
-	}
+		if(innerWidth <= 800) {
+			fixe = true;
+		}
 		var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
+		fixe = false;
 		return true;
 }
 // There used to be an un-nice comment here but I'm just putting a comment here anyway because it's green and that's the color of money, something I need
@@ -92,7 +95,7 @@ function artworkUpdate(evt) {
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
 	if(mousePosOld == 0) mousePosOld = mousePos;
-	if(evt.which == 1 || evt.type == "touchmove" && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
+	if((evt.which == 1 || evt.which == 2) || evt.type == "touchmove" && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
 		if(artworkTool.type == 0) {
 			ctx.fillStyle = artworkColors[artworkColorOffset][1];
 		} else {
@@ -107,7 +110,7 @@ function artworkDrawOnce(evt) {
     undoCtx.drawImage(canvas, 0, 0);
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
-	if(evt.which == 1 || evt.type == 'touchstart' && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
+	if((evt.which == 1 || evt.which == 2 || evt.type == 'touchstart') || evt.type == 'touchstart' && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
 		if(artworkTool.type == 0) {
 			ctx.fillStyle = artworkColors[artworkColorOffset][1];
 		} else {
@@ -172,19 +175,19 @@ artworkTool = {type: toolType};
 function artworkColorUpdate(evt) {
 $(this).removeClass(artworkColors[artworkColorOffset][0]);
 if(artworkColorOffset > 0 && artworkColorOffset < 15) {
-	if(evt.which == 1) {
+	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
 		artworkColorOffset = artworkColorOffset + 1;
 	} else {
 		artworkColorOffset = artworkColorOffset - 1;
 	}
 } else if(artworkColorOffset == 0) {
-	if(evt.which == 1) {
+	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
 		artworkColorOffset = artworkColorOffset + 1;
 	} else {
 		artworkColorOffset = 15;
 	}
 } else {
-	if(evt.which == 1) {
+	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
   	artworkColorOffset = 0;
   } else {
   	artworkColorOffset = artworkColorOffset - 1;
@@ -197,8 +200,8 @@ function artworkZoomUpdate(evt) {
   	    artworkZoomFactor = 2;
 		$('#artwork-canvas').css('width', '640px');
 		$('.memo-canvas').addClass('zoom');
-		// if(/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) {
-		$('.artwork-lock').removeClass('none');
+		// if(innerWidth <= 800) {
+			$('.artwork-lock').removeClass('none');
 		// } uncomment these lines if you want to make the button mobile only
     } else if(artworkZoomFactor == 2) {
   	    artworkZoomFactor = 4;
@@ -220,7 +223,6 @@ $(document).on('touchstart', function() {
     mousePosOld = 0;
 });
 $('#artwork-canvas').on('mousedown touchstart', artworkDrawOnce);
-$('#memo-drawboard-page button').contextmenu(function() { $(this).click(); return false });
 $('.artwork-clear').on('click',artworkClear);
 $('.artwork-undo').on('click',artworkUndo);
 $('.artwork-pencil, .artwork-eraser, .artwork-fill').on('click',artworkToolUpdate);
@@ -1037,11 +1039,15 @@ var Olv = Olv || {};
     ,
     b.ModalWindowManager._mask = null,
     b.ModalWindowManager.toggleMask = function(b) {
-                if(a(".mask").length) {
-                	a(".mask").remove();
-                } else {
-    a("#main-body").append("<div class=mask>");
-                }
+		 if(a(".mask").length) {
+					a('body').css('position', '');
+           a(".mask").remove();
+         } else {
+			    if(fixe) {
+					a('body').css('position', 'fixed');
+				}
+           a("#main-body").append("<div class=mask>");
+         }
     }
     ,
     b.ModalWindowManager.setup = function() {
@@ -1393,11 +1399,13 @@ var Olv = Olv || {};
     }
     ,
     b.Entry.onEmpathyClick = function(c) {
-        if (!c.isDefaultPrevented()) {
-            c.preventDefault();
-            var d = a(this);
-            b.Form.isDisabled(d) || b.Entry.toggleEmpathy(d)
-        }
+		if (c.which) {
+			if (!c.isDefaultPrevented()) {
+				c.preventDefault();
+				var d = a(this);
+				b.Form.isDisabled(d) || b.Entry.toggleEmpathy(d)
+			}
+		}
     }
     ,
     b.Entry.onEmpathyToggle = function(c, d) {
@@ -1629,20 +1637,20 @@ var Olv = Olv || {};
     b.EntryForm.setupSubmission = function(c, d) {
         function e(d) {
             var e = a(this);
-            b.Form.isDisabled(e) || d.isDefaultPrevented() || (d.preventDefault(),
-            b.Form.submit(c, e).done(function(a) {
-                if (b.Form.reset(c),
-                "topic" === c.attr("data-post-subtype") && !c.attr("data-is-identified")) {
-                    var d = c.find('textarea[name="body"]');
-                    d.prop("disabled", !0),
-                    d.attr("placeholder", d.attr("data-open-topic-post-existing-placeholder"))
-                }
-                e.trigger("olv:entryform:post:done", arguments)
-            }).fail(function() {
-                e.trigger("olv:entryform:post:fail", arguments)
-            }).always(function() {
-                c.find('textarea[name="body"]').trigger("input")
-            }))
+				b.Form.isDisabled(e) || !d.which || d.isDefaultPrevented() || (d.preventDefault(),
+				b.Form.submit(c, e).done(function(a) {
+					if (b.Form.reset(c),
+					"topic" === c.attr("data-post-subtype") && !c.attr("data-is-identified")) {
+						var d = c.find('textarea[name="body"]');
+						d.prop("disabled", !0),
+						d.attr("placeholder", d.attr("data-open-topic-post-existing-placeholder"))
+					}
+					e.trigger("olv:entryform:post:done", arguments)
+				}).fail(function() {
+					e.trigger("olv:entryform:post:fail", arguments)
+				}).always(function() {
+					c.find('textarea[name="body"]').trigger("input")
+				}))
         }
         function f(a) {
             return 13 !== a.which
@@ -1990,7 +1998,7 @@ var Olv = Olv || {};
     b.User.setupFollowButton = function(c, d) {
         function e(c) {
             var e = a(this);
-            b.Form.isDisabled(e) || (b.Form.post(e.attr("data-action"), null, e).done(function(b) {
+            b.Form.isDisabled(e) || !c.which || (b.Form.post(e.attr("data-action"), null, e).done(function(b) {
                 e.addClass("none").siblings().removeClass("none");
                 // !! DO THIS WHEN A FOLLOW LIMIT IS IMPLEMENTO
 				//e.hasClass("relationship-button") && (d.noReloadOnFollow && b.can_follow_more === !0 || reload()),

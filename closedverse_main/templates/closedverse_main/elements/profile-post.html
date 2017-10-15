@@ -1,6 +1,6 @@
 {% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:post-view" post.id %}" class="post trigger{% if post.screenshot %} with-image{% endif %}{% if post.spoils and not post.is_mine %} hidden test-hidden{% endif %}" tabindex="0">
   
-    <p class="community-container"><a {% if post.community.clickable %}href="{% url "main:community-view" post.community.id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a></p>
+    <p class="community-container"><a {% if post.community.clickable %}href="{% url "main:community-view" post.community_id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a></p>
 
   <div class="body">
     <div class="post-content">

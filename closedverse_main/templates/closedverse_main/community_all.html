@@ -29,5 +29,8 @@
 			{% if has_next %}
 				<a href="{% url "main:community-viewall" %}?offset={{ next }}" class="big-button">Next</a>
 			{% endif %}
+			{% if has_back %}
+				<a href="{% url "main:community-viewall" %}?offset={{ next }}" class="big-button">Next</a>
+			{% endif %}
 	</div>
 {% endblock %}

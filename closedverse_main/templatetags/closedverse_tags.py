@@ -25,17 +25,11 @@ def user_class(user):
 def user_level(user):
 	return user.get_class()[1]
 @register.inclusion_tag('closedverse_main/elements/user-icon-container.html')
-def user_icon_container(user, feeling=0, has_uclass=True):
-	if not has_uclass:
-		uclass = ''
-		url = user['avatar']
-	else:
-		uclass = user_class(user)
-		url = avatar(user, feeling)
+def user_icon_container(user, feeling=0):
 	return {
-	'uclass': uclass,
+	'uclass': user_class(user),
 	'user': user,
-	'url': url,
+	'url': avatar(user, feeling),
 	}
 @register.inclusion_tag('closedverse_main/elements/no-content.html')
 def nocontent(text='', style=''):
