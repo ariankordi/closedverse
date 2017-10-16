@@ -16,12 +16,14 @@ Including another URLconf
 from django.conf.urls import url, include
 
 from django.contrib import admin
+from .settings import INSTALLED_APPS
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 	url(r'^', include('closedverse_main.urls'))
 ]
-if True:
+
+if 'debug_toolbar' in INSTALLED_APPS:
     import debug_toolbar
     urlpatterns = [
         url(r'^__debug__/', include(debug_toolbar.urls)),

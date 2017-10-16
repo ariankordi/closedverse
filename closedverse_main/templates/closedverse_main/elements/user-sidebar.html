@@ -70,12 +70,22 @@
           <span class="test-post-count">{{ user.num_posts }}</span>
         </span>
       </a>
+	  {% if profile.comments_visible %}
+	    <a href="{% url "main:user-comments" user.username %}" class="sidebar-menu-replies with-count symbol{% if selection == 6 %} selected{% endif %}">
+        <span>{% if user.is_me %}My{% else %}All{% endif %} comments</span>
+        <span class="post-count">
+          <span class="test-reply-count">{{ user.num_comments }}</span>
+        </span>
+      </a>
+	  {% endif %}
+	  {% if profile.yeahs_visible %}
       <a href="{% url "main:user-yeahs" user.username %}" class="sidebar-menu-empathies with-count symbol{% if selection == 2 %} selected{% endif %}">
         <span>Yeahs given</span>
         <span class="post-count">
           <span class="test-empathy-count">{{ user.num_yeahs }}</span>
         </span>
       </a>
+	  {% endif %}
     </div>
   </div>
   

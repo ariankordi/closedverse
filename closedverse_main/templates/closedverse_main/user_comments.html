@@ -1,0 +1,10 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}
+{% user_sidebar request user profile 6 %}
+<div class="main-column"><div class="post-list-outline">
+    <h2 class="label">{{ title }}</h2>
+
+{% u_post_list posts next 1 %}
+
+</div></div>
+{% endblock %}

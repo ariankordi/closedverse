@@ -3356,6 +3356,10 @@ border-top: 1px solid #78c9ff;
   content: "e";
   color: #0080ff;
 }
+.sidebar-setting .sidebar-menu-replies:before {
+  content: "r";
+  color: #0080ff;
+}
 #sidebar-profile-body {
   padding: 0 15px 10px;
   *zoom: 1;

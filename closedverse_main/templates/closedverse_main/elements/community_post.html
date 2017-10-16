@@ -38,13 +38,13 @@
           <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
 		  {% if not post.can_yeah %}disabled{% endif %}
-		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
+		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
 		  {% if post.url %}
 		  <a class="link-confirm symbol button" href="{{ post.url }}"></a>
 		  {% endif %}
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
 		  {% if not post.original_post %}
-          <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
+          <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.comment_count }}</span></div>
 		  {% endif %}
 		</div>
 {% if post.recent_comment %}

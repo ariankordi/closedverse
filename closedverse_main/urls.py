@@ -20,12 +20,13 @@ urlpatterns = [
 	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
 	# User pages
-	url(r'users/(?P<user>'+ uuidr +'+)\.manager', views.user_manager, name='user-manager'),
+	url(r'users/(?P<user>'+ uuidr +'+)\.manager$', views.user_manager, name='user-manager'),
 	url(r'users/'+ username +'\.follow.json$', views.user_follow, name='user-follow'),
 	url(r'users/'+ username +'\.unfollow.json$', views.user_unfollow, name='user-unfollow'),
 	url(r'users/'+ username +'$', views.user_view, name='user-view'),
 	url(r'users/'+ username +'/posts$', views.user_posts, name='user-posts'),
 	url(r'users/'+ username +'/yeahs$', views.user_yeahs, name='user-yeahs'),
+	url(r'users/'+ username +'/comments$', views.user_comments, name='user-comments'),
 	url(r'users/'+ username +'/following$', views.user_following, name='user-following'),
 	url(r'users/'+ username +'/followers$', views.user_followers, name='user-followers'),
 	url(r'users/'+ username +'/friends$', views.user_friends, name='user-friends'),
@@ -61,8 +62,8 @@ urlpatterns = [
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'\.rm$', views.comment_rm, name='comment-rm'),
 	# Post-meta: polls
-	url(r'poll/(?P<poll>'+ uuidr +'+)\.vote', views.poll_vote, name='poll-vote'),
-	url(r'poll/(?P<poll>'+ uuidr +'+)\.unvote', views.poll_unvote, name='poll-unvote'),
+	url(r'poll/(?P<poll>'+ uuidr +'+)\.vote$', views.poll_vote, name='poll-vote'),
+	url(r'poll/(?P<poll>'+ uuidr +'+)\.unvote$', views.poll_unvote, name='poll-unvote'),
 	
 	# Notifications
 	url(r'alive$', views.check_notifications, name='check-notifications'),
@@ -91,7 +92,7 @@ urlpatterns = [
 	url(r'help/contact/?', views.help_contact, name='help-contact'),
 	
 	# Manage
-	url(r'man/users', views.admin_users, name='admin-users'),
+	url(r'man/users$', views.admin_users, name='admin-users'),
 	
 	
 	# "API"
@@ -99,7 +100,7 @@ urlpatterns = [
 
 	
 	# Util, right now we are away from the primary appo
-	url(r'origin', views.origin_id, name='origin-id-get'),
+	url(r'origin$', views.origin_id, name='origin-id-get'),
 	# :^)
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
 

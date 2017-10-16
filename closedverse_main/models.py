@@ -20,6 +20,7 @@ import re
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (69, 'easter egg'), )
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
+visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
@@ -92,11 +93,6 @@ class User(models.Model):
 	avatar = models.CharField(max_length=1200, blank=True, default='')
 	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
-
-	# Remove these
-	origin_id = models.CharField(max_length=16, null=True, blank=True)
-	origin_info = models.CharField(max_length=255, null=True, blank=True)
-	# //
 	
 	hide_online = models.BooleanField(default=False)
 	
@@ -134,7 +130,10 @@ class User(models.Model):
 		self.password = bcrypt_sha256.using(rounds=13).hash(raw_password)
 	def check_password(self, raw_password):
 		return bcrypt_sha256.using(rounds=13).verify(raw_password, hash=self.password)
-	def profile(self):
+	def profile(self, thing=None):
+		# If thing is specified, that field is retrieved
+		if thing:
+			return self.profile_set.all().values_list(thing, flat=True).first()
 		return self.profile_set.filter(user=self).first()
 	def gravatar(self):
 		g = util.get_gravatar(self.email)
@@ -142,13 +141,16 @@ class User(models.Model):
 			return settings.STATIC_URL + '/img/anonymous-mii.png'
 		return g
 	def mh(self):
-		if not self.profile().origin_info:
+		origin_info = self.profile('origin_info')
+		if not origin_info:
 			return None
 		try:
-			infodecode = json.loads(self.profile().origin_info)
+			infodecode = json.loads(origin_info)
 		except:
 			return None
 		return infodecode[0]
+	def let_yeahnotifs(self):
+		return self.profile('let_yeahnotifs')
 	def get_class(self):
 			first = {
 			1: 'urapp',
@@ -173,12 +175,10 @@ class User(models.Model):
 		else:
 			return False
 	def has_freedom(self):
-		return self.profile().let_freedom	
+		return self.profile('let_freedom')	
 	# This is the coolest one
 	def online_status(self, force=False):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
-		#if not force and not self.profile().let_presence_view:
-		#	return None
 		if self.hide_online:
 			return None
 		if (timezone.now() - timedelta(seconds=48)) > self.last_login:
@@ -210,6 +210,8 @@ class User(models.Model):
 		return self.yeah_set.filter(by=self).count()
 	def num_posts(self):
 		return self.post_set.filter(creator=self).count()
+	def num_comments(self):
+		return self.comment_set.filter().count()
 	def num_following(self):
 		return self.follow_source.filter().count()
 	def num_followers(self):
@@ -238,6 +240,12 @@ class User(models.Model):
 					post.recent_comment = post.recent_comment()
 					post.comment_count = post.number_comments()
 		return posts
+	def get_comments(self, limit=50, offset=0, request=None):
+		posts = self.comment_set.filter().order_by('-created')[offset:offset + limit]
+		if request:
+				for post in posts:
+					post.setup(request)
+		return posts
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
 		if type == 2:
@@ -252,9 +260,19 @@ class User(models.Model):
 	def notification_count(self):
 		return self.notification_to.filter(read=False, merged_with=None).count()
 	def notification_read(self):
-		return self.notification_to.filter(read=False).update(read=True)
+		self.notification_to.filter(read=False).update(read=True)
+		# FIX THESE - See if they work
+		#notifications_new = self.notification_ids()
+		#self.notification_set.exclude(id__in=notifications_new).delete()
+		return True
 	def get_notifications(self):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
+	def notification_ids(self):
+		notifications = list(self.notification_to.filter(merged_with=None).values_list('id', flat=True)[0:64])
+		for notification in notifications:
+			merges = self.notification_to.filter(merged_with=notification)
+			notifications.append(merges)
+			
 	# Admin can-manage
 	def can_manage(self):
 		if (self.level >= 2) or self.is_staff():
@@ -410,7 +428,7 @@ class User(models.Model):
 			del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
 			user_dict['online_status'] = user.online_status(force=True)
 			try:
-				user_dict['origin_info'] = loads(user.profile().origin_info)
+				user_dict['origin_info'] = loads(user.profile('origin_info'))
 			except:
 				user_dict['origin_info'] = None
 			user_dict['unique_id'] = str(user.unique_id)
@@ -874,9 +892,11 @@ class Profile(models.Model):
 	comment = models.TextField(blank=True, default='')
 	country = models.CharField(max_length=120, blank=True, default='')
 	#birthday = models.DateField(null=True, blank=True)
-	# 0 - show, 1 - friends only, 2 - hide
-	id_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
-	#relationship_visibility = models.SmallIntegerField(default=0, choices=((0, 'show'), (1, 'friends only'), (2, 'hide'), ))
+	id_visibility = models.SmallIntegerField(default=0, choices=visibility)
+
+	yeahs_visibility = models.SmallIntegerField(default=0, choices=visibility)
+	comments_visibility = models.SmallIntegerField(default=2, choices=visibility)
+	#relationship_visibility = models.SmallIntegerField(default=0, choices=visibility)
 	weblink = models.CharField(max_length=1200, blank=True, default='')
 	#gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default='')
@@ -889,16 +909,36 @@ class Profile(models.Model):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
 	def origin_id_public(self, user=None):
 		if user == self.user:
-			return self.user.origin_id
+			return self.origin_id
 		if self.id_visibility == 2:
 			return 1
 		elif self.id_visibility == 1:
-			if not Friendship.find_friendship(self.user, user):
+			if not user.is_authenticated or not Friendship.find_friendship(self.user, user):
 				return 1
 			return self.origin_id
 		elif not self.origin_id:
 			return None
 		return self.origin_id
+	def yeahs_visible(self, user=None):
+		if user == self.user:
+			return True
+		if self.yeahs_visibility == 2:
+			return False
+		elif self.yeahs_visibility == 1:
+			if not user.is_authenticated or not Friendship.find_friendship(self.user, user):
+				return False
+			return True
+		return True
+	def comments_visible(self, user=None):
+		if user == self.user:
+			return True
+		if self.comments_visibility == 2:
+			return False
+		elif self.comments_visibility == 1:
+			if not user.is_authenticated or not Friendship.find_friendship(self.user, user):
+				return False
+			return True
+		return True
 	def got_fullurl(self):
 		if self.weblink:
 			try:
@@ -909,6 +949,8 @@ class Profile(models.Model):
 		return False
 	def setup(self, request):
 		self.origin_id_public = self.origin_id_public(request.user)
+		self.yeahs_visible = self.yeahs_visible(request.user)
+		self.comments_visible = self.comments_visible(request.user)
 
 class Follow(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -981,7 +1023,7 @@ class Notification(models.Model):
 		# Or if yeah notifications are off and this is a yeah notification
 		user_is_self_unk = (not type == 3 and user == to)
 		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to)
-		user_no_yeahnotif = (not to.profile().let_yeahnotifs and (type == 0 or type == 1))
+		user_no_yeahnotif = (not to.let_yeahnotifs and (type == 0 or type == 1))
 		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False
 		# Search for my own notifiaction. If it exists, set it as unread.

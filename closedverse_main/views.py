@@ -315,6 +315,8 @@ def user_view(request, username):
 		profile.external = request.POST.get('external')
 		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
 		profile.id_visibility = (request.POST.get('id_visibility') or 0)
+		profile.yeahs_visibility = (request.POST.get('yeahs_visibility') or 0)
+		profile.comments_visibility = (request.POST.get('comments_visibility') or 0)
 		user.nickname = filterchars(request.POST.get('screen_name'))
 		profile.save()
 		user.save()
@@ -384,6 +386,9 @@ def user_yeahs(request, username):
 	profile = user.profile()
 	profile.setup(request)
 	
+	if not profile.yeahs_visible:
+		raise Http404()
+	
 	if request.GET.get('offset'):
 		yeahs = user.get_yeahed(2, 20, int(request.GET['offset']))
 	else:
@@ -416,6 +421,43 @@ def user_yeahs(request, username):
 			'profile': profile,
 			'next': next_offset,
 		})
+def user_comments(request, username):
+	"""User's comments page"""
+	user = get_object_or_404(User, username__iexact=username)
+	if user.is_me(request):
+		title = 'My comments'
+	else:
+		title = '{0}\'s comments'.format(user.nickname)
+	profile = user.profile()
+	profile.setup(request)
+	
+	if not profile.comments_visible:
+		raise Http404()
+	
+	if request.GET.get('offset'):
+		posts = user.get_comments(50, int(request.GET['offset']), request)
+	else:
+		posts = user.get_comments(50, 0, request)
+	if posts.count() > 19:
+		if request.GET.get('offset'):
+			next_offset = int(request.GET['offset']) + 20
+		else:
+			next_offset = 20
+	else:
+		next_offset = None
+	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			return render(request, 'closedverse_main/elements/u-post-list.html', {
+			'posts': posts,
+			'next': next_offset,
+		})
+	else:
+		return render(request, 'closedverse_main/user_comments.html', {
+			'user': user,
+			'title': title,
+			'posts': posts,
+			'profile': profile,
+			'next': next_offset,
+		})
 
 def user_following(request, username):
 	"""User following page"""
@@ -442,6 +484,8 @@ def user_following(request, username):
 	for follow in following_list:
 		following.append(follow.target)
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			for user in following:
+				user.is_following = user.is_following(request.user)
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': following,
 			'request': request,
@@ -480,6 +524,8 @@ def user_followers(request, username):
 	for follow in followers_list:
 		followers.append(follow.source)
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			for user in followers:
+				user.is_following = user.is_following(request.user)
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': followers,
 			'request': request,
@@ -520,6 +566,8 @@ def user_friends(request, username):
 		friends.append(friend.other(user))
 	del(friends_list)
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
+			for user in friends:
+				user.is_following = user.is_following(request.user)
 			return render(request, 'closedverse_main/elements/profile-user-list.html', {
 			'users': friends,
 			'request': request,
@@ -663,9 +711,9 @@ def post_view(request, post):
 @login_required
 def post_add_yeah(request, post):
 	the_post = get_object_or_404(Post, id=post)
-	the_post.give_yeah(request)
-	# Give the notification!
-	Notification.give_notification(request.user, 0, the_post.creator, the_post)
+	if the_post.give_yeah(request):
+		# Give the notification!
+		Notification.give_notification(request.user, 0, the_post.creator, the_post)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -772,9 +820,9 @@ def comment_view(request, comment):
 @login_required
 def comment_add_yeah(request, comment):
 	the_post = get_object_or_404(Comment, id=comment)
-	the_post.give_yeah(request)
-	# Give the notification!
-	Notification.give_notification(request.user, 1, the_post.creator, None, the_post)
+	if the_post.give_yeah(request):
+		# Give the notification!
+		Notification.give_notification(request.user, 1, the_post.creator, None, the_post)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -808,9 +856,9 @@ def user_follow(request, username):
 				User.objects.get(id=1).follow(request.user)
 			except:
 				pass
-	user.follow(request.user)
-	# Give the notification!
-	Notification.give_notification(request.user, 4, user)
+	if user.follow(request.user):
+		# Give the notification!
+		Notification.give_notification(request.user, 4, user)
 	followct = request.user.num_following()
 	return JsonResponse({'following_count': followct})
 @require_http_methods(['POST'])

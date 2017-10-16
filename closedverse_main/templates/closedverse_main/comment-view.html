@@ -64,7 +64,7 @@
 		<button type="button"{% if not comment.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if comment.has_yeah %}empathy-added{% endif %}
 		  {% if not comment.can_yeah %}disabled{% endif %}
-		  " data-feeling="" data-action="{% url "main:comment-add-yeah" comment.id %}" data-community-id="{{ comment.community.unique_id }}" data-url-id="{{ comment.id }}"><span class="yeah-button-text">{% empathy_txt comment.feeling comment.has_yeah %}</span></button>
+		  " data-feeling="" data-action="{% url "main:comment-add-yeah" comment.id %}" data-url-id="{{ comment.id }}"><span class="yeah-button-text">{% empathy_txt comment.feeling comment.has_yeah %}</span></button>
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ comment.number_yeahs }}</span></div>
         </div>
 		</div>
