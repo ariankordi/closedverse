@@ -570,7 +570,7 @@ var Olv = Olv || {};
                   , g = arguments;
                 setTimeout(function() {
                     b.Net._errorFeedbackHandler.apply(f, g)
-                }, d.status ? 0 : 5e3)
+                }, d.status ? 0 : 1507)
             }
         },
         _errorFeedbackHandler: function(c, d, e, f) {
@@ -2208,8 +2208,8 @@ var Olv = Olv || {};
         }
 		$('form.search').on('submit', function(s) {
 			s.preventDefault();
-			go($(this).attr('action') + '?'+$(this).serialize())
-		})
+			go($(this).attr('action') + '?'+$(this).serialize());
+		});
         b.Entry.setupEmpathyButtons(e);
         a("form.search").on("submit", b.Form.validateValueLength);
         var h, i, j = a(".content-loading-window");
@@ -2273,7 +2273,7 @@ var Olv = Olv || {};
 	
 	$('div.post-filter > form > input[type=checkbox]').on('click', function() {
 		go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
-	})
+	});
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {
 		changesel("community");
@@ -2399,7 +2399,17 @@ var Olv = Olv || {};
 	}),
 	b.router.connect("^/messages(\/)?$", function(a, c, d) {
 	   changesel("message");
-	   b.Content.autopagerize(".list-content-with-icon-and-text", d)
+	   b.Content.autopagerize(".list-content-with-icon-and-text", d);
+	   
+	   	$('form.search').on('submit', function(s) {
+			s.preventDefault();
+			go($(this).attr('action') + '?'+$(this).serialize());
+		});
+	   
+	   $('h2 > span > input[type=checkbox]').on('click', function() {
+		go(location.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
+		});
+	   
 	}),
 	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
 		changesel("message");
@@ -2454,18 +2464,22 @@ mode_post = 0;
     }
 }
 
-	rm_btn = $('.rm-post-button')
-	if(rm_btn.length) {
-		rm_btn.on('click',function(){
-			thingy = $(this)
-			b.showConfirm("Delete message", "Really delete this message?")
-				$('.ok-button').on('click',function(){
-					b.Form.post(thingy.attr('data-action'))
-					thingy.parent().parent().remove()
-				})
-		})
+	function msg_rm_load() {
+		var rm_btn = $('.rm-post-button')
+		if(rm_btn.length) {
+			rm_btn.on('click',function(){
+				var thingy = $(this);
+				b.showConfirm("Delete message", "Really delete this message?")
+					$('.ok-button').on('click',function(){
+						b.Form.post(thingy.attr('data-action'));
+						thingy.parent().parent().remove();
+					})
+			})
+		}
 	}
 
+	msg_rm_load();
+	
 	$('button.msg-update').on('click',function(e){
 			msglist = $('.list.messages')
 			NProgress.start();
@@ -2478,9 +2492,9 @@ mode_post = 0;
 			}).done(function(g) {
 				NProgress.done();
 				msglist.replaceWith(g);
+				msg_rm_load();
 			});
 		});
-			
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
 		changesel("community");

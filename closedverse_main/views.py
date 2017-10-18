@@ -649,6 +649,8 @@ def community_favorite_rm(request, community):
 @login_required
 def post_create(request, community):
 	if request.method == 'POST' and request.is_ajax():
+		# Wake
+		request.user.wake(request.META['REMOTE_ADDR'])
 		# Required
 		if not (request.POST.get('community')):
 			return HttpResponseBadRequest()
@@ -762,6 +764,8 @@ def comment_rm(request, comment):
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
 	if request.method == 'POST' and request.is_ajax():
+		# Wake
+		request.user.wake(request.META['REMOTE_ADDR'])
 		# Method of Post
 		new_post = post.create_comment(request)
 		if not new_post:
@@ -1051,10 +1055,19 @@ def activity_feed(request):
 	})
 @login_required
 def messages(request):
-	if request.GET.get('offset'):
-		friends = Friendship.get_friendships_message(request.user, 20, int(request.GET['offset']))
+	if request.GET.get('online'):
+		if request.GET['online'] == 'n':
+			request.session['messages_online'] = False
+		else:
+			request.session['messages_online'] = True
+	if request.session.get('messages_online'):
+		online_only = True
 	else:
-		friends = Friendship.get_friendships_message(request.user, 20, 0)
+		online_only = False
+	if request.GET.get('offset'):
+		friends = Friendship.get_friendships_message(request.user, 20, int(request.GET['offset']), online_only)
+	else:
+		friends = Friendship.get_friendships_message(request.user, 20, 0, online_only)
 	if len(friends) > 19:
 		if request.GET.get('offset'):
 			next_offset = int(request.GET['offset']) + 20
@@ -1076,6 +1089,8 @@ def messages_view(request, username):
 	other = friendship.other(request.user)
 	conversation = friendship.conversation()
 	if request.method == 'POST':
+		# Wake
+		request.user.wake(request.META['REMOTE_ADDR'])
 		new_post = conversation.make_message(request)
 		if not new_post:
 			return HttpResponseBadRequest()
@@ -1101,7 +1116,7 @@ def messages_view(request, username):
 		else:
 			next_offset = None
 		if request.META.get('HTTP_X_AUTOPAGERIZE'):
-			response = loader.get_template('closedverse_main/message-list.html').render({
+			response = loader.get_template('closedverse_main/elements/message-list.html').render({
 				'messages': messages,
 				'next': next_offset,
 			}, request)
@@ -1205,7 +1220,7 @@ def user_manager(request, user):
 		'nickname': user.nickname,
 		'is_active': user.is_active(),
 		'addr': user.addr,
-		'shared_addrs': User.format_queryset(user.find_shared_ip()),
+		#'shared_addrs': User.format_queryset(user.find_shared_ip()),
 		'html': loader.get_template('closedverse_main/elements/user-sidebar-info.html').render({'user': user}, request)
 	})
 

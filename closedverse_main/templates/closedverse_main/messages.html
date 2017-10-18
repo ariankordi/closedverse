@@ -5,7 +5,19 @@
 <div class="main-column messages">
   <div class="post-list-outline">
 
-    <h2 class="label">Messages</h2>
+    <h2 class="label">Messages
+		<span class="message-chk">
+			<input type="checkbox" name="online" value="{% if request.session.messages_online %}n{% else %}1{% endif %}"{% if request.session.messages_online %} checked{% endif %}> Only show online friends
+		</span>
+	</h2>
+	<!--
+	{% if friends %}
+		<form class="friend-search search" action="{% url "main:messages" %}">
+			<input type="text" name="query" title="Search friends" placeholder="Search friends" minlength="2" maxlength="16">
+			<input type="submit" value="q" title="Search">
+		</form>
+	{% endif %}
+	-->
 	<div class="list">
 		{% if friends %}
 				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">

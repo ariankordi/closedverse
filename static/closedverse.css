@@ -1033,6 +1033,10 @@ margin-top: 4px;
   margin-left: 10px;
   margin-bottom: 0;
 }
+form.friend-search {
+    width: 99.4% !important;
+    margin: 8px 2px 9px 2px !important;
+}
 .headline .activity-headline:before {
   content: 'a';
   line-height: 23px;
@@ -4978,6 +4982,13 @@ button.msg-update {
   margin-right: 0;
   margin-top: -25px;
 }
+.message-chk {
+  float: right;
+  padding: 8px 0 8px;
+  font-size: 12px;
+  margin-right: 0;
+  margin-top: -15px;
+}
 .post .post-subtype-label {
   color: #323232;
   float: right;
@@ -7435,6 +7446,7 @@ margin: 10px 0px 15px !important;
   }
   #community-guide-footer {
     width: 100%;
+    margin-bottom: 50px;
     float: none;
   }
   .album-dialog .window {

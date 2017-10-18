@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q, QuerySet, Max, F, Count
+from django.db.models import Q, QuerySet, Max, F, Count, Case, When
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.utils.dateformat import format
@@ -260,22 +260,29 @@ class User(models.Model):
 	def notification_count(self):
 		return self.notification_to.filter(read=False, merged_with=None).count()
 	def notification_read(self):
-		self.notification_to.filter(read=False).update(read=True)
-		# FIX THESE - See if they work
-		#notifications_new = self.notification_ids()
-		#self.notification_set.exclude(id__in=notifications_new).delete()
-		return True
+		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
 		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
+	""" Broken - gives segfault
+	notifications_new = self.notification_ids()
+	self.notification_set.exclude(id__in=notifications_new).delete()
 	def notification_ids(self):
 		notifications = list(self.notification_to.filter(merged_with=None).values_list('id', flat=True)[0:64])
 		for notification in notifications:
 			merges = self.notification_to.filter(merged_with=notification)
 			notifications.append(merges)
+	"""
 			
 	# Admin can-manage
 	def can_manage(self):
 		if (self.level >= 2) or self.is_staff():
+			return True	
+		return False
+	# Does user have authority over self?
+	def has_authority(self, user):
+		if self.is_staff():
+			return False
+		if (self.level < user.level):
 			return True	
 		return False
 	def friend_state(self, other):
@@ -648,7 +655,9 @@ class Post(models.Model):
 		else:
 			return False
 	def can_rm(self, request):
-		return request.user.level > 0
+		if self.creator.has_authority(request.user):
+			return True
+		return False
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
 			return False
@@ -815,8 +824,11 @@ class Comment(models.Model):
 		else:
 			return False
 	def can_rm(self, request):
-		if request.user.level > 0 or self.original_post.is_mine(request.user):
+		if self.creator.has_authority(request.user):
 			return True
+		if self.original_post.is_mine(request.user):
+			return True
+		return False
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
 			return False
@@ -1022,7 +1034,7 @@ class Notification(models.Model):
 		# Or if user is to
 		# Or if yeah notifications are off and this is a yeah notification
 		user_is_self_unk = (not type == 3 and user == to)
-		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to)
+		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to, type=type).exclude(type=4)
 		user_no_yeahnotif = (not to.let_yeahnotifs and (type == 0 or type == 1))
 		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False
@@ -1099,17 +1111,30 @@ class Friendship(models.Model):
 			return Conversation.objects.create(source=self.source, target=self.target)
 		return conv.first()
 
-	def get_friendships(user, limit=50, offset=0, latest=False):
+	def get_friendships(user, limit=50, offset=0, latest=False, online_only=False):
 		if not limit:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')
 		if latest:
-			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]
+			if online_only:
+				delta = timezone.now() - timedelta(seconds=48)
+				awman = []
+				for friend in Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]:
+					if friend.other(user).last_login > delta:
+						awman.append(friend)
+				return awman
+# Fix all of this at some point
+#				return Friendship.objects.filter(
+#source=When(source__ne=user, source__last_login__gt=delta),
+#target=When(target__ne=user, target__last_login__gt=delta)
+#).order_by('-latest')[offset:offset + limit]
+			else:
+				return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]
 		else:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
 	def find_friendship(first, second):
 		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created').first()
-	def get_friendships_message(user, limit=20, offset=0):
-		friends_list = Friendship.get_friendships(user, limit, offset, True)
+	def get_friendships_message(user, limit=20, offset=0, online_only=False):
+		friends_list = Friendship.get_friendships(user, limit, offset, True, online_only)
 		friends = []
 		for friend in friends_list:
 			friends.append(friend.other(user))
@@ -1271,3 +1296,4 @@ class ThermostatTouch(models.Model):
 	
 	def __str__(self):
 		return str(created) + " touched the thermostat, setting it to " + str(lvl) + " degrees celsius"
+0
