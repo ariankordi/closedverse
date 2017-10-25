@@ -5,6 +5,9 @@
       <p class="user-name"><a href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
       <p class="timestamp-container">
         <a class="timestamp" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}href{% endif %}="{% url "main:comment-view" comment.id %}">{% time comment.created %}</a>
+				{% if comment.drawing %}
+				<span class="spoiler">(handwritten)</span>
+				{% endif %}
 		{% if comment.has_edit %}
 			<span class="spoiler">· Edited</span>
 		{% endif %}

@@ -1,6 +1,8 @@
 from django.conf.urls import url
 from django.conf.urls.static import static
 
+from django.shortcuts import redirect
+
 from . import views
 from closedverse.settings import MEDIA_URL, MEDIA_ROOT 
 
@@ -11,6 +13,7 @@ comment = r'(?P<comment>[0-9]+)'
 uuidr = r'[0-9a-f\-]'
 
 app_name = 'main'
+
 urlpatterns = [
 	# Root
 	url(r'^^$|^communities$|^index.*$$', views.community_list, name='community-list'),
@@ -103,5 +106,7 @@ urlpatterns = [
 	url(r'origin$', views.origin_id, name='origin-id-get'),
 	# :^)
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
+	url(r'debug$', lambda request: redirect('https://youtu.be/dQw4w9WgXcQ'), name='rickroll'),
+	url(r'splatoon$', views.splatoon, name='splatoon'),
 
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)

@@ -1034,7 +1034,7 @@ margin-top: 4px;
   margin-bottom: 0;
 }
 form.friend-search {
-    width: 99.4% !important;
+    width: 250px !important;
     margin: 8px 2px 9px 2px !important;
 }
 .headline .activity-headline:before {
@@ -8682,15 +8682,15 @@ margin: 10px 0px 15px !important;
   position: relative;
   width: 50px;
   height: 27px;
-  -webkit-box-sizing: border-box;
   border: 1px solid rgba(0, 0, 0, 0.3);
+  outline-style: none;
 }
 .textarea-with-menu .textarea-menu label input[type="radio"] {
   position: absolute;
   width: 50px;
   height: 27px;
   margin: 0;
-  -webkit-appearance: none;
+  display: none;
 }
 .textarea-with-menu .textarea-menu-text,
 .textarea-with-menu .textarea-menu-memo,
@@ -9007,5 +9007,60 @@ display: block !important;
     to {
         -webkit-transform: rotate(-1turn);
         transform: rotate(-1turn)
+    }
+}
+.spinner-chasing-dots {
+    -webkit-animation: spinner-chasing-dots-rotate 2s infinite linear;
+    animation: spinner-chasing-dots-rotate 2s infinite linear
+}
+.spinner-chasing-dots .spinner-item {
+    -webkit-animation: spinner-chasing-dots-bounce 2s infinite ease-in-out;
+    animation: spinner-chasing-dots-bounce 2s infinite ease-in-out;
+    background-color: #0080ff;
+    border-radius: 100%;
+    display: inline-block;
+    height: 60%;
+    position: absolute;
+    top: 0;
+    width: 60%
+}
+.spinner-chasing-dots .spinner-item:last-child {
+    -webkit-animation-delay: -1s;
+    animation-delay: -1s;
+    bottom: 0;
+    top: auto
+}
+@-webkit-keyframes spinner-chasing-dots-rotate {
+    to {
+        -webkit-transform: rotate(1turn);
+        transform: rotate(1turn)
+    }
+}
+@keyframes spinner-chasing-dots-rotate {
+    to {
+        -webkit-transform: rotate(1turn);
+        transform: rotate(1turn)
+    }
+}
+@-webkit-keyframes spinner-chasing-dots-bounce {
+    0%,to {
+        -webkit-transform: scale(0);
+        transform: scale(0)
+    }
+
+    50% {
+        -webkit-transform: scale(1);
+        transform: scale(1)
+    }
+}
+@keyframes spinner-chasing-dots-bounce {
+    0%,to {
+        -webkit-transform: scale(0);
+        transform: scale(0)
+    }
+
+    50% {
+        -webkit-transform: scale(1);
+        transform: scale(1)
     }
 }

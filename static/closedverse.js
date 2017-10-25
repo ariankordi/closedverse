@@ -1,45 +1,10 @@
 //! Modifications by Arian K and Lane B
-var splatoon = true
-if(innerWidth <= 480) {
+var splatoon = true;
+if(innerWidth <= 480 || navigator.userAgent.indexOf('Nintendo') > 0) {
    splatoon = false;
 }
-var pjax_container = '#container'
+var pjax_container = '#container';
 
-function go(a) {
-$.pjax({url: a, container: pjax_container});
-}
-function lo(cation) {
-location.href = cation;
-}
-function reload() {
-$.pjax.reload(pjax_container);
-}
-var discordapp_spinner = '<span class=spinner><span class="spinner-inner spinner-wandering-cubes"><span class=spinner-item></span><span class=spinner-item></span></span></span>';
-function changesel(a) {
-$("li.selected").removeClass("selected");
-if(a !== undefined) {
-		$("li#global-menu-" + a).addClass("selected");
-	}
-}
-function prlinkConf() {
-$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkconfirmsuck\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="lo(\''+ass+'\');$(\'.linkconfirmsuck\').remove()">Yes</button></div></div></div></div></div>');
-var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
-}
-function lights() {
-$('#darkness').prop('disabled',function(a,b){return !b})
-Olv.Form.get('/lights')
-}
-var fixe = false;
-function openDrawboardModal() {
-		if(innerWidth <= 800) {
-			fixe = true;
-		}
-		var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
-		fixe = false;
-		return true;
-}
-// There used to be an un-nice comment here but I'm just putting a comment here anyway because it's green and that's the color of money, something I need
-// Oh, sorry, no I don't need money, I need FRESH JUICY PLUMP education
 var artworkColors = [
 ["black", "#000"], ["gray", "#808080"], ["red", "#ff0000"], ["brown", "#804000"], ["orange", "#ff8000"], ["darkorange", "#c08000"], ["yellow", "#ffff00"], ["beige", "#fff8dc"], ["green", "#00c700"], ["darkgreen", "#008000"], ["skyblue", "#00ffff"], ["darkaqua", "#00a0a0"], ["blue", "#0000ff"], ["openverse", "#0080ff"], ["pink", "#ff00ff"], ["purple", "#800080"]];
 var artworkChanged = '';
@@ -249,10 +214,19 @@ $('.memo-finish-btn').on('click',function(){
 
 })
 }
+var fixe = false;
+function openDrawboardModal() {
+		if(innerWidth <= 800) {
+			fixe = true;
+		}
+			var g = new Olv.ModalWindow($('#memo-drawboard-page'));g.open();
+		//fixe = false;
+		return true;
+}
 function setupPostForm2() {
             var letters = ["a", "b", "c", "d", "e"]; // lazy as fuck but who cares lol
-            $("label.textarea-menu-memo").on("click", function() {
-                if (openDrawboardModal()) {
+            $("label.textarea-menu-memo > input").on("click", function(e) {
+				if (openDrawboardModal()) {
                     var menu = $("div.textarea-with-menu");
                     var memo = $("div.textarea-memo");
                     var text = $("div.textarea-container");
@@ -355,7 +329,6 @@ function deleteOption() {
 }
 */
 }
-var blank = /^[\s\u00A0\u3000]*$/
 //!© Nintendo/Hatena 2012-2017 copyright@hatena.com
 var Olv = Olv || {};
 (function(a, b) {
@@ -373,7 +346,8 @@ var Olv = Olv || {};
             this.routes.push([a, b])
         },
         dispatch: function(b) {
-            this.guard.resolve(b),
+            a("#global-menu-list > ul > li.selected").removeClass("selected");
+			this.guard.resolve(b),
             this.guard = a.Deferred();
             for (var c, d = b.pathname, e = 0; c = this.routes[e]; e++) {
                 var f = d.match(c[0]);
@@ -464,6 +438,21 @@ var Olv = Olv || {};
             return b.showMessage(f, d || "")
         }
     },
+	b.Closed = {
+		blank: /^[\s\u00A0\u3000]*$/,
+		discordapp_spinner: '<span class=spinner><span class="spinner-inner spinner-chasing-dots"><span class=spinner-item></span><span class=spinner-item></span></span></span>',
+		lights: function() {
+			$('#darkness').prop('disabled',function(a,b){return !b})
+			Olv.Form.get('/lights')
+		},
+		prlinkConf: function() {
+			$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(this).remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(this).remove()">Yes</button></div></div></div></div></div>');
+			var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
+		},
+		changesel: function(a) {
+			$("li#global-menu-" + a).addClass("selected");
+		}
+	},
     b.Net = {
         ajax: function(c) {
             var d = a.ajax(c)
@@ -519,9 +508,15 @@ var Olv = Olv || {};
 				}
 			break;
 			case 500:
+				errmsg = "An error has been encountered in the server.\n";
+				console.log(a.getResponseHeader('Content-Type').indexOf('html') < 0);
+				console.log(a);
+				if(a.getResponseHeader('Content-Type').indexOf('html') < 0) {
+					errmsg += "Error information is available; please send this to an administrator:\n" + a.responseText.substr(0, 400) + "...";
+				}
 				return {
 				error_code: "Internal server error",
-				message: "An internal error has occurred, try again later.\n"
+				message: errmsg
 				}
 			break;
 			case 503:
@@ -597,7 +592,16 @@ var Olv = Olv || {};
                 dataType: e,
 				beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
             })
-        }
+        },
+		go: function(a) {
+			$.pjax({url: a, container: pjax_container});
+		},
+		lo: function(cation) {
+			location.href = cation;
+		},
+		reload: function() {
+			$.pjax.reload(pjax_container);
+		}
     },
     b.Browsing = {
         setup: function() {
@@ -609,7 +613,7 @@ var Olv = Olv || {};
                 var d = a(this);
                 if (!d.hasClass("disabled")) {
                     var e = d.attr("data-href");
-                    go(e);
+                    b.Net.go(e);
                 }
             }
         },
@@ -704,7 +708,7 @@ var Olv = Olv || {};
     b.Content.autopagerize = function(c, d) {
         function e() {
             if (!(k._disabledCount || h.scrollTop() + h.height() + 200 < f.offset().top + f.outerHeight())) {
-                var d = a("<div/>").attr("class", "post-list-loading").append(a(discordapp_spinner)).appendTo(f);
+                var d = a("<div/>").attr("class", "post-list-loading").append(a(b.Closed.discordapp_spinner)).appendTo(f);
                 i = a.ajax({
                     url: g,
                     headers: {
@@ -1026,8 +1030,11 @@ var Olv = Olv || {};
     b.ModalWindowManager._windows = [],
     b.ModalWindowManager.currentWindow = null,
     b.ModalWindowManager.closeAll = function() {
+		//b.ModalWindowManager._windows = [];
+		
         for (; this.currentWindow; )
             this.currentWindow.close()
+		
     }
     ,
     b.ModalWindowManager.closeUntil = function(a) {
@@ -1099,7 +1106,7 @@ var Olv = Olv || {};
         b.ModalWindowManager.setup()
     }),
     a(document).on("olv:pagechange", function() {
-        //b.ModalWindowManager.closeAll();
+        b.ModalWindowManager.closeAll();
     }),
     b.ModalWindow = function(b, c) {
         this.element = a(b),
@@ -1232,6 +1239,18 @@ var Olv = Olv || {};
     }
     ,
     b.Entry = {},
+	b.Entry.checkEvent = function(c) {
+		var d = c.originalEvent;
+		//console.log(d);
+		// d.composed and d.isTrusted are indicators don't work on iOS 9 Safari
+		// d.webkitForce and d.timestamp work on Safari only
+		//console.log(d.detail, d.webkitForce, d.timestamp);
+		if(d.clientX && d.clientY && d.pageX && d.pageY && d.screenX && d.screenY && d.which && d.detail) {
+			return true;
+		} else {
+			return false;
+		}
+	},
     b.Entry.incrementReplyCount = function(b) {
         var c = a("div.post-meta div.reply");
         if (0 !== !c.length && void 0 != b && 0 != b) {
@@ -1283,7 +1302,7 @@ var Olv = Olv || {};
                             okLabel: b.loc("olv.portal.user.search.go"),
                             cancelLabel: b.loc("olv.portal.close")
                         }).done(function(a) {
-                            a && (go("/users/@me"))
+                            a && (b.Net.go("/users/@me"))
                         })
                     })
                 }
@@ -1339,7 +1358,7 @@ var Olv = Olv || {};
             var d = a(this);
             if (!f && !b.Form.isDisabled(d)) {
                 var g = d.text();
-                d.text("").append(a(discordapp_spinner)),
+                d.text("").append(a(b.Closed.discordapp_spinner)),
                 f = b.Form.get(d.attr("data-fragment-url"), null, d).done(function(b) {
                     var c = a(a.parseHTML(b));
                     if (d.hasClass("newest-replies-button") || d.hasClass("oldest-replies-button"))
@@ -1394,7 +1413,7 @@ var Olv = Olv || {};
 		$('.link-confirm').on('click', function(b) {
 		ass = a(this).attr('href');
 		b.preventDefault();
-		prlinkConf()
+		b.Closed.prlinkConf()
 		});
     }
     ,
@@ -1417,7 +1436,7 @@ var Olv = Olv || {};
     }
     ,
     b.Entry.onEmpathyClick = function(c) {
-		if (c.which) {
+		if (b.Entry.checkEvent(c)) {
 			if (!c.isDefaultPrevented()) {
 				c.preventDefault();
 				var d = a(this);
@@ -1655,7 +1674,7 @@ var Olv = Olv || {};
     b.EntryForm.setupSubmission = function(c, d) {
         function e(d) {
             var e = a(this);
-				b.Form.isDisabled(e) || !d.which || d.isDefaultPrevented() || (d.preventDefault(),
+				b.Form.isDisabled(e) || !b.Entry.checkEvent(d) || d.isDefaultPrevented() || (d.preventDefault(),
 				b.Form.submit(c, e).done(function(a) {
 					if (b.Form.reset(c),
 					"topic" === c.attr("data-post-subtype") && !c.attr("data-is-identified")) {
@@ -1702,11 +1721,11 @@ var Olv = Olv || {};
     }
     ,
     b.EntryForm.setupFormStatus = function(c, d) {
-        function e(b) {
-            var d = b.filter(function() {
-                return !blank.test(a(this).val())
+        function e(l) {
+            var d = l.filter(function() {
+                return !b.Closed.blank.test(a(this).val())
             });
-            return d.length === b.length
+            return d.length === l.length
         }
         function f(c) {
             var d = h.filter("[data-required]:visible")
@@ -2016,10 +2035,10 @@ var Olv = Olv || {};
     b.User.setupFollowButton = function(c, d) {
         function e(c) {
             var e = a(this);
-            b.Form.isDisabled(e) || !c.which || (b.Form.post(e.attr("data-action"), null, e).done(function(b) {
+            b.Form.isDisabled(e) || !b.Entry.checkEvent(c) || (b.Form.post(e.attr("data-action"), null, e).done(function(b) {
                 e.addClass("none").siblings().removeClass("none");
                 // !! DO THIS WHEN A FOLLOW LIMIT IS IMPLEMENTO
-				//e.hasClass("relationship-button") && (d.noReloadOnFollow && b.can_follow_more === !0 || reload()),
+				//e.hasClass("relationship-button") && (d.noReloadOnFollow && b.can_follow_more === !0 || b.Net.reload()),
                 "following_count" in b && a(e).trigger("olv:visitor:following-count:change", [b.following_count])
             }),
             c.preventDefault())
@@ -2035,8 +2054,8 @@ var Olv = Olv || {};
                 });
                 f.done(function(a) {
                     a && b.Form.post(d.attr("data-action"), null, d).done(function() {
-                        // Maybe don't use the reload() here
-						d.hasClass("relationship-button") ? reload() : (d.addClass("none"),
+                        // Maybe don't use the b.Net.reload() here
+						d.hasClass("relationship-button") ? b.Net.reload() : (d.addClass("none"),
                         e.removeClass("none"),
                         b.Form.toggleDisabled(e, !1))
                     })
@@ -2087,7 +2106,7 @@ var Olv = Olv || {};
 				$('#wrapper').prepend('<div class="dialog feedback-dialog none"><div class=dialog-inner><div class=window><h1 class=window-title>Feedback</h1><div class=window-body><form id=feedback-form><p class=window-body-content>What\'s this?<br><input type=radio name=a value=0 checked>Issue/bug report<input type=radio name=a value=1>Suggestion<input type=radio name=a value=2>I want something<div class=textarea-container><textarea name=b id=feedbackbody class="textarea-text textarea" maxlength="5000" placeholder="Write your feedback, suggestions, bug report, whatever you want here." required></textarea></div><p></p></p></form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.feedback-dialog\').remove()">Cancel</button><button class="black-button d-send disabled" disabled type=button>Send it</button></div></div></div></div></div>');
 		var g = new b.ModalWindow($('.feedback-dialog'));g.open();
 		$('#feedbackbody').on('input', function() {
-				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (blank.test($(this).val())))
+				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (b.Closed.blank.test($(this).val())))
         });
 		$('.d-send').on('click', function() {
 			b.Form.post('/complaints', $('#feedback-form').serializeArray()).done(function() { 
@@ -2105,7 +2124,7 @@ var Olv = Olv || {};
 						lights_off = a[1] ? ' checked' : '';
 						online_status = a[2] ? ' checked' : '';
 						
-						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Hide my latest time seen and online status from others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
+						$('#wrapper').prepend('<div class="dialog acc-set none"><div class=dialog-inner><div class=window><h1 class=window-title>Account preferences</h1><div class=window-body><form id=feedback-form><p class=window-body-content> These are your account\'s preferences, pretty self-explanatory.</p><br> <input type=checkbox value=1 name=a'+ yeah_notifications +'> Enable notifications for Yeahs<br><input type=checkbox onclick=Olv.Closed.lights()'+ lights_off +'> Enable dark mode<br> <input type=checkbox value=1 name=b'+ online_status +'> Hide my latest time seen and online status from others</form><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.acc-set\').remove()">Cancel</button><button class="black-button ac-send" type="button">Save</button></div></div></div></div></div>');
 						var g = new b.ModalWindow($('.acc-set'));g.open();
 						$('.ac-send').on('click',function() {
 							b.Form.post('/pref', $('#feedback-form').serializeArray())
@@ -2145,7 +2164,7 @@ var Olv = Olv || {};
 				msg: {}
             }, function(b, c) {
 				// If the response is blank, set both of the counts as 0.
-				if(!b) {
+				if(!b || b.length > 2) {
 				b = [unescape('\x00'), unescape('\x00')];
 				}
 					// Notification
@@ -2179,7 +2198,7 @@ var Olv = Olv || {};
         }
     }),
     b.router.connect("^/activity$", function(c, d, e) {
-		changesel("feed");
+		b.Closed.changesel("feed");
         function f() {
             var c = a("#post-form");
             b.Form.setupForPage(),
@@ -2208,7 +2227,7 @@ var Olv = Olv || {};
         }
 		$('form.search').on('submit', function(s) {
 			s.preventDefault();
-			go($(this).attr('action') + '?'+$(this).serialize());
+			b.Net.go($(this).attr('action') + '?'+$(this).serialize());
 		});
         b.Entry.setupEmpathyButtons(e);
         a("form.search").on("submit", b.Form.validateValueLength);
@@ -2272,11 +2291,11 @@ var Olv = Olv || {};
 		*/
 	
 	$('div.post-filter > form > input[type=checkbox]').on('click', function() {
-		go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
+		b.Net.go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
 	});
     }),
     b.router.connect("^(?:/|/communities)$", function(c, d, e) {
-		changesel("community");
+		b.Closed.changesel("community");
 		/*
 			if(a("#header-news").length) {
 			o = a("#header-news");
@@ -2290,7 +2309,7 @@ var Olv = Olv || {};
 				o.on("click", function(){
 				a.post(o);
 				alert("POSTed to " + l);
-				go(o.attr("href"));
+				b.Net.go(o.attr("href"));
 				});
 			}
 		*/
@@ -2330,11 +2349,11 @@ var Olv = Olv || {};
         })
 		$('form.search').on('submit', function(s) {
 			s.preventDefault();
-			go($(this).attr('action') + '?'+$(this).serialize())
+			b.Net.go($(this).attr('action') + '?'+$(this).serialize())
 		})
     }),
     b.router.connect("^/communities/all$", function(c, d, e) {
-		changesel("community");
+		b.Closed.changesel("community");
 		gsl = function(e) {
 			e.preventDefault();
 			$('.community-switcher-tab.selected').removeClass('selected');
@@ -2350,7 +2369,7 @@ var Olv = Olv || {};
 	b.router.connect("^/communities.search$", function(c) {
 		$('form.search').on('submit', function(s) {
 			s.preventDefault();
-			go($(this).attr('action') + '?'+$(this).serialize())
+			b.Net.go($(this).attr('action') + '?'+$(this).serialize())
 		})
 		$("form.search").off("submit", b.Form.validateValueLength);
 	}),
@@ -2359,14 +2378,14 @@ var Olv = Olv || {};
         b.Content.autopagerize(".js-post-list", d)
     }),
 	b.router.connect("/notifications(\/)?$", function(a, c, d) {
-	   changesel("news");
+	   b.Closed.changesel("news");
 	   $('button.rm').on('click', function() {
 		   $(this).parent().parent().remove()
 		   b.Form.post('/notifications/' + $(this).parent().parent().attr('id') + '.rm')
 	   })
 	}),
 	b.router.connect('/notifications/friend_requests(\/)?$', function(a, c, d) {
-		changesel("news");
+		b.Closed.changesel("news");
 		b.Form.post("/notifications/set_read?fr=1")
 		$('.received-request-button').on('click', function(a) {
 			a.preventDefault()
@@ -2378,7 +2397,7 @@ var Olv = Olv || {};
 				b.Form.post($(a.target).parents().eq(4).attr('data-action')).done(function(){
 								b.Form.toggleDisabled($(this), false);
 								fr.close();
-								reload();
+								b.Net.reload();
 							})
 			})
 		$('div[data-modal-types=accept-friend-request] .cancel-button').on('click', function(a){
@@ -2392,27 +2411,27 @@ var Olv = Olv || {};
 							b.Form.post($(a.target).parents().eq(4).attr('data-reject-action')).done(function(){
 								b.Form.toggleDisabled($(this), false);
 								fr.close();
-								reload()
+								b.Net.reload()
 							})
 					})
 			})
 	}),
 	b.router.connect("^/messages(\/)?$", function(a, c, d) {
-	   changesel("message");
+	   b.Closed.changesel("message");
 	   b.Content.autopagerize(".list-content-with-icon-and-text", d);
 	   
 	   	$('form.search').on('submit', function(s) {
 			s.preventDefault();
-			go($(this).attr('action') + '?'+$(this).serialize());
+			b.Net.go($(this).attr('action') + '?'+$(this).serialize());
 		});
 	   
 	   $('h2 > span > input[type=checkbox]').on('click', function() {
-		go(location.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
+		b.Net.go(location.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
 		});
 	   
 	}),
 	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
-		changesel("message");
+		b.Closed.changesel("message");
 		b.Content.autopagerize(".list.messages", d)
 			var ff = $('#post-form')
 		    b.EntryForm.setupSubmission(ff, d),
@@ -2433,7 +2452,7 @@ var Olv = Olv || {};
 
 			        if($("#post-form").length) {
 var mode_post = 0;
-$("label.textarea-menu-memo").on("click", function() {
+$("label.textarea-menu-memo > input").on("click", function() {
 	if(openDrawboardModal()) {
 var menu = $("div.textarea-with-menu");
 var memo = $("div.textarea-memo");
@@ -2483,7 +2502,7 @@ mode_post = 0;
 	$('button.msg-update').on('click',function(e){
 			msglist = $('.list.messages')
 			NProgress.start();
-			msglist.prepend(discordapp_spinner);
+			msglist.prepend(b.Closed.discordapp_spinner);
 			$.ajax({
 				url: window.location.href,
 				headers: {
@@ -2497,18 +2516,18 @@ mode_post = 0;
 		});
 	}),
     b.router.connect("^/communities/(?:favorites|played)$", function(a, c, d) {
-		changesel("community");
+		b.Closed.changesel("community");
         b.Content.autopagerize(".community-list", d)
     }),
     b.router.connect("^/communities/search$", function(c, d, e) {
-		changesel("community");
+		b.Closed.changesel("community");
         a("form.search").on("submit", b.Form.validateValueLength),
         e.done(function() {
             a("form.search").off("submit", b.Form.validateValueLength)
         })
     }),
     b.router.connect("^/communities/[0-9]+(/diary|/new|/hot|/in_game|/old)?$", function(c, d, e) {
-		changesel("community");
+		b.Closed.changesel("community");
         function f() {
             var b = a(".multi_timeline-topic-filter");
             b.addClass("open")
@@ -2563,7 +2582,7 @@ mode_post = 0;
 		*/
     }),
     b.router.connect("^/communities/[0-9]+(/artwork(/hot|/new)?|/topic(/new|/open)?)$", function(c, d, e) {
-		changesel("community");
+		b.Closed.changesel("community");
         function f(d, f) {
             var h = a(".js-post-list");
             h.length || (h = a("<div>", {
@@ -2689,18 +2708,18 @@ $('.post-poll .poll-votes').on('click', function() {
 				b.EntryForm.setupFormStatus(t, e);
 		$('.edit-post-button').on('click',function(){
 			if($('.post-content-memo').length) {
-				b.showMessage("", "You can't edit a drawing at this time.")
+				b.showMessage("", "You can't edit a drawing, sorry.");
 			} else {
 					et();
-					b.Form.toggleDisabled(submit_btn, true)
+					b.Form.toggleDisabled(submit_btn, true);
 			}
 		})
 		submit_btn.on('click',function(a) {
-			a.preventDefault()
-			b.Form.toggleDisabled($(this), true)
-			cereal = t.serializeArray()
+			a.preventDefault();
+			b.Form.toggleDisabled($(this), true);
+			cereal = t.serializeArray();
 			b.Form.post(t.attr('data-action'), cereal).done(function() {
-				$('.post-content-text').html(cereal.body); reload()
+				$('.post-content-text').html(cereal.body); b.Net.reload();
 			})
 		})
 	}
@@ -2719,7 +2738,7 @@ $('.post-poll .poll-votes').on('click', function() {
 				fav_btn.on('click',function(){
 					b.showConfirm("Profile post unset", "Unset your profile picture?")
 						$('.ok-button').on('click',function(){
-							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.removeClass('done',reload()))
+							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.removeClass('done',b.Net.reload()))
 						})
 				})
 			}
@@ -2727,7 +2746,7 @@ $('.post-poll .poll-votes').on('click', function() {
 				fav_btn.on('click',function(){
 					b.showConfirm("Profile post", "Set this as your profile picture?")
 						$('.ok-button').on('click',function(){
-							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.addClass('done'),reload())
+							b.Form.post(fav_btn.attr('data-action')).done(fav_btn.addClass('done'),b.Net.reload())
 						})
 				})
 			}
@@ -2735,7 +2754,7 @@ $('.post-poll .poll-votes').on('click', function() {
 		
 if($("#reply-form").length) {
 var mode_post = 0;
-$("label.textarea-menu-memo").on("click", function() {
+$("label.textarea-menu-memo > input").on("click", function() {
 		if(openDrawboardModal()) {
 var menu = $("div.textarea-with-menu");
 var memo = $("div.textarea-memo");
@@ -2793,7 +2812,7 @@ mode_post = 0;
 					b.EntryForm.setupFormStatus(t, e);
 			$('.edit-post-button').on('click',function(){
 				if($('.reply-content-memo').length) {
-					b.showMessage("", "You can't edit a drawing at this time.")
+					b.showMessage("", "You can't edit a drawing, sorry.")
 				} else {
 						et();
 						b.Form.toggleDisabled(submit_btn, true)
@@ -2804,7 +2823,7 @@ mode_post = 0;
 				b.Form.toggleDisabled($(this), true)
 				cereal = t.serializeArray()
 				b.Form.post(t.attr('data-action'), cereal).done(function() {
-					$('.post-content-text').html(cereal.body); reload()
+					$('.post-content-text').html(cereal.body); b.Net.reload()
 				})
 			})
 		}
@@ -2819,13 +2838,13 @@ mode_post = 0;
 			}
     }),
     b.router.connect("^/users\.search$", function(c, d, e) {
-		changesel("feed");
+		b.Closed.changesel("feed");
         b.Content.autopagerize("#searched-user-list", e),
         b.Guest.isGuest() || b.User.setupFollowButton(e),
         a("form.search").on("submit", function(s) {
 		b.Form.validateValueLength(s),
 			s.preventDefault();
-		go($(this).attr('action') + '?'+$(this).serialize())
+		b.Net.go($(this).attr('action') + '?'+$(this).serialize())
 		}),
         e.done(function() {
             a("form.search").off("submit", b.Form.validateValueLength)
@@ -2877,7 +2896,7 @@ mode_post = 0;
     }),
     b.router.connect("^/users/[0-9a-zA-Z\\-_.]+(/friends|/following|/followers|/yeahs|/posts|/comments)?$", function(c, d, e) {
 		if($("body").attr("sess-usern") == (c[0].split('/users/')[1])) {
-		changesel('mymenu');
+		b.Closed.changesel('mymenu');
 		}
         function f(c, d) {
             b.Form.toggleDisabled(a(c.target), !0)
@@ -2899,7 +2918,7 @@ mode_post = 0;
 					b.Form.post($('.friend-button.create').attr('data-action'), $('div[data-modal-types=post-friend-request] form').serializeArray()).done(function() {
 						fr.close();
 						b.Form.toggleDisabled($(this), false);
-						reload()
+						b.Net.reload()
 				})
 			})
 		
@@ -2913,7 +2932,7 @@ mode_post = 0;
 				b.Form.post($('div[data-modal-types=accept-friend-request]').attr('data-action')).done(function(){
 								b.Form.toggleDisabled($(this), false);
 								fr.close();
-								reload();
+								b.Net.reload();
 							})
 			})
 		$('div[data-modal-types=accept-friend-request] .cancel-button').on('click', function(g){
@@ -2925,7 +2944,7 @@ mode_post = 0;
 						$('.ok-button.black-button').on('click', function(g) {
 							b.Form.post($('div[data-modal-types=accept-friend-request]').attr('data-reject-action')).done(function(){
 								fr.close();
-								reload()
+								b.Net.reload()
 							})
 					})
 			})
@@ -2937,7 +2956,7 @@ mode_post = 0;
                 })
 						$('.ok-button.black-button').on('click', function(g) {
 							b.Form.post($('.friend-button.cancel').attr('data-action')).done(function(){
-								reload()
+								b.Net.reload()
 							})
 					})
 		})
@@ -2951,7 +2970,7 @@ mode_post = 0;
 							b.Form.toggleDisabled($(this), true);
 							b.Form.post($('.friend-button.delete').attr('data-action')).done(function(){
 								b.Form.toggleDisabled($(this), false);
-								reload();
+								b.Net.reload();
 							})
 					})
 		})
@@ -2973,7 +2992,7 @@ mode_post = 0;
 		function lfinish(b) {
 		window.location.href=b
 		//a('body').attr('sess-usern', a('input[name=username]').val())
-		//go(b)
+		//b.Net.go(b)
 		}
 		cac = function (){
 			$.ajax({
@@ -3066,13 +3085,13 @@ mode_post = 0;
 				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
 					NProgress.done();
 					openUserModal(a)
-					console.log(a);
+					b.print(a);
 				})
 			})
 		})
 	}),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
-		changesel('mymenu')
+		b.Closed.changesel('mymenu')
 			// If we are on profile settings..
 			if(c[0][10] == 'p') {
 			$('.get-ipinfo').on('click', function(e){
@@ -3101,10 +3120,14 @@ mode_post = 0;
 								url: inp.attr('data-action').replace('nil', inp.val()),
 								type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
 								success: function(a) {
-									$('.nnid-icon.mii').attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_normal_face.png')
-									$('input[name=mh]').val(a)
+									if(a == '') {
+										$('.nnid-icon.mii').attr('src', '');
+									} else {
+										$('.nnid-icon.mii').attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_normal_face.png');
+									}
+									$('input[name=mh]').val(a);
 								}, error: function(a) {
-									$('p.error').html(a.responseText)
+									$('p.error').html(a.responseText);
 								},
 								beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
 							})
@@ -3133,7 +3156,7 @@ mode_post = 0;
               , e = d.closest("form");
             b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
             b.Form.submit(e, d).done(function(a) {
-                reload()
+                b.Net.reload()
             }))
         }
         function g(c) {
@@ -3184,20 +3207,19 @@ mode_post = 0;
         })
     }),
     b.router.connect("^(/users/[0-9a-zA-Z\\-_.]+/communities/(favorites|played)|/my_menu)", function(a, c, d) {
-		changesel('community');
+		b.Closed.changesel('community');
         b.User.setupUserSidebar(d)
     }),
     b.router.connect("^/communities/[0-9]+", function(a, c, d) {
-		changesel("community");
+		b.Closed.changesel("community");
         if($("#post-form").length) {
-setupPostForm2()
-
-}
+			setupPostForm2()
+		}
         b.Community.setupCommunitySidebar(d);
     }),
 	/*
 	b.router.connect("^/news/.*$", function(c, d, e) {
-	changesel("news");
+	b.Closed.changesel("news");
 	}),
 	*/
     b.init.done(function(a) {
@@ -3251,9 +3273,12 @@ setupPostForm2()
 Olv.Locale.Data={
 "olv.portal.age_gate.select_label":{value:"Please enter your date of birth."},"olv.portal.album.delete_confirm":{value:"Are you sure you want to delete this?"},"olv.portal.button.remove":{value:"Yes"},"olv.portal.cancel":{value:"Cancel"},"olv.portal.close":{value:"Close"},"olv.portal.dialog.apply_settings_done":{value:"Settings saved."},"olv.portal.dialog.report_spoiler_done":{value:"Spoiler reported. Thank you for your help!"},"olv.portal.dialog.report_violation_done":{value:"Violation reported. Thank you for your help!"},"olv.portal.edit.action.close_topic_post":{value:"Close for Comments"},"olv.portal.edit.action.close_topic_post.confirm":{value:"It will no longer be possible to post comments on this discussion. Is that OK? (This action cannot be reversed.)"},"olv.portal.edit.edit_post":{value:"Edit Post"},"olv.portal.edit.edit_reply":{value:"Edit Comment"},"olv.portal.error.500.for_offdevice":{value:"An error occurred.\nPlease try again later."},"olv.portal.error.album_limit_exceeded":{value:"Unable to save because the maximum number of screenshots that can be saved has been reached. Please delete some saved screenshots, and then try again."},"olv.portal.error.code":{args:[1],value:"Error Code: %s"},"olv.portal.error.code %1":{args:[1],value:"Error Code: %s"},"olv.portal.error.code [_1]":{args:[1],value:"Error Code: %s"},"olv.portal.error.daily_post_limit_exceeded":{value:"You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow."},"olv.portal.error.failed_to_connect.for_offdevice":{value:"An error occurred."},"olv.portal.error.network_unavailable.for_offdevice":{value:"Cannot connect to the Internet. Please check your network connection and try again."},"olv.portal.error.post_time_restriction":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction %1":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction [_1]":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.followlist.confirm_unfollow_with_name":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name %1":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name [_1]":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.miitoo.frustrated":{value:"Yeah..."},"olv.portal.miitoo.frustrated.delete":{value:"Unyeah"},"olv.portal.miitoo.happy":{value:"Yeah!"},"olv.portal.miitoo.happy.delete":{value:"Unyeah"},"olv.portal.miitoo.like":{value:"Yeah♥"},"olv.portal.miitoo.like.delete":{value:"Unyeah"},"olv.portal.miitoo.normal":{value:"Yeah!"},"olv.portal.miitoo.normal.delete":{value:"Unyeah"},"olv.portal.miitoo.puzzled":{value:"Yeah..."},"olv.portal.miitoo.puzzled.delete":{value:"Unyeah"},"olv.portal.miitoo.surprised":{value:"Yeah!?"},"olv.portal.miitoo.surprised.delete":{value:"Unyeah"},"olv.portal.ok":{value:"OK"},"olv.portal.post.delete_confirm":{value:"Delete this post?"},"olv.portal.profile_post":{value:"Favorite Post"},"olv.portal.profile_post.confirm_remove":{value:"Remove this post from your profile?\nThe original post will not be deleted."},"olv.portal.profile_post.confirm_update":{value:"Set this post as your favorite?\nPlease note, it will replace any existing favorite post."},"olv.portal.profile_post.confirm_update.yes":{value:"OK"},"olv.portal.profile_post.done":{value:"Your favorite post has been set.\nWould you like to view your profile?"},"olv.portal.read_more_content":{value:"Read More"},"olv.portal.reply.delete_confirm":{value:"Delete this comment?"},"olv.portal.report.report_comment_id":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id %1":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id [_1]":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_post_id":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id %1":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id [_1]":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_spoiler":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_violation":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.setup":{value:"Set Up"},"olv.portal.show_more_content":{value:"View Entire Post"},"olv.portal.stop":{value:"Cancel"},"olv.portal.unfollow":{value:"Unfollow"},"olv.portal.user.search.go":{value:"View Profile"},"olv.portal.yes":{value:"Yes"}};
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false});
-$(document).on('pjax:error',function(evt, xhr) {
-Olv.ErrorViewer.open(Olv.Net.getErrorFromXHR(xhr));
-return false;
+$(document).on('pjax:error',function(evt, xhr, status) {
+	if(status != 'abort') {
+		Olv.ErrorViewer.open(Olv.Net.getErrorFromXHR(xhr));
+		return false;
+	}
+	return true;
 })
 $(document).on('pjax:send',function(){NProgress.start()});
 $(document).on('pjax:complete',function(){

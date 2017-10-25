@@ -27,6 +27,9 @@
       {% p_username post.creator %}
       <p class="timestamp-container">
         <span class="timestamp">{% time post.created %}</span>
+			{% if post.drawing %}
+			<span class="spoiler">(handwritten)</span>
+			{% endif %}
         <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">·Spoilers</span>
 		{% if post.has_edit %}
 		· <span class="spoiler">Edited ({% time post.edited %})</span>

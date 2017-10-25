@@ -1,9 +1,18 @@
 from django.http import HttpResponseForbidden
+from closedverse.settings import DEBUG, PROD
+
 class ClosedMiddleware(object):
 	def __init__(self, get_response):
 		self.get_response = get_response
 
 	def __call__(self, request):
+	# Fix this ; put something in settings signifying if the server supports HTTPS or not
+	if not request.is_secure() and (not DEBUG) and PROD:
+		# Let's try to redirect to HTTPS for non-Nintendo stuff.
+		if not request.META.get('HTTP_USER_AGENT'):
+			return HttpResponseForbidden("You need a user agent.", content_type='text/plain')
+		if not request.is_secure() and not 'Nintendo' in request.META['HTTP_USER_AGENT']:
+			return redirect('https://{0}{1}'.format(request.get_host(), request.get_full_path()))
 		if request.user.is_authenticated and not request.user.is_active():
 			return HttpResponseForbidden()
 		response = self.get_response(request)

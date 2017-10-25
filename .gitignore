@@ -14,6 +14,7 @@ settings.py
 media
 closedverse_main/media
 closedverse/media
+closedverse_main/migrations
 *.pyc
 *.db3
 *.db

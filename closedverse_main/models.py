@@ -41,6 +41,10 @@ class UserManager(BaseUserManager):
 		addr = addr,
 		email = email,
 		)
+		if util.getipintel(addr) > 0.994:
+			spamuser = True
+		else:
+			spamuser = False
 		profile = Profile.objects.model()
 		if nn:
 			user.avatar = nn[0]
@@ -53,7 +57,7 @@ class UserManager(BaseUserManager):
 			user.has_mh = False
 		user.set_password(password)
 		user.save(using=self._db)
-		if util.getipintel(addr) > 0.994:
+		if spamuser:
 			profile.let_freedom = False
 		else:
 			profile.let_freedom = True
@@ -71,7 +75,7 @@ class UserManager(BaseUserManager):
 		return user
 	def authenticate(self, username, password):
 		try:
-			user = self.get(username=username)
+			user = self.get(username__iexact=username)
 		except User.DoesNotExist:
 			return None
 		if not user.check_password(password):
@@ -149,6 +153,9 @@ class User(models.Model):
 		except:
 			return None
 		return infodecode[0]
+	def has_plain_avatar(self):
+		if not self.has_mh and 'http' in self.avatar and not 'gravatar.com' in self.avatar:
+			return True
 	def let_yeahnotifs(self):
 		return self.profile('let_yeahnotifs')
 	def get_class(self):
@@ -238,7 +245,6 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
-					post.comment_count = post.number_comments()
 		return posts
 	def get_comments(self, limit=50, offset=0, request=None):
 		posts = self.comment_set.filter().order_by('-created')[offset:offset + limit]
@@ -345,7 +351,6 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
-					post.comment_count = post.number_comments()
 		return posts
 	def community_favorites(self, all=False):
 		if not all:
@@ -509,7 +514,6 @@ class Community(models.Model):
 			for post in posts:
 				post.setup(request)
 				post.recent_comment = post.recent_comment()
-				post.comment_count = post.get_comments().count()
 		return posts
 	def post_perm(self, request):
 		if self.allowed_users:
@@ -751,8 +755,8 @@ class Post(models.Model):
 	def rm(self, request):
 		if request and not self.is_mine(request.user) and not self.can_rm(request):
 			return False
-		if self.is_favorite(request.user):
-			self.unfavorite(request.user)
+		if self.is_favorite(self.creator):
+			self.unfavorite(self.creator)
 		self.is_rm = True
 		if self.is_mine(request.user):
 			self.status = 1
@@ -877,11 +881,13 @@ class Comment(models.Model):
 		self.is_mine = self.is_mine(request.user)
 
 class Yeah(models.Model):
+	# Todo: make this a plain int at some point
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 	by = models.ForeignKey(User)
-	# 0 - post, 2 - comment
 	type = models.SmallIntegerField(default=0, choices=((0, 'post'), (1, 'comment'), ))
 	post = models.ForeignKey(Post, null=True, blank=True)
+	# kldsjfldsfsdfd
+	#spam = models.BooleanField(default=False)
 	comment = models.ForeignKey(Comment, null=True, blank=True)
 	created = models.DateTimeField(auto_now_add=True)
 
@@ -905,6 +911,9 @@ class Profile(models.Model):
 	country = models.CharField(max_length=120, blank=True, default='')
 	#birthday = models.DateField(null=True, blank=True)
 	id_visibility = models.SmallIntegerField(default=0, choices=visibility)
+	pronoun_is = models.IntegerField(default=0, choices=(
+	(0, "I don't know"), (1, "He/him"), (2, "She/her"), (3, "He/she"), (4, "It")
+	))
 
 	yeahs_visibility = models.SmallIntegerField(default=0, choices=visibility)
 	comments_visibility = models.SmallIntegerField(default=2, choices=visibility)
@@ -965,6 +974,7 @@ class Profile(models.Model):
 		self.comments_visible = self.comments_visible(request.user)
 
 class Follow(models.Model):
+	# Todo: remove this
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='follow_source')
@@ -975,6 +985,7 @@ class Follow(models.Model):
 		return "follow: from " + self.source.username + " to " + self.target.username
 
 class Notification(models.Model):
+	# Todo: make this a plain int at some point
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	
 	to = models.ForeignKey(User, related_name='notification_to')
@@ -1035,7 +1046,7 @@ class Notification(models.Model):
 		# Or if yeah notifications are off and this is a yeah notification
 		user_is_self_unk = (not type == 3 and user == to)
 		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to, type=type).exclude(type=4)
-		user_no_yeahnotif = (not to.let_yeahnotifs and (type == 0 or type == 1))
+		user_no_yeahnotif = (not to.let_yeahnotifs() and (type == 0 or type == 1))
 		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False
 		# Search for my own notifiaction. If it exists, set it as unread.
@@ -1118,7 +1129,7 @@ class Friendship(models.Model):
 			if online_only:
 				delta = timezone.now() - timedelta(seconds=48)
 				awman = []
-				for friend in Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]:
+				for friend in Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest'):
 					if friend.other(user).last_login > delta:
 						awman.append(friend)
 				return awman
@@ -1230,7 +1241,21 @@ class Message(models.Model):
 			raise ValueError
 		return json.dumps(ls)
 
+class ConversationInvite(models.Model):
+	id = models.AutoField(primary_key=True)
+	conversation = models.ForeignKey(Conversation)
+	source = models.ForeignKey(User, related_name='convinvite_source')
+	target = models.ForeignKey(User, related_name='convinvite_target')
+	body = models.TextField(blank=True, null=True, default='')
+	read = models.BooleanField(default=False)
+	finished = models.BooleanField(default=False)
+	created = models.DateTimeField(auto_now_add=True)
+	
+	def __str__(self):
+		return "Invite to conversation " + str(self.conversation) + " from " + str(self.source) + " to " + str(self.target)
+
 class Poll(models.Model):
+	# Todo: make this a plain int at some point
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	able_vote = models.BooleanField(default=True)
@@ -1296,4 +1321,14 @@ class ThermostatTouch(models.Model):
 	
 	def __str__(self):
 		return str(created) + " touched the thermostat, setting it to " + str(lvl) + " degrees celsius"
-0
+
+# Finally
+class UserBlock(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	source = models.ForeignKey(User, related_name='block_source')
+	target = models.ForeignKey(User, related_name='block_target')
+	full = models.BooleanField(default=False)
+	
+	def __str__(self):
+		return "Block created from " + str(self.source) + " to " + str(self.target)

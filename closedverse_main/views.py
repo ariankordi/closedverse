@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest,  HttpResponseServerError, HttpResponseForbidden, JsonResponse
 from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
@@ -11,7 +11,11 @@ from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTim
 from closedverse import settings
 import re
 from django.urls import reverse
+from random import getrandbits
 from json import dumps, loads
+import sys, traceback
+from random import choice
+from subprocess import Popen, PIPE
 
 def json_response(msg='', code=0, httperr=400):
 	thing = {
@@ -31,11 +35,6 @@ def json_response(msg='', code=0, httperr=400):
 
 def community_list(request):
 	"""Lists communities / main page."""
-	# Fix this ; put something in settings signifying if the server supports HTTPS or not
-	if not settings.DEBUG:
-		# Let's try to redirect to HTTPS for non-Nintendo stuff.
-		if not 'Nintendo' in request.META.get('HTTP_USER_AGENT'):
-			return redirect('https://{0}{1}'.format(request.get_host(), request.META['REQUEST_URI']))
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -117,13 +116,18 @@ def community_favorites(request):
 	if request.GET.get('u'):
 		user = get_object_or_404(User, username=request.GET['u'])
 		has_other = True
+		profile = user.profile()
+		profile.setup(request)
 		communities = user.community_favorites(True)
 	else:
 		communities = request.user.community_favorites(True)
+		profile = user.profile()
+		profile.setup(request)
 	return render(request, 'closedverse_main/community_favorites.html', {
 		'title': 'Favorite communities',
 		'favorites': communities,
 		'user': user,
+		'profile': profile,
 		'other': has_other,
 	})
 
@@ -138,13 +142,13 @@ def login_page(request):
 		# Remove spaces from the username, because some people do that.
 		request.POST['username'].replace(' ', '')
 		# Wait, first check if the user exists.
-		if not User.objects.filter(username=request.POST['username']).exists():
+		if not User.objects.filter(username__iexact=request.POST['username']).exists():
 			return HttpResponseNotFound("The user doesn't exist.")
 		user = authenticate(username=request.POST['username'], password=request.POST['password'])
 		if not user:
 			return HttpResponse("Invalid password.", status=401)
 		if not user.is_active():
-			return HttpResponseForbidden("This user was disabled {0}.".format(HumanTime(user.last_login)))
+			return HttpResponseForbidden("This user was disabled.")
 		login(request, user)
 		
 		# Then, let's get the referrer and either return that or the root.
@@ -243,7 +247,7 @@ def forgot_passwd(request):
 			'classes': ['no-login-btn'],
 		})
 	return render(request, 'closedverse_main/forgot_page.html', {
-		'title': 'Reset password',
+		'title': 'Reset password for ' + user.username,
 		'classes': ['no-login-btn'],
 	})
 
@@ -267,7 +271,7 @@ def user_view(request, username):
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
-		if (len(request.POST.get('screen_name')) > 32 or request.POST.get('screen_name')) and not request.user.is_staff():
+		if len(request.POST.get('screen_name')) > 32 and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
 			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
@@ -288,15 +292,17 @@ def user_view(request, username):
 		if settings.nnid_forbiddens:
 			if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
 				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
+		if user.has_plain_avatar():
+			user.avatar = request.POST.get('avatar') or ''
 		if request.POST.get('avatar') == '1':
-			user.avatar = get_gravatar(user.email) or ''
+			user.avatar = get_gravatar(user.email) or ('s' if getrandbits(1) else '')
 			user.has_mh = False
 		elif request.POST.get('avatar') == '0':
 			user.has_mh = True
 			if not request.POST.get('origin_id'):
 				profile.origin_id = None
 				profile.origin_info = None
-				user.avatar = ''
+				user.avatar =  ('s' if getrandbits(1) else '')
 			else:
 				getmii = get_mii(request.POST.get('origin_id'))
 				if not getmii:
@@ -316,6 +322,7 @@ def user_view(request, username):
 		profile.relationship_visibility = (request.POST.get('relationship_visibility') or 0)
 		profile.id_visibility = (request.POST.get('id_visibility') or 0)
 		profile.yeahs_visibility = (request.POST.get('yeahs_visibility') or 0)
+		profile.pronoun_is = (request.POST.get('pronoun_dot_is') or 0)
 		profile.comments_visibility = (request.POST.get('comments_visibility') or 0)
 		user.nickname = filterchars(request.POST.get('screen_name'))
 		profile.save()
@@ -1282,3 +1289,5 @@ def help_contact(request):
 
 def csrf_fail(request, reason):
 	return HttpResponseBadRequest("The CSRF check has failed.\nYour browser might not support cookies, or you need to refresh.")
+def server_err(request):
+	return HttpResponseServerError(traceback.format_exc(), content_type='text/plain')

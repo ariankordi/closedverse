@@ -52,7 +52,7 @@
 		{% elif user.is_me and not general %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
 		{% endif %}{% if user.is_me %}
-		<button class="button" onclick="lights()">Toggle dark mode</button>
+		<button class="button" onclick="Olv.Closed.lights()">Toggle dark mode</button>
 		{% endif %}
 
     <ul id="sidebar-profile-status">
@@ -129,6 +129,14 @@
 			<h4><span>Last seen</span></h4>
 			<div class="note">
 				<span>{% time user.last_login True %}</span>
+			</div>
+		</div>
+		{% endif %}
+		{% if profile.pronoun_is %}
+		<div class="data-content">
+			<h4><span>Preferred pronoun</span></h4>
+			<div class="note">
+				<span>{{ profile.get_pronoun_is_display }}</span>
 			</div>
 		</div>
 		{% endif %}

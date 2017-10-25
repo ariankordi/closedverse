@@ -3,11 +3,11 @@ from lxml import html
 import urllib.request, urllib.error
 import requests
 from lxml import etree
-
+from random import choice
 import json
 import time
 import os.path
-from PIL import Image, ExifTags
+from PIL import Image, ExifTags, ImageFile
 from datetime import datetime
 from math import floor
 from hashlib import md5, sha1
@@ -21,6 +21,7 @@ import imghdr
 import base64
 from closedverse import settings
 import re
+
 
 def HumanTime(date, full=False):
 	now = time.time()
@@ -53,7 +54,7 @@ def get_mii(id):
 	if ou_check and 'official-user' in ou_check[0]:
 		return False
 	if "img/anonymous-mii.png" in miihash:
-		miihash = settings.STATIC_URL + '/img/anonymous-mii.png'
+		miihash = ''
 	
 	# Using AccountWS, not being used now
 	"""
@@ -93,7 +94,7 @@ def recaptcha_verify(request, key):
 		return False
 	return True
 
-
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 def image_upload(img, stream=False):
 	if stream:
 		decodedimg = img.read()
@@ -104,8 +105,19 @@ def image_upload(img, stream=False):
 			decodedimg = base64.b64decode(img)
 		except binascii.Error:
 			return 1
-	
-	im = Image.open(io.BytesIO(decodedimg))
+	if stream:
+		if not 'image' in img.content_type:
+			return 1
+		if 'audio' or 'video' in img.content_type:
+			return 1
+	# upload svg?
+	#if 'svg' in mime:
+	#	
+	try:
+		im = Image.open(io.BytesIO(decodedimg))
+	# OSError is probably from invalid images, SyntaxError probably from unsupported images
+	except (OSError, SyntaxError):
+		return 1
 	# Taken from https://coderwall.com/p/nax6gg/fix-jpeg-s-unexpectedly-rotating-when-saved-with-pil
 	if hasattr(im, '_getexif'):
 		orientation = 0x0112
@@ -123,9 +135,19 @@ def image_upload(img, stream=False):
 	# I know some people have aneurysms when they see people actually using SHA1 in the real world, for anything in general.
 	# Yes, we are really using it. Sorry if that offends you. It's just fast and I don't feel I need anything more random, since we are talking about IMAGES.
 	imhash = sha1(im.tobytes()).hexdigest()
-	floc = imhash + '.png'
+	# File saving target
+	target = 'png'
+	if stream:
+	# If we have a stream and either a JPEG or a WEBP, save them as those since those are a bit better than plain PNG
+		if 'jpeg' in img.content_type:
+			target = 'jpeg'
+			im = im.convert('RGB')
+		elif 'webp' in img.content_type:
+			target = 'webp'
+	floc = imhash + '.' + target
+	# If the file exists, just use it, that's what hashes are for.
 	if not os.path.exists(settings.MEDIA_ROOT + floc):
-		im.save(settings.MEDIA_ROOT + floc, 'PNG')
+		im.save(settings.MEDIA_ROOT + floc, target, optimize=True)
 	return settings.MEDIA_URL + floc
 
 def get_gravatar(email):
@@ -136,8 +158,12 @@ def get_gravatar(email):
 	return page.geturl()
 
 def filterchars(str):
-	if str.isspace():
-		return 'None'
+	if not str or str.isspace():
+		try:
+			girls = json.load(open(settings.BASE_DIR + '/girls.json'))
+		except:
+			girls = ['None']
+		return choice(girls)
 	if "\u202e" in str:
 		return str.split("\u202e")[1]
 	return str
@@ -146,7 +172,7 @@ def getipintel(addr):
 	# My router's IP prefix is 192.168.1.*, so this works in debug
 	if settings.ipintel_email and not '192.168' in addr:
 		try:
-			site = urllib.request.urlopen('https://check.getipintel.net/check.php?ip={0}&contact={1}'
+			site = urllib.request.urlopen('https://check.getipintel.net/check.php?ip={0}&contact={1}&flags=f'
 			.format(addr, settings.ipintel_email))
 		except:
 			return 0

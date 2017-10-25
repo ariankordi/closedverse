@@ -18,6 +18,9 @@
 		<span class="spoiler">Edited</span>·
 		{% endif %}
       <a class="timestamp" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}">{% time post.created %}</a>
+				{% if post.drawing %}
+				<span class="spoiler">(handwritten)</span>
+				{% endif %}
 	</p>
     <div class="body post-content">
 		{% if post.yt_vid %}
@@ -44,14 +47,14 @@
 		  {% endif %}
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
 		  {% if not post.original_post %}
-          <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.comment_count }}</span></div>
+          <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
 		  {% endif %}
 		</div>
 {% if post.recent_comment %}
 	<div class="recent-reply-content">
-{% if post.comment_count > 1 %}
+{% if post.number_comments > 1 %}
 <div class="recent-reply-read-more-container" tabindex="0">
-      View all comments ({{ post.comment_count }})
+      View all comments ({{ post.number_comments }})
     </div>
 {% endif %}
   <div id="{{ post.recent_comment.unique_id }}" tabindex="0" class="recent-reply trigger">

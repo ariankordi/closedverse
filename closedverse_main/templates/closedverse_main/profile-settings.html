@@ -78,6 +78,20 @@
       </li>
 	  {% endif %}
       <li>
+        <p class="settings-label"><label for="pronoun_dot_is">What's your preferred pronoun?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="pronoun_dot_is" id="pronoun_dot_is">
+              <option value="0"{% if profile.pronoun_is == 0 %} selected{% endif %}>I don't know</option>
+              <option value="1"{% if profile.pronoun_is == 1 %} selected{% endif %}>He/him</option>
+              <option value="2"{% if profile.pronoun_is == 2 %} selected{% endif %}>She/her</option>
+			  <option value="3"{% if profile.pronoun_is == 3 %} selected{% endif %}>He/she</option>
+			  <option value="4"{% if profile.pronoun_is == 4 %} selected{% endif %}>It</option>
+            </select>
+          </div>
+        </div>
+      </li>
+      <li>
         <p class="settings-label"><label for="yeahs_visibility">Who should be able to see your Yeahs given?</label></p>
         <div class="select-content">
           <div class="select-button">
@@ -111,6 +125,7 @@
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>
               </li>
+		{% if not user.has_plain_avatar %}
               <li class="setting-avatar">
                 <div class="icon-container">
                     <img class="icon nnid-icon mii{% if not user.has_mh %} none{% endif %}" src="{% miionly user.mh %}">
@@ -121,6 +136,12 @@
                 <label><input type="radio" name="avatar" value="1"{% if not user.has_mh %} checked{% endif %}>Gravatar</label>
                 <p class="note">Selecting the Gravatar option will cause your avatar to be pulled from the <a href="https://gravatar.com">Gravatar account</a> linked to your email address, and feelings won't be shown in your posts unless you choose to use a Mii instead.</p>
          </li>
+		 {% else %}
+		 <p class="settings-label">It appears that you somehow have a plain URL avatar, change it here (<strong>if you change it to nothing then it will reset to being selectable !!</strong>)</p>
+		 <div class="center center-input">
+			<input type="text" name="avatar" maxlength="255" placeholder="Avatar url" value="{{ user.avatar }}">
+		</div>
+		 {% endif %}
 
 	{% csrf_token %}
 	<div class="form-buttons">

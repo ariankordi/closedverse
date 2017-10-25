@@ -16,15 +16,9 @@ Including another URLconf
 from django.conf.urls import url, include
 
 from django.contrib import admin
-from .settings import INSTALLED_APPS
 
+handler500 = 'closedverse_main.views.server_err'
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 	url(r'^', include('closedverse_main.urls'))
 ]
-
-if 'debug_toolbar' in INSTALLED_APPS:
-    import debug_toolbar
-    urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
