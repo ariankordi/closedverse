@@ -78,6 +78,18 @@
       </li>
 	  {% endif %}
       <li>
+        <p class="settings-label"><label for="let_friendrequest">Who should be able to send you friend requests?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="let_friendrequest" id="let_friendrequest">
+              <option value="0"{% if profile.let_friendrequest == 0 %} selected{% endif %}>Everyone</option>
+              <option value="1"{% if profile.let_friendrequest == 1 %} selected{% endif %}>People I'm following</option>
+              <option value="2"{% if profile.let_friendrequest == 2 %} selected{% endif %}>Nobody</option>
+            </select>
+          </div>
+        </div>
+      </li>
+      <li>
         <p class="settings-label"><label for="pronoun_dot_is">What's your preferred pronoun?</label></p>
         <div class="select-content">
           <div class="select-button">

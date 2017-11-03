@@ -12,6 +12,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-title" content="Closedverse">
     <meta name="description" content="Openverse is a social network: designed by PF2M, programmed by Arian Kordi. With Miiverse DNA, style and familiar assets such as Miiverse's interface and Miis, you're sure to have fun here!">
+	<meta property="og:locale" content="en_US">
+	{% if ogdata %}
+		<meta property="og:title" content="{{ ogdata.title }} - Closedverse">
+		<meta property="og:type" content="article">
+		<meta property="og:url" content="{{ request.build_absolute_uri }}">
+		<meta property="og:description" content="{{ ogdata.description|truncatechars:150 }}">
+		<meta property="og:title" content="{{ ogdata.title }} - Closedverse">
+		<meta property="og:site_name" content="Closedverse">
+		<meta property="article:published_time" content="{{ ogdata.date }}">
+	{% endif %}
 	<link rel="shortcut icon" type="image/png" href="{% static "img/favicon.png" %}">
     <link rel="stylesheet" type="text/css" href="{% static "closedverse.css" %}">
 	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "blueness.css" %}">

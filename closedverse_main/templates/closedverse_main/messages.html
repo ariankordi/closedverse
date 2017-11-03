@@ -29,6 +29,9 @@
 						<p class="title">
 						  <span class="nick-name"><a href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
 						  <span class="id-name">{{ friend.username }}</span>
+							{% if not friend.get_latest_msg.mine and friend.get_latest_msg.read == False %}
+								<button class="button msg-update">Read</button>
+							{% endif %}
 						</p>
 						{% if friend.get_latest_msg %}
 						<span class="timestamp">{% time friend.get_latest_msg.created %}</span>

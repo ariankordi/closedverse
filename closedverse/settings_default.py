@@ -159,10 +159,16 @@ memo_msg = "Heyyyy!"
 # None for no IP checking (recommended)
 ipintel_email = None
 
+# If IP can be checked, then use this to disallow any proxies
+disallow_proxy = False
+
 # Cloudinary environment, because we're using that
+# Never mind, not anymore
+"""
 cloudinary_key = None
 cloudinary_secret = None
 cloudinary_name = None
+"""
 
 # MD
 MARKDOWN_DEUX_STYLES = {

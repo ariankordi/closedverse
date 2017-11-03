@@ -4,17 +4,15 @@ if(innerWidth <= 480 || navigator.userAgent.indexOf('Nintendo') > 0) {
    splatoon = false;
 }
 var pjax_container = '#container';
+// Edge lies about being WebKit but it works anyway
+// Edit: This used to match 'WebKit' but it's now Gecko because WebKit will have that in here anyway
+var webkit = navigator.userAgent.indexOf('Gecko') > 0;
 
-var artworkColors = [
-["black", "#000"], ["gray", "#808080"], ["red", "#ff0000"], ["brown", "#804000"], ["orange", "#ff8000"], ["darkorange", "#c08000"], ["yellow", "#ffff00"], ["beige", "#fff8dc"], ["green", "#00c700"], ["darkgreen", "#008000"], ["skyblue", "#00ffff"], ["darkaqua", "#00a0a0"], ["blue", "#0000ff"], ["openverse", "#0080ff"], ["pink", "#ff00ff"], ["purple", "#800080"]];
-var artworkChanged = '';
-var artworkTool = {type: 0, size: 1};
-var artworkColorOffset = 0;
-var artworkZoomFactor = 1;
 function setupDrawboard() {
-    var canvas = document.getElementById("artwork-canvas");
-    var ctx = canvas.getContext('2d');
-	var haval = $("input[type=hidden][name=painting]")
+var canvas = document.getElementById("artwork-canvas");
+var ctx = canvas.getContext('2d');
+
+	var haval = $("input[type=hidden][name=painting]");
 	if(haval.length) {
 		dds = new Image();
 		dds.src = "data:image/png;base64," + haval.val();
@@ -22,30 +20,31 @@ function setupDrawboard() {
 		    ctx.drawImage(dds,0,0);
 		};
 	}
-    var undoCanvas = document.getElementById('artwork-canvas-undo');
-    var undoCtx = undoCanvas.getContext('2d');
-    var redoCanvas = document.getElementById('artwork-canvas-redo');
-    var redoCtx = redoCanvas.getContext('2d');
-    if(artworkChanged != window.location.href) {
-        artworkTool = {type: 0, size: 1};
-        artworkColorOffset = 0;
-        artworkZoomFactor = 1;
-        artworkChanged = window.location.href;
-    }
-    var mousePosOld = 0;
+
+var undoCanvas = document.getElementById('artwork-canvas-undo');
+var undoCtx = undoCanvas.getContext('2d');
+var redoCanvas = document.getElementById('artwork-canvas-redo');
+var redoCtx = redoCanvas.getContext('2d');
+var mousePosOld = 0;
+var artworkTool = {type: 0, size: 1};
+var sizeSmall = 1;
+var sizeMedium = 2;
+var sizeLarge = 4;
+var artworkColor = "#000000";
+var artworkZoomFactor = 1;
 function getMousePos(evt) {
-    var rect = canvas.getBoundingClientRect();
-    if(evt.type == "touchmove") {
-        var clientX = evt.touches[0].clientX;
-        var clientY = evt.touches[0].clientY;
-	} else {
-        var clientX = evt.clientX;
-        var clientY = evt.clientY;
-	}
-    return {
-        x: (clientX - rect.left) / artworkZoomFactor,
+	var rect = canvas.getBoundingClientRect();
+if(evt.type == 'touchmove') {
+	var clientX = evt.touches[0].clientX;
+	var clientY = evt.touches[0].clientY;
+} else {
+var clientX = evt.clientX;
+var clientY = evt.clientY;
+}
+  return {
+		x: (clientX - rect.left) / artworkZoomFactor,
 		y: (clientY - rect.top) / artworkZoomFactor
-    };
+  };
 }
 function drawLineNoAliasing(ctx, sx, sy, tx, ty) {
     var dist = Math.sqrt((tx-sx)*(tx-sx)+(ty-sy)*(ty-sy));
@@ -57,12 +56,13 @@ function drawLineNoAliasing(ctx, sx, sy, tx, ty) {
     }
 }
 function artworkUpdate(evt) {
+	//console.log('artworkUpdate()');
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
 	if(mousePosOld == 0) mousePosOld = mousePos;
-	if((evt.which == 1 || evt.which == 2) || evt.type == "touchmove" && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
+	if(evt.which == 1 || evt.type == 'touchmove') {
 		if(artworkTool.type == 0) {
-			ctx.fillStyle = artworkColors[artworkColorOffset][1];
+			ctx.fillStyle = artworkColor;
 		} else {
     	ctx.fillStyle = "#fff";
     }
@@ -72,26 +72,33 @@ function artworkUpdate(evt) {
 	}
 }
 function artworkDrawOnce(evt) {
-    undoCtx.drawImage(canvas, 0, 0);
+	//console.log('artworkDrawOnce()');
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
-	if((evt.which == 1 || evt.which == 2 || evt.type == 'touchstart') || evt.type == 'touchstart' && (!$('.memo-canvas').hasClass('zoom') || $('.memo-canvas').hasClass('locked'))) {
+	if(evt.which == 1) {
 		if(artworkTool.type == 0) {
-			ctx.fillStyle = artworkColors[artworkColorOffset][1];
+			ctx.fillStyle = artworkColor;
 		} else {
     	ctx.fillStyle = "#fff";
     }
 		ctx.fillRect(Math.round(mousePos.x), Math.round(mousePos.y), artworkTool.size, artworkTool.size);
   }
 	} else {
-  	ctx.fillStyle = ctx.fillStyle = artworkColors[artworkColorOffset][1];
+  	ctx.fillStyle = artworkColor;
     ctx.fillFlood(mousePos.x, mousePos.y, 0);
   }
 }
 function artworkClear() {
-undoCtx.drawImage(canvas, 0, 0);
+doTheThing();
+	//console.log('artworkClear()');
+
+artworkUndoDown();
+	//console.log('artworkUndoDown()');
 ctx.fillStyle = "#fff";
 ctx.fillRect(0, 0, 320, 120);
+}
+function artworkUndoDown() {
+undoCtx.drawImage(canvas, 0, 0);
 }
 function artworkUndo() {
 redoCtx.drawImage(canvas, 0, 0);
@@ -99,6 +106,7 @@ ctx.drawImage(undoCanvas, 0, 0);
 undoCtx.drawImage(redoCanvas, 0, 0);
 }
 function artworkToolUpdate() {
+	//console.log('artworkToolUpdate()');
 	if($(this).hasClass('artwork-eraser')) {
 		var toolType = 1;
 	} else if($(this).hasClass('artwork-fill')) {
@@ -108,15 +116,15 @@ function artworkToolUpdate() {
 	}
 	if($(this).hasClass('selected')) {
 		if($(this).hasClass('small')) {
-			artworkTool = {type: toolType, size: 2};
+			artworkTool = {type: toolType, size: sizeMedium};
 			$(this).removeClass('small');
 			$(this).addClass('medium');
 		} else if ($(this).hasClass('medium')) {
-artworkTool = {type: toolType, size: 4};
+artworkTool = {type: toolType, size: sizeLarge};
 $(this).removeClass('medium');
 $(this).addClass('large');
 } else if ($(this).hasClass('large')) {
-artworkTool = {type: toolType, size: 1};
+artworkTool = {type: toolType, size: sizeSmall};
 $(this).removeClass('large');
 $(this).addClass('small');
 } else {
@@ -126,82 +134,75 @@ artworkTool = {type: toolType};
 $('.memo-buttons button').removeClass('selected');
 $(this).addClass('selected');
 if($(this).hasClass('small')) {
-artworkTool = {type: toolType, size: 1};
+artworkTool = {type: toolType, size: sizeSmall};
 } else if ($(this).hasClass('medium')) {
-artworkTool = {type: toolType, size: 2};
+artworkTool = {type: toolType, size: sizeMedium};
 } else if ($(this).hasClass('large')) {
-artworkTool = {type: toolType, size: 4};
+artworkTool = {type: toolType, size: sizeLarge};
 } else {
 artworkTool = {type: toolType};
 }
 }
 }
-
-function artworkColorUpdate(evt) {
-$(this).removeClass(artworkColors[artworkColorOffset][0]);
-if(artworkColorOffset > 0 && artworkColorOffset < 15) {
-	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
-		artworkColorOffset = artworkColorOffset + 1;
-	} else {
-		artworkColorOffset = artworkColorOffset - 1;
-	}
-} else if(artworkColorOffset == 0) {
-	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
-		artworkColorOffset = artworkColorOffset + 1;
-	} else {
-		artworkColorOffset = 15;
-	}
-} else {
-	if(evt.which == 1 || evt.which == 2 || evt.type == 'touchmove') {
-  	artworkColorOffset = 0;
-  } else {
-  	artworkColorOffset = artworkColorOffset - 1;
-  }
-}
-$(this).addClass(artworkColors[artworkColorOffset][0]);
-}
 function artworkZoomUpdate(evt) {
-    if(artworkZoomFactor == 1) {
-  	    artworkZoomFactor = 2;
+	//console.log('artworkZoomUpdate()');
+	if(artworkZoomFactor == 1) {
+  	artworkZoomFactor = 2;
 		$('#artwork-canvas').css('width', '640px');
-		$('.memo-canvas').addClass('zoom');
-		// if(innerWidth <= 800) {
-			$('.artwork-lock').removeClass('none');
-		// } uncomment these lines if you want to make the button mobile only
-    } else if(artworkZoomFactor == 2) {
-  	    artworkZoomFactor = 4;
+  } else if(artworkZoomFactor == 2) {
+  	artworkZoomFactor = 4;
 		$('#artwork-canvas').css('width', '1280px');
 		$(this).addClass('out');
-    } else {
-  	    artworkZoomFactor = 1;
+  } else {
+  	artworkZoomFactor = 1;
 		$('#artwork-canvas').css('width', '320px');
 		$(this).removeClass('out');
-		$('.memo-canvas').removeClass('zoom');
-		$('.artwork-lock').addClass('none');
-    }
-    evt.preventDefault();
+  }
 }
-$('body').css('overflow', 'hidden');
 artworkClear();
-$(document).on('mousemove touchmove', artworkUpdate);
-$(document).on('touchstart', function() {
-    mousePosOld = 0;
+$(document).on('mousemove', artworkUpdate);
+$(document).on('touchstart', function(){
+	mousePosOld = 0;
 });
-$('#artwork-canvas').on('mousedown touchstart', artworkDrawOnce);
-$('.artwork-clear').on('click',artworkClear);
-$('.artwork-undo').on('click',artworkUndo);
-$('.artwork-pencil, .artwork-eraser, .artwork-fill').on('click',artworkToolUpdate);
-$('.artwork-color').on('click',artworkColorUpdate);
-$('.artwork-zoom').on('click',artworkZoomUpdate);
-$('.artwork-lock').on('click',function(){
-    if(!$(this).hasClass('selected')) {
-        $('.memo-canvas').addClass('locked');
-        $(this).addClass('selected');
-    } else {
-        $('.memo-canvas').removeClass('locked');
-        $(this).removeClass('selected');
-    }
+$(document).on('touchmove', artworkUpdate);
+$('#artwork-canvas').on('mousedown', artworkDrawOnce);
+$('#artwork-canvas').on('mousedown', artworkUndoDown);
+$('button').contextmenu(function() { $(this).click(); return false });
+$('.artwork-clear').click(artworkClear);
+$('.artwork-undo').click(artworkUndo);
+$('.artwork-pencil, .artwork-eraser, .artwork-fill').click(artworkToolUpdate);
+$(".artwork-color").spectrum({
+    color: "#000000",
+		preferredFormat: "hex",
+    showInput: true,
+    showPalette: true,
+    change: function(color) {
+        artworkColor = color;
+    },
+    palette: [["#000000", "#808080"], ["#ff0000",
+        "#804000"], ["#ff8000", "#c08000"], ["#ffff00",
+        "#fff8dc"], ["#00c700", "#008000"], ["#00ffff",
+        "#00a0a0"], ["#0000ff", "#0080ff"], ["#ff00ff",
+        "#800080"]]
 });
+$('.artwork-zoom').click(artworkZoomUpdate);
+function doTheThing(){
+var canvas = document.getElementById("artwork-canvas");
+var ctx = canvas.getContext('2d');
+  //console.log('doing the thing');
+	var pixelArray = [];
+	for(var i = 0; i < canvas.clientHeight; i++) {
+		pixelArray[i] = [];
+		for(var j = 0; j < canvas.clientWidth; j++) {
+			var data = ctx.getImageData(j, i, 1, 1).data;
+			if(data[0] + data[1] + data[2] < 382) {
+				pixelArray[i].push(0);
+      } else {
+				pixelArray[i].push(1);
+      }
+		}
+	}
+}
 $('.memo-finish-btn').on('click',function(){
 	var dataURL = canvas.toDataURL();
         if(typeof dataURL !== undefined) {
@@ -211,8 +212,7 @@ $('.memo-finish-btn').on('click',function(){
 	$(".textarea-memo").append("<img id=\"drawing\" src=\"" + dataURL + "\" style=\"background:white;\"></img>");
 	$("#memo-drawboard-page button").off('click');
 	$('body').css('overflow', '');
-
-})
+});
 }
 var fixe = false;
 function openDrawboardModal() {
@@ -416,38 +416,16 @@ var Olv = Olv || {};
         c.promise()
     }
     ,
-    b.ErrorViewer = {
-        open: function(a) {
-            a = a || {};
-			
-			if(!(Number.isInteger(a.error_code))) {
-			return b.showMessage(a.error_code, a.message);
-			}
-            
-			var c = +a.error_code
-              , d = a.message || a.msgid && b.loc(a.msgid);
-            c || (c = 0,
-            d = d || b.loc("olv.portal.error.500.for_offdevice"));
-            var e = String(c).match(/^([0-9]{3})([0-9]{4})$/);
-            e && (c = e[1] + "-" + e[2]);
-			if(c == 0) {
-			var f = 'Error';
-			} else {
-            var f = b.loc("olv.portal.error.code", c);
-			}
-            return b.showMessage(f, d || "")
-        }
-    },
 	b.Closed = {
 		blank: /^[\s\u00A0\u3000]*$/,
-		discordapp_spinner: '<span class=spinner><span class="spinner-inner spinner-chasing-dots"><span class=spinner-item></span><span class=spinner-item></span></span></span>',
+		open_spinner: '<span class=open-spin></span>',
 		lights: function() {
 			$('#darkness').prop('disabled',function(a,b){return !b})
 			Olv.Form.get('/lights')
 		},
 		prlinkConf: function() {
-			$('#container').prepend('<div class="dialog linkconfirmsuck none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(this).remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(this).remove()">Yes</button></div></div></div></div></div>');
-			var g = new Olv.ModalWindow($('.linkconfirmsuck'));g.open();
+			$('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
+			var g = new Olv.ModalWindow($('.linkc'));g.open();
 		},
 		changesel: function(a) {
 			$("li#global-menu-" + a).addClass("selected");
@@ -509,10 +487,13 @@ var Olv = Olv || {};
 			break;
 			case 500:
 				errmsg = "An error has been encountered in the server.\n";
-				console.log(a.getResponseHeader('Content-Type').indexOf('html') < 0);
-				console.log(a);
 				if(a.getResponseHeader('Content-Type').indexOf('html') < 0) {
-					errmsg += "Error information is available; please send this to an administrator:\n" + a.responseText.substr(0, 400) + "...";
+					errmsg += "Error information is available; please send this to an administrator:\n";
+					if(innerWidth <= 480) {
+						errmsg += a.responseText.substr(0, 400);
+					} else {
+						errmsg += a.responseText.substr(0, 1000);
+					}
 				}
 				return {
 				error_code: "Internal server error",
@@ -525,10 +506,16 @@ var Olv = Olv || {};
 				message: "Unfortunately, it's down now. Come back later.\n"
 				}
 			break;
+			case 420:
+				return {
+				error_code: "Service is probably down",
+				message: "You've just recieved an error code that's usually recieved after a shutdown or some kind of service downage. So, don't refresh!\n"
+				}
+			break;
 			case 502:
 				return {
 				error_code: "Bad gateway",
-				message: "There's an issue with the application server right now.\n"
+				message: "There's an issue with the application server right now. Wait for it to come back later, and inform an admin about this (because they probably don't do and therefore cannot fix it).\n"
 				}
 			break;
 			case 521:
@@ -708,7 +695,7 @@ var Olv = Olv || {};
     b.Content.autopagerize = function(c, d) {
         function e() {
             if (!(k._disabledCount || h.scrollTop() + h.height() + 200 < f.offset().top + f.outerHeight())) {
-                var d = a("<div/>").attr("class", "post-list-loading").append(a(b.Closed.discordapp_spinner)).appendTo(f);
+                var d = a("<div/>").attr("class", "post-list-loading").append(a(b.Closed.open_spinner)).appendTo(f);
                 i = a.ajax({
                     url: g,
                     headers: {
@@ -1238,8 +1225,32 @@ var Olv = Olv || {};
         return b.SimpleDialog.show(f)
     }
     ,
+    b.ErrorViewer = {
+        open: function(a) {
+            a = a || {};
+			if(!(Number.isInteger(a.error_code))) {
+			return b.showMessage(a.error_code, a.message);
+			}
+            
+			var c = +a.error_code
+              , d = a.message || a.msgid && b.loc(a.msgid);
+            c || (c = 0,
+            d = d || b.loc("olv.portal.error.500.for_offdevice"));
+            // NOTE: This (OFFICIAL) regex is for ***-**** type errors
+			var e = String(c).match(/^([0-9]{3})([0-9]{4})$/);
+            e && (c = e[1] + "-" + e[2]);
+			if(c == 0) {
+			var f = 'Error';
+			} else {
+            var f = b.loc("olv.portal.error.code", c);
+			}
+            return b.showMessage(f, d || "")
+        }
+    },
     b.Entry = {},
 	b.Entry.checkEvent = function(c) {
+		// Non-WebKit browsers will probably fail this anyway
+		if(!webkit) return true;
 		var d = c.originalEvent;
 		//console.log(d);
 		// d.composed and d.isTrusted are indicators don't work on iOS 9 Safari
@@ -1358,7 +1369,7 @@ var Olv = Olv || {};
             var d = a(this);
             if (!f && !b.Form.isDisabled(d)) {
                 var g = d.text();
-                d.text("").append(a(b.Closed.discordapp_spinner)),
+                d.text("").append(a(b.Closed.open_spinner)),
                 f = b.Form.get(d.attr("data-fragment-url"), null, d).done(function(b) {
                     var c = a(a.parseHTML(b));
                     if (d.hasClass("newest-replies-button") || d.hasClass("oldest-replies-button"))
@@ -1391,7 +1402,7 @@ var Olv = Olv || {};
         })
     }
     ,
-    b.Entry.setupHiddenContents = function(b) {
+    b.Entry.setupHiddenContents = function(h) {
         function c(b) {
             if (!b.isDefaultPrevented()) {
                 b.preventDefault();
@@ -1407,13 +1418,13 @@ var Olv = Olv || {};
             }
         }
         a(document).on("click", ".hidden-content-button", c),
-        b.done(function() {
+        h.done(function() {
             a(document).off("click", ".hidden-content-button", c)
         })
-		$('.link-confirm').on('click', function(b) {
-		ass = a(this).attr('href');
-		b.preventDefault();
-		b.Closed.prlinkConf()
+		a('.link-confirm').on('click', function(g) {
+			ass = a(this).attr('href');
+			g.preventDefault();
+			b.Closed.prlinkConf();
 		});
     }
     ,
@@ -2502,7 +2513,7 @@ mode_post = 0;
 	$('button.msg-update').on('click',function(e){
 			msglist = $('.list.messages')
 			NProgress.start();
-			msglist.prepend(b.Closed.discordapp_spinner);
+			msglist.prepend(b.Closed.open_spinner);
 			$.ajax({
 				url: window.location.href,
 				headers: {
@@ -3273,13 +3284,11 @@ mode_post = 0;
 Olv.Locale.Data={
 "olv.portal.age_gate.select_label":{value:"Please enter your date of birth."},"olv.portal.album.delete_confirm":{value:"Are you sure you want to delete this?"},"olv.portal.button.remove":{value:"Yes"},"olv.portal.cancel":{value:"Cancel"},"olv.portal.close":{value:"Close"},"olv.portal.dialog.apply_settings_done":{value:"Settings saved."},"olv.portal.dialog.report_spoiler_done":{value:"Spoiler reported. Thank you for your help!"},"olv.portal.dialog.report_violation_done":{value:"Violation reported. Thank you for your help!"},"olv.portal.edit.action.close_topic_post":{value:"Close for Comments"},"olv.portal.edit.action.close_topic_post.confirm":{value:"It will no longer be possible to post comments on this discussion. Is that OK? (This action cannot be reversed.)"},"olv.portal.edit.edit_post":{value:"Edit Post"},"olv.portal.edit.edit_reply":{value:"Edit Comment"},"olv.portal.error.500.for_offdevice":{value:"An error occurred.\nPlease try again later."},"olv.portal.error.album_limit_exceeded":{value:"Unable to save because the maximum number of screenshots that can be saved has been reached. Please delete some saved screenshots, and then try again."},"olv.portal.error.code":{args:[1],value:"Error Code: %s"},"olv.portal.error.code %1":{args:[1],value:"Error Code: %s"},"olv.portal.error.code [_1]":{args:[1],value:"Error Code: %s"},"olv.portal.error.daily_post_limit_exceeded":{value:"You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow."},"olv.portal.error.failed_to_connect.for_offdevice":{value:"An error occurred."},"olv.portal.error.network_unavailable.for_offdevice":{value:"Cannot connect to the Internet. Please check your network connection and try again."},"olv.portal.error.post_time_restriction":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction %1":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.error.post_time_restriction [_1]":{args:[],value:"Multiple posts cannot be made in such a short period of time. Please try posting again later."},"olv.portal.followlist.confirm_unfollow_with_name":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name %1":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.followlist.confirm_unfollow_with_name [_1]":{args:[1],value:"Remove %s from your follow list?"},"olv.portal.miitoo.frustrated":{value:"Yeah..."},"olv.portal.miitoo.frustrated.delete":{value:"Unyeah"},"olv.portal.miitoo.happy":{value:"Yeah!"},"olv.portal.miitoo.happy.delete":{value:"Unyeah"},"olv.portal.miitoo.like":{value:"Yeah♥"},"olv.portal.miitoo.like.delete":{value:"Unyeah"},"olv.portal.miitoo.normal":{value:"Yeah!"},"olv.portal.miitoo.normal.delete":{value:"Unyeah"},"olv.portal.miitoo.puzzled":{value:"Yeah..."},"olv.portal.miitoo.puzzled.delete":{value:"Unyeah"},"olv.portal.miitoo.surprised":{value:"Yeah!?"},"olv.portal.miitoo.surprised.delete":{value:"Unyeah"},"olv.portal.ok":{value:"OK"},"olv.portal.post.delete_confirm":{value:"Delete this post?"},"olv.portal.profile_post":{value:"Favorite Post"},"olv.portal.profile_post.confirm_remove":{value:"Remove this post from your profile?\nThe original post will not be deleted."},"olv.portal.profile_post.confirm_update":{value:"Set this post as your favorite?\nPlease note, it will replace any existing favorite post."},"olv.portal.profile_post.confirm_update.yes":{value:"OK"},"olv.portal.profile_post.done":{value:"Your favorite post has been set.\nWould you like to view your profile?"},"olv.portal.read_more_content":{value:"Read More"},"olv.portal.reply.delete_confirm":{value:"Delete this comment?"},"olv.portal.report.report_comment_id":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id %1":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_comment_id [_1]":{args:[1],value:"Comment ID: %s"},"olv.portal.report.report_post_id":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id %1":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_post_id [_1]":{args:[1],value:"Post ID: %s"},"olv.portal.report.report_spoiler":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment %1":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_spoiler_comment [_1]":{args:[],value:"Report Spoilers to Openverse Administrators"},"olv.portal.report.report_violation":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_comment [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message %1":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.report.report_violation_message [_1]":{args:[],value:"Report Violation to Openverse Administrators"},"olv.portal.setup":{value:"Set Up"},"olv.portal.show_more_content":{value:"View Entire Post"},"olv.portal.stop":{value:"Cancel"},"olv.portal.unfollow":{value:"Unfollow"},"olv.portal.user.search.go":{value:"View Profile"},"olv.portal.yes":{value:"Yes"}};
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false});
-$(document).on('pjax:error',function(evt, xhr, status) {
-	if(status != 'abort') {
-		Olv.ErrorViewer.open(Olv.Net.getErrorFromXHR(xhr));
-		return false;
-	}
-	return true;
-})
+$(document).on('pjax:error', function(event, xhr, textStatus, errorThrown, options) {
+Olv.Net.errorFeedbackHandler(event, textStatus, xhr, options);
+history.back();
+return false;
+});
 $(document).on('pjax:send',function(){NProgress.start()});
 $(document).on('pjax:complete',function(){
 NProgress.done();

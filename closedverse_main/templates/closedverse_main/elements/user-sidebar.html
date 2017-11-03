@@ -14,7 +14,9 @@
     <button type="button" data-action="{% url "main:user-unfollow" user.username %}" class="unfollow-button button symbol{% if not user.is_following %} none{% endif %}" data-screen-name="{{ user.nickname }}">Follow</button>
 	{% if selection == 0 %}
 		{% if user.friend_state == 0 %}
-		<button type="button" data-action="{% url "main:user-fr-create" user.username %}" class="friend-button create button symbol">Send friend request</button>
+			{% if profile.can_friend %}
+				<button type="button" data-action="{% url "main:user-fr-create" user.username %}" class="friend-button create button symbol">Send friend request</button>
+			{% endif %}
 		{% elif user.friend_state == 1 %}
 		<button type="button" data-action="{% url "main:user-fr-cancel" user.username %}" data-screen-name="{{ user.nickname }}" class="friend-button unf cancel button symbol">Cancel friend request</button>
 		{% elif user.friend_state == 2 %}

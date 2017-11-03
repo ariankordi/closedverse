@@ -6,7 +6,7 @@ from django.shortcuts import redirect
 from . import views
 from closedverse.settings import MEDIA_URL, MEDIA_ROOT 
 
-username = r'(?P<username>[A-Za-z0-9-._]+)'
+username = r'(?P<username>[A-Za-z0-9-._\ ]+)'
 community = r'(?P<community>[0-9]+)'
 post = r'(?P<post>[0-9]+)'
 comment = r'(?P<comment>[0-9]+)'
@@ -107,6 +107,5 @@ urlpatterns = [
 	# :^)
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
 	url(r'debug$', lambda request: redirect('https://youtu.be/dQw4w9WgXcQ'), name='rickroll'),
-	url(r'splatoon$', views.splatoon, name='splatoon'),
 
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)

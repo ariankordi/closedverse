@@ -25,7 +25,7 @@ class UserAdmin(admin.ModelAdmin):
 
 class ProfileAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'origin_id', )
-	raw_id_fields = ('user', 'favorite', )
+	raw_id_fields = ('user', 'favorite', 'adopted', )
 
 class ComplaintAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'body', )
@@ -57,6 +57,10 @@ class MessageAdmin(admin.ModelAdmin):
 	def get_queryset(self, request):
 		return models.Message.real.get_queryset()
 
+class NotificationAdmin(admin.ModelAdmin):
+        raw_id_fields = ('to', 'source', 'context_post', 'context_comment', 'merged_with')
+        search_fields = ('unique_id', )
+
 #admin.site.unregister(Group)
 
 admin.site.register(models.User, UserAdmin)
@@ -65,6 +69,7 @@ admin.site.register(models.Community, CommunityAdmin)
 admin.site.register(models.Complaint, ComplaintAdmin)
 admin.site.register(models.Message, MessageAdmin)
 admin.site.register(models.Conversation, ConversationAdmin)
+admin.site.register(models.Notification, NotificationAdmin)
 
 
 admin.site.register(models.Post, PostAdmin)
@@ -76,6 +81,6 @@ if settings.DEBUG:
 	admin.site.register(models.Follow)
 	admin.site.register(models.FriendRequest)
 	admin.site.register(models.Friendship, ConversationAdmin)
-	admin.site.register(models.Notification)
+	#admin.site.register(models.Notification)
 	admin.site.register(models.Poll)
 	admin.site.register(models.PollVote)

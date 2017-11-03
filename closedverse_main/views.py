@@ -3,9 +3,11 @@ from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.core.validators import EmailValidator
+from django.core.exceptions import ValidationError
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation
 from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime
 from closedverse import settings
@@ -51,6 +53,11 @@ def community_list(request):
 		'feature': obj.filter(is_feature=True).order_by('-created'),
 		'favorites': favorites,
 		'settings': settings,
+		'ogdata': {
+				'title': 'Community List',
+				'description': "Openverse is a social network: designed by PF2M, programmed by Arian Kordi. With Miiverse DNA, style and familiar assets such as Miiverse's interface and Miis, you're sure to have fun here!",
+				'date': 'None',
+			},
 	})
 def community_all(request):
 	"""All communities, with pagination"""
@@ -133,6 +140,9 @@ def community_favorites(request):
 
 def login_page(request):
 	"""Login page! using our own user objects."""
+	# Redirect the user to / if they're logged in, forcing them to log out
+	if request.user.is_authenticated:
+		return redirect('/')
 	if request.method == 'POST':
 		# If we don't have all of the POST parameters we want..
 		if not (request.POST['username'] and request.POST['password']): 
@@ -144,7 +154,7 @@ def login_page(request):
 		# Wait, first check if the user exists.
 		if not User.objects.filter(username__iexact=request.POST['username']).exists():
 			return HttpResponseNotFound("The user doesn't exist.")
-		user = authenticate(username=request.POST['username'], password=request.POST['password'])
+		user = User.objects.authenticate(username=request.POST['username'], password=request.POST['password'])
 		if not user:
 			return HttpResponse("Invalid password.", status=401)
 		if not user.is_active():
@@ -167,6 +177,9 @@ def login_page(request):
 		})
 def signup_page(request):
 	"""Signup page, lots of checks here"""
+	# Redirect the user to / if they're logged in, forcing them to log out
+	if request.user.is_authenticated:
+		return redirect('/')
 	if request.method == 'POST':
 		if settings.recaptcha_pub:
 			if not recaptcha_verify(request, settings.recaptcha_priv):
@@ -189,8 +202,13 @@ def signup_page(request):
 			return HttpResponseBadRequest("Your nickname is either too long or too short (1-32 characters)")
 		if request.POST['origin_id'] and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
-		if request.POST.get('email') and User.email_in_use(request.POST['email']):
-			return HttpResponseBadRequest("That email address is already in use, that can't happen.")
+		if request.POST.get('email'):
+			if User.email_in_use(request.POST['email']):
+				return HttpResponseBadRequest("That email address is already in use, that can't happen.")
+			try:
+				EmailValidator()(value=request.POST['email'])
+			except ValidationError:
+				return HttpResponseBadRequest("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		check_others = Profile.objects.filter(user__addr=request.META['REMOTE_ADDR'], let_freedom=False).exists()
 		if check_others:
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
@@ -209,7 +227,7 @@ def signup_page(request):
 			nick = request.POST['nickname']
 			mii = None
 			gravatar = True
-		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST['email'], addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
+		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST.get('email'), addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
 		login(request, make)
 		return HttpResponse("/")
 	else:
@@ -243,11 +261,11 @@ def forgot_passwd(request):
 			user.save()
 			return HttpResponse("Success! Now you can log in with your new password!")
 		return render(request, 'closedverse_main/forgot_reset.html', {
-			'title': 'Reset password',
+			'title': 'Reset password for ' + user.username,
 			'classes': ['no-login-btn'],
 		})
 	return render(request, 'closedverse_main/forgot_page.html', {
-		'title': 'Reset password for ' + user.username,
+		'title': 'Reset password',
 		'classes': ['no-login-btn'],
 	})
 
@@ -267,6 +285,8 @@ def user_view(request, username):
 		title = '{0}\'s profile'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		profile.can_friend = profile.can_friend(request.user)
 	if request.method == 'POST':
 		user = request.user
 		profile	= user.profile()
@@ -285,8 +305,13 @@ def user_view(request, username):
 		
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		if User.email_in_use(request.POST.get('email'), request):
-			return json_response("That email address is already in use, that can't happen.")
+		if request.POST.get('email'):
+			if User.email_in_use(request.POST['email'], request):
+				return HttpResponseBadRequest("That email address is already in use, that can't happen.")
+			try:
+				EmailValidator()(value=request.POST['email'])
+			except ValidationError:
+				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
 		if settings.nnid_forbiddens:
@@ -298,12 +323,13 @@ def user_view(request, username):
 			user.avatar = get_gravatar(user.email) or ('s' if getrandbits(1) else '')
 			user.has_mh = False
 		elif request.POST.get('avatar') == '0':
-			user.has_mh = True
 			if not request.POST.get('origin_id'):
+				user.has_mh = False
 				profile.origin_id = None
 				profile.origin_info = None
 				user.avatar =  ('s' if getrandbits(1) else '')
 			else:
+				user.has_mh = True
 				getmii = get_mii(request.POST.get('origin_id'))
 				if not getmii:
 					return json_response('NNID not found')
@@ -324,6 +350,7 @@ def user_view(request, username):
 		profile.yeahs_visibility = (request.POST.get('yeahs_visibility') or 0)
 		profile.pronoun_is = (request.POST.get('pronoun_dot_is') or 0)
 		profile.comments_visibility = (request.POST.get('comments_visibility') or 0)
+		profile.let_friendrequest = (request.POST.get('let_friendrequest') or 0)
 		user.nickname = filterchars(request.POST.get('screen_name'))
 		profile.save()
 		user.save()
@@ -346,6 +373,12 @@ def user_view(request, username):
 		'posts': posts,
 		'yeahed': yeahed,
 		'fr': fr,
+		'ogdata': {
+				'title': title,
+				# Todo: fix all concatenations like these and make them into strings with format() since that's cleaner and better
+				'description': str(user.nickname) + ": " + profile.comment,
+				'date': str(user.created),
+			},
 	})
 
 def user_posts(request, username):
@@ -382,6 +415,12 @@ def user_posts(request, username):
 			'posts': posts,
 			'profile': profile,
 			'next': next_offset,
+			# Copied from the above, if you change the last ogdata occurrence then change this one
+			'ogdata': {
+				'title': title,
+				'description': str(user.nickname) + ": " + profile.comment,
+				'date': str(user.created),
+			},
 		})
 def user_yeahs(request, username):
 	"""User's Yeahs page"""
@@ -637,6 +676,11 @@ def community_view(request, community):
 			'community': communities,
 			'posts': posts,
 			'next': next_offset,
+			'ogdata': {
+				'title': communities.name,
+				'description': communities.name + ": " + communities.description,
+				'date': str(communities.created),
+			},
 		})
 
 @require_http_methods(['POST'])
@@ -699,6 +743,7 @@ def post_view(request, post):
 	if request.user.is_authenticated:
 		post.can_rm = post.can_rm(request)
 		post.is_favorite = post.is_favorite(request.user)
+		post.can_comment = post.can_comment(request)
 	if post.is_mine:
 		title = 'Your post'
 	else:
@@ -715,6 +760,11 @@ def post_view(request, post):
 		'yeahs': post.get_yeahs(request),
 		'comments': comments,
 		'all_comment_count': all_comment_count,
+		'ogdata': {
+				'title': title,
+				'description': str(post.creator.nickname) + ": " + post.trun(),
+				'date': str(post.created),
+			},
 	})
 @require_http_methods(['POST'])
 @login_required
@@ -770,7 +820,9 @@ def comment_rm(request, comment):
 @login_required
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
-	if request.method == 'POST' and request.is_ajax():
+	if not request.is_ajax():
+		raise Http404()
+	if request.method == 'POST':
 		# Wake
 		request.user.wake(request.META['REMOTE_ADDR'])
 		# Method of Post
@@ -826,6 +878,11 @@ def comment_view(request, comment):
 		#CSS might not be that friendly with this / 'classes': ['post-permlink'],
 		'comment': comment,
 		'yeahs': comment.get_yeahs(request),
+			'ogdata': {
+				'title': title,
+				'description': str(comment.creator.nickname) + ": " + comment.trun(),
+				'date': str(comment.created),
+			},
 	})
 @require_http_methods(['POST'])
 @login_required
@@ -894,6 +951,8 @@ def user_unfollow(request, username):
 @login_required
 def user_friendrequest_create(request, username):
 	user = get_object_or_404(User, username=username)
+	if not user.profile().can_friend(request.user):
+		return HttpResponse()
 	if user.friend_state(request.user) == 0:
 		if request.POST.get('body'):
 			if len(request.POST['body']) > 2200:
@@ -1197,8 +1256,8 @@ def users_list(request, type):
 		users = User.objects.filter().order_by('-created').exclude(staff=True, level__gte=request.user.level)[offset:offset + limit]
 	# I don't know if this will work or not, it might break cURL and such but whom cares anyway
 	#if type == 'html':
-	if users.count() > 19:
-		next_offset = offset + 20
+	if users.count() > 49:
+		next_offset = offset + 50
 	else:
 		next_offset = None
 	return render(request, 'closedverse_main/man/admin-user-list.html', {

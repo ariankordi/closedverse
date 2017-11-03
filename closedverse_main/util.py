@@ -42,7 +42,8 @@ def HumanTime(date, full=False):
 
 
 def get_mii(id):
-	# Using Miiverse off-device server
+	# Using Miiverse off-device server, doesn't work after Miiverse shutdown
+	"""
 	try:
 		page = urllib.request.urlopen('https://miiverse.nintendo.net/users/{0}/favorites'.format(id)).read()
 	except urllib.error.HTTPError:
@@ -55,14 +56,13 @@ def get_mii(id):
 		return False
 	if "img/anonymous-mii.png" in miihash:
 		miihash = ''
-	
-	# Using AccountWS, not being used now
 	"""
+	# Using AccountWS
 	dmca = {
 		'X-Nintendo-Client-ID': 'a2efa818a34fa16b8afbc8a74eba3eda',
 		'X-Nintendo-Client-Secret': 'c91cdb5658bd4954ade78533a339cf9a',
 	}
-	nnid = requests.get('https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + sys.argv[1], headers=dmca)
+	nnid = requests.get('https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + id, headers=dmca)
 	nnid_dec = etree.fromstring(nnid.content)
 	del(nnid)
 	pid = nnid_dec[0][1].text
@@ -80,7 +80,6 @@ def get_mii(id):
 	screenname = mii_dec[0][3].text
 	nnid = mii_dec[0][6].text
 	del(mii_dec)
-	"""
 	
 	return [miihash, screenname, id]
 
@@ -108,7 +107,7 @@ def image_upload(img, stream=False):
 	if stream:
 		if not 'image' in img.content_type:
 			return 1
-		if 'audio' or 'video' in img.content_type:
+		if 'audio' in img.content_type or 'video' in img.content_type:
 			return 1
 	# upload svg?
 	#if 'svg' in mime:
@@ -157,15 +156,21 @@ def get_gravatar(email):
 		return False
 	return page.geturl()
 
-def filterchars(str):
-	if not str or str.isspace():
+def filterchars(str=""):
+	# If string is blank, None, any other object, etc, make it whitespace so it's detected by isspace.
+	if not str:
+		str = " "
+	# Forbid chars in this list, currently: Right-left override, largest Unicode character.
+	forbid = ["\u202e", "\ufdfd"]
+	for char in forbid:
+		if char in str:
+			str = str.replace(char, " ")
+	if str.isspace():
 		try:
 			girls = json.load(open(settings.BASE_DIR + '/girls.json'))
 		except:
 			girls = ['None']
 		return choice(girls)
-	if "\u202e" in str:
-		return str.split("\u202e")[1]
 	return str
 	
 def getipintel(addr):

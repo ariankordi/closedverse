@@ -41,10 +41,14 @@ class UserManager(BaseUserManager):
 		addr = addr,
 		email = email,
 		)
-		if util.getipintel(addr) > 0.994:
-			spamuser = True
-		else:
-			spamuser = False
+		if settings.PROD:
+			if util.getipintel(addr) > 0.994:
+				spamuser = True
+				if settings.disallow_proxy:
+					# This was for me, a server error will email admins of course.
+					raise ValueError
+			else:
+				spamuser = False
 		profile = Profile.objects.model()
 		if nn:
 			user.avatar = nn[0]
@@ -90,6 +94,8 @@ class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	username = models.CharField(max_length=32, unique=True)
+	# Todo: Don't allow nickname to be null (once this is fixed, un-str-ify line 357 of views; the one with ogdata description)
+	# Also don't let lots of other strings to be null
 	nickname = models.CharField(max_length=64, null=True)
 	password = models.CharField(max_length=128)
 	email = models.EmailField(null=True, blank=True, default='')
@@ -188,9 +194,9 @@ class User(models.Model):
 	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
 		if self.hide_online:
 			return None
-		if (timezone.now() - timedelta(seconds=48)) > self.last_login:
+		if (timezone.now() - timedelta(seconds=50)) > self.last_login:
 			return False
-		elif (timezone.now() - timedelta(seconds=32)) > self.last_login:
+		elif (timezone.now() - timedelta(seconds=48)) > self.last_login:
 			return 2
 		else:
 			return True
@@ -234,6 +240,7 @@ class User(models.Model):
 	def follow(self, source):
 		if self.is_following(source) or source == self:
 			return False
+		# Todo: put a follow limit here
 		return self.follow_target.create(source=source, target=self)
 	def unfollow(self, source):
 		if not self.is_following(source) or source == self:
@@ -678,6 +685,11 @@ class Post(models.Model):
 		return self.comment_set.filter(original_post=self).count()
 	def get_yeahs(self, request):
 		return Yeah.objects.filter(type=0, post=self).order_by('-created')[0:30]
+	def can_comment(self, request):
+		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
+		if self.number_comments() > 500:
+			return False
+		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if limit:
 			comments = self.comment_set.filter(original_post=self).order_by('created')[offset:offset + limit]
@@ -690,6 +702,8 @@ class Post(models.Model):
 				post.setup(request)
 		return comments
 	def create_comment(self, request):
+		if not self.can_comment(request):
+			return False
 		if not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
@@ -830,8 +844,8 @@ class Comment(models.Model):
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
-		if self.original_post.is_mine(request.user):
-			return True
+		#if self.original_post.is_mine(request.user):
+		#	return True
 		return False
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
@@ -915,6 +929,8 @@ class Profile(models.Model):
 	(0, "I don't know"), (1, "He/him"), (2, "She/her"), (3, "He/she"), (4, "It")
 	))
 
+	let_friendrequest = models.SmallIntegerField(default=0, choices=visibility)
+
 	yeahs_visibility = models.SmallIntegerField(default=0, choices=visibility)
 	comments_visibility = models.SmallIntegerField(default=2, choices=visibility)
 	#relationship_visibility = models.SmallIntegerField(default=0, choices=visibility)
@@ -957,6 +973,14 @@ class Profile(models.Model):
 			return False
 		elif self.comments_visibility == 1:
 			if not user.is_authenticated or not Friendship.find_friendship(self.user, user):
+				return False
+			return True
+		return True
+	def can_friend(self, user=None):
+		if self.let_friendrequest == 2:
+			return False
+		elif self.let_friendrequest == 1:
+			if not user.is_following(self.user):
 				return False
 			return True
 		return True
@@ -1045,7 +1069,7 @@ class Notification(models.Model):
 		# Or if user is to
 		# Or if yeah notifications are off and this is a yeah notification
 		user_is_self_unk = (not type == 3 and user == to)
-		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), to=to, type=type).exclude(type=4)
+		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), type=type).exclude(type=4)
 		user_no_yeahnotif = (not to.let_yeahnotifs() and (type == 0 or type == 1))
 		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False

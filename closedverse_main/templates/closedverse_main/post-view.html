@@ -120,6 +120,10 @@
   <a href="{% url "main:signup" %}" class="arrow-button"><span>Create an account</span></a>
   <a href="{% url "main:help-faq" %}" class="arrow-button"><span>FAQ/Frequently Asked Questions</span></a>
 </div>
+{% elif not post.can_comment %}
+<div class="cannot-reply"><div>
+  <p>You cannot comment on this post.</p>
+</div></div>
 {% else %}
 {% comment_form post request.user %}
 {% endif %}
