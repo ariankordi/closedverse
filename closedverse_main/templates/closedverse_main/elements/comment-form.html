@@ -1,6 +1,13 @@
 {% load closedverse_community %}<form id="reply-form" class="for-identified-user" method="post" action="{% url "main:post-comments" post.id %}">
   {% csrf_token %}
 
+  	{% if not user.limit_remaining is False %}
+		<div class="post-count-container">
+			<span>Remaining posts for today</span>
+			<span class="remaining-today-post-count">{{ user.limit_remaining }}</span>
+		</div>
+	{% endif %}
+  
   {% feeling_selector %}
 
   	<div class="textarea-with-menu active-text">

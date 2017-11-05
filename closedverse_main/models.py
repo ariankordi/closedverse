@@ -7,7 +7,7 @@ from django.forms.models import model_to_dict
 from django.utils.dateformat import format
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from datetime import timedelta
+from datetime import timedelta, datetime, date, time
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
 from . import util
@@ -78,12 +78,14 @@ class UserManager(BaseUserManager):
 		user.save(using=self._db)
 		return user
 	def authenticate(self, username, password):
+		if not username or username.isspace():
+			return None
 		try:
-			user = self.get(username__iexact=username)
+			user = self.get(Q(username__iexact=username) | Q(email=username))
 		except User.DoesNotExist:
 			return None
 		if not user.check_password(password):
-			return None
+			return False
 		return user
 
 class PostManager(models.Manager):
@@ -164,18 +166,33 @@ class User(models.Model):
 			return True
 	def let_yeahnotifs(self):
 		return self.profile('let_yeahnotifs')
+	def limit_remaining(self):
+		limit = self.profile('limit_post')
+		# If False is returned, no post limit is assumed.
+		if limit == 0:
+			return False
+		today_min = timezone.datetime.combine(timezone.datetime.today(), time.min)
+		today_max = timezone.datetime.combine(timezone.datetime.today(), time.max)
+		# recent_posts =
+		# Posts made by the user today + posts made by the IP today +
+		# same thing except with comments
+		recent_posts = Post.real.filter(Q(creator=self.id, created__range=(today_min, today_max)) | Q(creator__addr=self.addr, created__range=(today_min, today_max))).count() + Comment.real.filter(Q(creator=self.id, created__range=(today_min, today_max)) | Q(creator__addr=self.addr, created__range=(today_min, today_max))).count()
+		
+		# Posts remaining
+		return limit - recent_posts
+		
 	def get_class(self):
 			first = {
 			1: 'urapp',
 			2: 'moderator',
-			3: 'administrator',
+			#3: 'administrator',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
 			second = {
 			1: "cave story official #1 fan",
 			2: "Moderator",
-			3: "Admin",
+			#3: "Admin",
 			5: "O-PHP-enverse Man",
 			10: "Friendship ended with PHP / Now PYTHON is my best friend",
 			}.get(self.level, '')
@@ -551,6 +568,10 @@ class Community(models.Model):
 	def create_post(self, request):
 		if not self.post_perm(request):
 			return 4
+		limit = request.user.limit_remaining()
+		if not limit is False and not limit:
+			return 8
+		del(limit)
 		if Post.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if request.POST.get('url'):
@@ -704,6 +725,10 @@ class Post(models.Model):
 	def create_comment(self, request):
 		if not self.can_comment(request):
 			return False
+		limit = request.user.limit_remaining()
+		if not limit is False and not limit:
+			return 8
+		del(limit)
 		if not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
@@ -938,9 +963,14 @@ class Profile(models.Model):
 	#gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default='')
 	favorite = models.ForeignKey(Post, blank=True, null=True)
+
 	let_yeahnotifs = models.BooleanField(default=True)
 	let_freedom = models.BooleanField(default=True)
+	# Todo: When you see this, implement it; make it a bool that determines whether the user should be able to edit their avatar; if this is true and 
+	#let_avatar = models.BooleanField(default=False)
 	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children')
+	# Post limit, 0 for none
+	limit_post = models.SmallIntegerField(default=0)
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username

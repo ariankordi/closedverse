@@ -2,6 +2,13 @@
 	{% csrf_token %}
 	<input type="hidden" name="community" value="{{ community.unique_id }}">
 
+	{% if not user.limit_remaining is False %}
+		<div class="post-count-container">
+			<span>Remaining posts for today</span>
+			<span class="remaining-today-post-count">{{ user.limit_remaining }}</span>
+		</div>
+	{% endif %}
+	
     {% feeling_selector %}
 	<div class="textarea-with-menu active-text">
 		<menu class="textarea-menu">

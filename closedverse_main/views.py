@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation
 from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime
 from closedverse import settings
@@ -149,13 +150,12 @@ def login_page(request):
 		# then return that.
 			return HttpResponseBadRequest("You didn't fill in all of the fields.")
 		# Now let's authenticate.
-		# Remove spaces from the username, because some people do that.
-		request.POST['username'].replace(' ', '')
-		# Wait, first check if the user exists.
-		if not User.objects.filter(username__iexact=request.POST['username']).exists():
+		# Wait, first check if the user exists. Remove spaces from the username, because some people do that.
+		user = User.objects.authenticate(username=request.POST['username'].replace(' ', ''), password=request.POST['password'])
+		# None = doesn't exist, False = invalid password.
+		if user is None:
 			return HttpResponseNotFound("The user doesn't exist.")
-		user = User.objects.authenticate(username=request.POST['username'], password=request.POST['password'])
-		if not user:
+		elif user is False:
 			return HttpResponse("Invalid password.", status=401)
 		if not user.is_active():
 			return HttpResponseForbidden("This user was disabled.")
@@ -376,7 +376,7 @@ def user_view(request, username):
 		'ogdata': {
 				'title': title,
 				# Todo: fix all concatenations like these and make them into strings with format() since that's cleaner and better
-				'description': str(user.nickname) + ": " + profile.comment,
+				'description': profile.comment,
 				'date': str(user.created),
 			},
 	})
@@ -418,7 +418,7 @@ def user_posts(request, username):
 			# Copied from the above, if you change the last ogdata occurrence then change this one
 			'ogdata': {
 				'title': title,
-				'description': str(user.nickname) + ": " + profile.comment,
+				'description': profile.comment,
 				'date': str(user.created),
 			},
 		})
@@ -678,7 +678,7 @@ def community_view(request, community):
 			'next': next_offset,
 			'ogdata': {
 				'title': communities.name,
-				'description': communities.name + ": " + communities.description,
+				'description': communities.description,
 				'date': str(communities.created),
 			},
 		})
@@ -714,6 +714,10 @@ def post_create(request, community):
 		if not new_post:
 			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
+			# If post limit 
+			if new_post == 8:
+				# then do meme
+				return json_response("You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow.", 1215919)
 			return json_response({
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
@@ -762,7 +766,7 @@ def post_view(request, post):
 		'all_comment_count': all_comment_count,
 		'ogdata': {
 				'title': title,
-				'description': str(post.creator.nickname) + ": " + post.trun(),
+				'description': post.trun(),
 				'date': str(post.created),
 			},
 	})
@@ -830,6 +834,10 @@ def post_comments(request, post):
 		if not new_post:
 			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
+			# If post limit 
+			if new_post == 8:
+				# then do meme
+				return json_response("You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow.", 1215919)
 			return json_response({
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
@@ -880,7 +888,7 @@ def comment_view(request, comment):
 		'yeahs': comment.get_yeahs(request),
 			'ogdata': {
 				'title': title,
-				'description': str(comment.creator.nickname) + ": " + comment.trun(),
+				'description': comment.trun(),
 				'date': str(comment.created),
 			},
 	})
@@ -1212,7 +1220,6 @@ def messages_read(request, username):
 @login_required
 def message_rm(request, message):
 	message = get_object_or_404(Message, unique_id=message)
-	print('this is message ' + str(message.id) + '; ' + str(message.unique_id) )
 	message.rm(request)
 	return HttpResponse()
 
@@ -1290,6 +1297,24 @@ def user_manager(request, user):
 		'html': loader.get_template('closedverse_main/elements/user-sidebar-info.html').render({'user': user}, request)
 	})
 
+@login_required
+def admin_misc(request):
+	if not request.user.is_staff():
+		raise Http404()
+	if request.method == 'POST' and request.POST.get('action'):
+		# if this were PHP/JS/anything else, this would be a switch()
+		if request.POST['action'] == 'purge1' and request.POST.get('username'):
+			# purge1 - delete yeahs + yeah notifs given by a user
+			user = User.objects.filter(username__iexact=request.POST['username']).values_list('id', flat=True).first()
+			first = Yeah.objects.filter(by=user).delete()
+			second = Notification.objects.filter(Q(source=user, type=0) | Q(source=user, type=1)).delete()
+			return HttpResponse(str(first) + "\n\n" + str(second))
+		
+		return HttpResponseNotFound()
+	return render(request, 'closedverse_main/man/debug.html', {
+		'title': 'Misc utils',
+	})
+
 @require_http_methods(['POST'])
 @login_required
 def origin_id(request):
@@ -1345,6 +1370,9 @@ def help_legal(request):
 	return render(request, 'closedverse_main/help/legal.html', {})
 def help_contact(request):
 	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})
+def help_why(request):
+	return render(request, 'closedverse_main/help/why.html', {'title': "Why even join Closed?"})
+
 
 def csrf_fail(request, reason):
 	return HttpResponseBadRequest("The CSRF check has failed.\nYour browser might not support cookies, or you need to refresh.")

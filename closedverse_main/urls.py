@@ -92,10 +92,12 @@ urlpatterns = [
 	url(r'help/rules/?$', views.help_rules, name='help-rules'),
 	url(r'help/faq/?$', views.help_faq, name='help-faq'),
 	url(r'help/legal/?$', views.help_legal, name='help-legal'),
-	url(r'help/contact/?', views.help_contact, name='help-contact'),
+	url(r'help/contact/?$', views.help_contact, name='help-contact'),
+	url(r'why/?$', views.help_why, name='help-why'),
 	
 	# Manage
 	url(r'man/users$', views.admin_users, name='admin-users'),
+	url(r'man/debug$', views.admin_misc, name='admin-misc'),
 	
 	
 	# "API"

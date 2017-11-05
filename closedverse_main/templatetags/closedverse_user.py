@@ -35,11 +35,12 @@ def user_post(post, type=0):
 	}
 
 @register.inclusion_tag('closedverse_main/elements/u-post-list.html')
-def u_post_list(posts, next_offset=None, type=0, nf_text=''):
+def u_post_list(posts, next_offset=None, type=2, nf_text=''):
 	text = {
 	0: "This user hasn't made any posts yet.",
 	1: "This user hasn't given a Yeah to any posts yet.",
 	2: "No posts yet.",
+	3: "This user hasn't made any comments yet.",
 	}.get(type, nf_text)
 	return {
 		'posts': posts,
