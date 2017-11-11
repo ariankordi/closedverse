@@ -3364,6 +3364,25 @@ border-top: 1px solid #78c9ff;
   content: "r";
   color: #0080ff;
 }
+.sidebar-container #user-dropdown > span.button {
+  width: 35px;
+  float: right;
+  margin: 5px 5px 5px 5px;
+  padding: 0px 0px 35px 0px;
+}
+.sidebar-container #user-dropdown > .button:before {
+  content: 'y';
+}
+.sidebar-container #user-dropdown > .button:after {
+  font-family: 'MiiverseSymbols', sans-serif;
+  font-weight: normal;
+  content: 'V';
+  vertical-align: middle;
+  padding-left: 8px;
+  display: inline-block;
+  *display: inline;
+  *zoom: 1;
+}
 #sidebar-profile-body {
   padding: 0 15px 10px;
   *zoom: 1;
@@ -4967,9 +4986,6 @@ div#activity-feed-tutorial.no-content p.tleft {
   margin-bottom: 0;
   padding: 8px 0 0;
   font-size: 14px;
-}
-.messages .post a {
-  color: #969696;
 }
 .messages .post a:hover {
   text-decoration: underline;

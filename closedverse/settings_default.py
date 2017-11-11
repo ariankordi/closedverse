@@ -155,9 +155,9 @@ nnid_forbiddens = BASE_DIR + '/forbidden.json'
 memo_title = "Closedverse demo"
 memo_msg = "Heyyyy!"
 
-# E-mail to use for getipintel.net, because we're using that
-# None for no IP checking (recommended)
-ipintel_email = None
+# Client key to use for iphub.email, because we're using that
+# None for no IP checking (recommended since this is so slow)
+iphub_key = None
 
 # If IP can be checked, then use this to disallow any proxies
 disallow_proxy = False
@@ -179,3 +179,15 @@ MARKDOWN_DEUX_STYLES = {
         "safe_mode": "escape",
     },
 }
+
+# Force logins everywhere.
+force_login = True
+# Don't change this.
+LOGIN_EXEMPT_URLS = (
+	r'^login/$',
+	r'^signup/$',
+	r'^logout/$',
+	r'^reset/$',
+	r'^help/rules$',
+	r'^help/contact$',
+)

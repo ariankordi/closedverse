@@ -18,15 +18,12 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 import re
 
-feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (69, 'easter egg'), )
+feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (6, 'japan'), (69, 'easter egg'), )
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
 class UserManager(BaseUserManager):
 	def create_user(self, username, password):
-		#if not email:
-		#	raise ValueError('Users must have an email address')
-
 		user = self.model(
 			username=username,
 		)
@@ -42,7 +39,7 @@ class UserManager(BaseUserManager):
 		email = email,
 		)
 		if settings.PROD:
-			if util.getipintel(addr) > 0.994:
+			if util.iphub(addr):
 				spamuser = True
 				if settings.disallow_proxy:
 					# This was for me, a server error will email admins of course.
@@ -80,13 +77,19 @@ class UserManager(BaseUserManager):
 	def authenticate(self, username, password):
 		if not username or username.isspace():
 			return None
-		try:
-			user = self.get(Q(username__iexact=username) | Q(email=username))
-		except User.DoesNotExist:
+		user = self.filter(Q(username__iexact=username) | Q(email=username))
+		if not user.exists():
 			return None
-		if not user.check_password(password):
-			return False
-		return user
+		user = user.first()
+		try:
+			passwd = user.check_password(password)
+		# Check if the password is a valid bcrypt
+		except ValueError:
+			return (user, False)
+		else:
+			if not passwd:
+				return (user, False)
+		return (user, True)
 
 class PostManager(models.Manager):
 	def get_queryset(self):
@@ -146,6 +149,7 @@ class User(models.Model):
 		# If thing is specified, that field is retrieved
 		if thing:
 			return self.profile_set.all().values_list(thing, flat=True).first()
+		# Otherwise just get full profile
 		return self.profile_set.filter(user=self).first()
 	def gravatar(self):
 		g = util.get_gravatar(self.email)
@@ -248,6 +252,13 @@ class User(models.Model):
 		return self.follow_target.filter().count()
 	def num_friends(self):
 		return self.friend_source.filter().count() + self.friend_target.filter().count()
+	def can_follow(self):
+		# TODO
+		return True
+	def can_view(self, user):
+		if UserBlock.find_block(self, user, full=True):
+			return False
+		return True
 	def is_following(self, me):
 		if not me.is_authenticated:
 			return False
@@ -263,6 +274,15 @@ class User(models.Model):
 		if not self.is_following(source) or source == self:
 			return False
 		return self.follow_target.filter(source=source, target=self).delete()
+	"""Todo
+	def can_block(self, source):
+		
+	def has_block(self, source):
+		
+	# BLOCK this user from SOURCE
+	def make_block(self, source):
+		
+	"""
 	def get_posts(self, limit=50, offset=0, request=None):
 		posts = self.post_set.filter().order_by('-created')[offset:offset + limit]
 		if request:
@@ -446,6 +466,7 @@ class User(models.Model):
 		if not id:
 			return False
 		if request:
+			# TODO: Remove dash and period from NNID since NNIDs can be spoofed like that
 			return Profile.objects.filter(origin_id__iexact=id).exclude(user__id=request.user.id).exists()
 		else:
 			return Profile.objects.filter(origin_id=id).exists()
@@ -1183,7 +1204,7 @@ class Friendship(models.Model):
 			if online_only:
 				delta = timezone.now() - timedelta(seconds=48)
 				awman = []
-				for friend in Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest'):
+				for friend in Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]:
 					if friend.other(user).last_login > delta:
 						awman.append(friend)
 				return awman
@@ -1364,7 +1385,7 @@ class LoginAttempt(models.Model):
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
 	def __str__(self):
-		return 'A login attempt to ' + self.user + ' from ' + self.addr + ', ' + str(self.success)
+		return 'A login attempt to ' + str(self.user) + ' from ' + self.addr + ', ' + str(self.success)
 		
 # Fun
 class ThermostatTouch(models.Model):
@@ -1386,3 +1407,8 @@ class UserBlock(models.Model):
 	
 	def __str__(self):
 		return "Block created from " + str(self.source) + " to " + str(self.target)
+
+	def find_block(first, second, full=False):
+		if full:
+			return UserBlock.objects.filter(Q(source=first, full=True) & Q(target=second, full=True) | Q(target=first, full=True) & Q(source=second, full=True)).exists()
+		return UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).exists()

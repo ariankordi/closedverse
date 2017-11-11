@@ -11,7 +11,13 @@ closedverse/settings.py
 closedverse/urls.py
 # //
 settings.py
+closedverse/settingscool.py
+settingscool.py
+managecool.py
+closedverse/wsgicool.py
+wsgicool.py
 media
+media2
 closedverse_main/media
 closedverse/media
 closedverse_main/migrations

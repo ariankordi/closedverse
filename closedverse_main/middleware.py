@@ -1,14 +1,27 @@
 from django.http import HttpResponseForbidden
-from closedverse.settings import DEBUG, PROD
+from closedverse import settings
 from django.shortcuts import redirect
+from re import compile
+
+# Taken from https://python-programming.com/recipes/django-require-authentication-pages/
+if settings.force_login:
+	EXEMPT_URLS = [compile(settings.LOGIN_URL.lstrip('/'))]
+	if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
+		EXEMPT_URLS += [compile(expr) for expr in settings.LOGIN_EXEMPT_URLS]
 
 class ClosedMiddleware(object):
 	def __init__(self, get_response):
 		self.get_response = get_response
 
 	def __call__(self, request):
-	# Fix this ; put something in settings signifying if the server supports HTTPS or not
-		if not request.is_secure() and (not DEBUG) and PROD:
+		# Force logins if it's set
+		if settings.force_login and not request.user.is_authenticated:
+			if not any(m.match(request.path_info.lstrip('/')) for m in EXEMPT_URLS):
+				if request.is_ajax():
+					return HttpResponseForbidden("Login is required")
+				return redirect(settings.LOGIN_REDIRECT_URL)
+		# Fix this ; put something in settings signifying if the server supports HTTPS or not
+		if not request.is_secure() and (not settings.DEBUG) and settings.PROD:
 			# Let's try to redirect to HTTPS for non-Nintendo stuff.
 			if not request.META.get('HTTP_USER_AGENT'):
 				return HttpResponseForbidden("You need a user agent.", content_type='text/plain')

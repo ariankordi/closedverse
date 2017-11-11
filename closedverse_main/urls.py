@@ -39,6 +39,8 @@ urlpatterns = [
 	url(r'users/'+ username +'/friend\.reject$', views.user_friendrequest_reject, name='user-fr-reject'),
 	url(r'users/'+ username +'/friend\.cancel$', views.user_friendrequest_cancel, name='user-fr-cancel'),
 	url(r'users/'+ username +'/friend\.delete$', views.user_friendrequest_delete, name='user-fr-delete'),
+	
+	url(r'users/'+ username +'/block\.do$', views.user_addblock, name='user-addblock'),
 	# Communities
 	url(r'communities.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),

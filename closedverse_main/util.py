@@ -62,6 +62,7 @@ def get_mii(id):
 		'X-Nintendo-Client-ID': 'a2efa818a34fa16b8afbc8a74eba3eda',
 		'X-Nintendo-Client-Secret': 'c91cdb5658bd4954ade78533a339cf9a',
 	}
+	# TODO: Make this, the gravatar request, and reCAPTCHA request escape (or plainly use) URL params
 	nnid = requests.get('https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + id, headers=dmca)
 	nnid_dec = etree.fromstring(nnid.content)
 	del(nnid)
@@ -81,6 +82,7 @@ def get_mii(id):
 	nnid = mii_dec[0][6].text
 	del(mii_dec)
 	
+	# Also todo: Return the NNID based on what accountws returns, not the user's input!!!
 	return [miihash, screenname, id]
 
 
@@ -173,6 +175,7 @@ def filterchars(str=""):
 		return choice(girls)
 	return str
 	
+""" Not using getipintel anymore
 def getipintel(addr):
 	# My router's IP prefix is 192.168.1.*, so this works in debug
 	if settings.ipintel_email and not '192.168' in addr:
@@ -184,3 +187,12 @@ def getipintel(addr):
 		return float(site.read().decode())
 	else:
 		return 0
+"""
+# Now using iphub
+def iphub(addr):
+	if settings.iphub_key and not '192.168' in addr:
+		get = requests.get('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.iphub_key})
+		if get.json()['block'] == 1:
+			return True
+		else:
+			return False

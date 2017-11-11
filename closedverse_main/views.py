@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation
+from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation, UserBlock, LoginAttempt
 from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime
 from closedverse import settings
 import re
@@ -155,11 +155,15 @@ def login_page(request):
 		# None = doesn't exist, False = invalid password.
 		if user is None:
 			return HttpResponseNotFound("The user doesn't exist.")
-		elif user is False:
-			return HttpResponse("Invalid password.", status=401)
-		if not user.is_active():
-			return HttpResponseForbidden("This user was disabled.")
-		login(request, user)
+		else:
+			# Todo: I might want to do some things relating to making models take care of object stuff like this instead of the view, it's totally messed up now.
+			successful = False if user[1] is False or not user[0].is_active() else True
+			LoginAttempt.objects.create(user=user[0], success=successful, addr=request.META.get('REMOTE_ADDR'))
+			if user[1] is False:
+				return HttpResponse("Invalid password.", status=401)
+			elif not user[0].is_active():
+				return HttpResponseForbidden("This user was disabled.")
+		login(request, user[0])
 		
 		# Then, let's get the referrer and either return that or the root.
 		# Actually, let's not for now.
@@ -282,6 +286,8 @@ def user_view(request, username):
 	if user.is_me(request):
 		title = 'My profile'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s profile'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -291,7 +297,7 @@ def user_view(request, username):
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
-		if len(request.POST.get('screen_name')) > 32 and not request.user.is_staff():
+		if not request.POST.get('screen_name') or len(request.POST['screen_name']) > 32 and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
 			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
@@ -387,6 +393,8 @@ def user_posts(request, username):
 	if user.is_me(request):
 		title = 'My posts'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s posts'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -428,6 +436,8 @@ def user_yeahs(request, username):
 	if user.is_me(request):
 		title = 'My yeahs'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s yeahs'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -473,6 +483,8 @@ def user_comments(request, username):
 	if user.is_me(request):
 		title = 'My comments'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s comments'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -511,6 +523,8 @@ def user_following(request, username):
 	if user.is_me(request):
 		title = 'My follows'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s follows'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -551,6 +565,8 @@ def user_followers(request, username):
 	if user.is_me(request):
 		title = 'My followers'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -592,6 +608,8 @@ def user_friends(request, username):
 	if user.is_me(request):
 		title = 'My friends'
 	else:
+		if request.user.is_authenticated and not user.can_view(request.user):
+			raise Http404()
 		title = '{0}\'s friends'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
@@ -994,6 +1012,13 @@ def user_friendrequest_delete(request, username):
 	request.user.delete_friend(user)
 	return HttpResponse()
 
+@require_http_methods(['POST'])
+@login_required
+def user_addblock(request, username):
+	user = get_object_or_404(User, username=username)
+	user.make_block(request.user)
+	return HttpResponse()
+
 # Notifications work differently since the Openverse rebranding. (that we changed back)
 # They used to respond with a JSON for values for unread notifications and messages.
 # NOW we send the unread notifications in bytes, and then the unread messages in bytes, 2 bytes. The JS is using charCodeAt() 
@@ -1156,7 +1181,7 @@ def messages(request):
 	})
 @login_required
 def messages_view(request, username):
-	user = get_object_or_404(User, username=username)
+	user = get_object_or_404(User, username__iexact=username)
 	friendship = Friendship.find_friendship(request.user, user)
 	if not friendship:
 		return HttpResponseForbidden()

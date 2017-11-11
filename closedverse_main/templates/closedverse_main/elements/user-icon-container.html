@@ -1,1 +1,1 @@
-<a href="{% url "main:user-view" user.username %}" class="icon-container {{ uclass }} {% if user.online_status == True %}online{% elif user.online_status == 2 %}afk{% elif user.online_status == False %}offline{% endif %}"><img src="{{ url }}" class="icon"></a>
+<a href="{% url "main:user-view" user.username %}" class="icon-container {{ uclass }}{% if status %} {% if user.online_status == True %}online{% elif user.online_status == 2 %}afk{% elif user.online_status == False %}offline{% endif %}{% endif %}"><img src="{{ url }}" class="icon"></a>

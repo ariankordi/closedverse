@@ -18,7 +18,7 @@ class UserForm(ModelForm):
 """
 
 class UserAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', )
+	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', 'email', )
 	#exclude = ('has_mh', )
 	# Not yet
 	#form = UserForm
@@ -61,6 +61,12 @@ class NotificationAdmin(admin.ModelAdmin):
         raw_id_fields = ('to', 'source', 'context_post', 'context_comment', 'merged_with')
         search_fields = ('unique_id', )
 
+class LoginAdmin(admin.ModelAdmin):
+        raw_id_fields = ('user', )
+        search_fields = ('user', )
+
+#class BlockAdmin(admin.ModelAdmin)
+
 #admin.site.unregister(Group)
 
 admin.site.register(models.User, UserAdmin)
@@ -70,6 +76,8 @@ admin.site.register(models.Complaint, ComplaintAdmin)
 admin.site.register(models.Message, MessageAdmin)
 admin.site.register(models.Conversation, ConversationAdmin)
 admin.site.register(models.Notification, NotificationAdmin)
+admin.site.register(models.LoginAttempt, LoginAdmin)
+admin.site.register(models.UserBlock)
 
 
 admin.site.register(models.Post, PostAdmin)

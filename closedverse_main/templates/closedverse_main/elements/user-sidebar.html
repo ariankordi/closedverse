@@ -94,8 +94,8 @@
   <div class="sidebar-container sidebar-profile">
 	{% if profile.comment %}
       <div class="profile-comment">
-        <p class="js-truncated-text">{{ profile.comment|truncatechars:100|linebreaksbr }}</p>
-		{% if profile.comment|length > 99 %}
+        <p class="js-truncated-text">{{ profile.comment|truncatechars:300|linebreaksbr }}</p>
+		{% if profile.comment|length > 299 %}
           <p class="js-full-text none">{{ profile.comment|linebreaksbr }}</p>
           <button type="button" class="description-more-button js-open-truncated-text-button">Show more</button>
 		{% endif %}
@@ -111,7 +111,7 @@
 		<div class="data-content">
 			<h4><span>NNID</span></h4>
 			<div class="note">
-				<span>{% if profile.origin_id_public == 1 %}Private{% elif not profile.origin_id_public %}None{% else %}<a href="https://miiverse.nintendo.net/users/{{ profile.origin_id_public }}">{{ profile.origin_id_public }}</a>{% endif %}</span>
+				<span>{% if profile.origin_id_public == 1 %}Private{% elif not profile.origin_id_public %}None{% else %}{{ profile.origin_id_public }}{% endif %}</span>
 			</div>
 		</div>
 		<div class="data-content">

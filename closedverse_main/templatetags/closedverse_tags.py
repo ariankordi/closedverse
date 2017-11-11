@@ -25,10 +25,11 @@ def user_class(user):
 def user_level(user):
 	return user.get_class()[1]
 @register.inclusion_tag('closedverse_main/elements/user-icon-container.html')
-def user_icon_container(user, feeling=0):
+def user_icon_container(user, feeling=0, status=False):
 	return {
 	'uclass': user_class(user),
 	'user': user,
+	'status': status,
 	'url': avatar(user, feeling),
 	}
 @register.inclusion_tag('closedverse_main/elements/no-content.html')
@@ -48,6 +49,7 @@ def empathy_txt(feeling=0, has=False):
 	3: 'Yeah!?',
 	4: 'Yeah...',
 	5: 'Yeah...',
+	6: 'Nyeah~',
 	69: 'olv.portal.miitoo.',
 	}.get(feeling, 'Yeah!')
 	# olv.portal.miitoo is going to be the only easter egg in this thing ever

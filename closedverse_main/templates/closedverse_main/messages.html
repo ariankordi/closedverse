@@ -23,15 +23,12 @@
 				<ul class="list-content-with-icon-and-text arrow-list" data-next-page-url="{% if next %}?offset={{ next }}{% endif %}">
 		{% for friend in friends %}
 					<li class="trigger{% if not friend.get_latest_msg.mine and friend.get_latest_msg.read == False %} notify{% endif %}" data-href="{% url "main:messages-view" friend.username %}">
-						{% user_icon_container friend %}
+						{% user_icon_container friend 0 True %}
 
 					  <div class="body">
 						<p class="title">
 						  <span class="nick-name"><a href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
 						  <span class="id-name">{{ friend.username }}</span>
-							{% if not friend.get_latest_msg.mine and friend.get_latest_msg.read == False %}
-								<button class="button msg-update">Read</button>
-							{% endif %}
 						</p>
 						{% if friend.get_latest_msg %}
 						<span class="timestamp">{% time friend.get_latest_msg.created %}</span>
