@@ -83,7 +83,7 @@ def get_mii(id):
 	del(mii_dec)
 	
 	# Also todo: Return the NNID based on what accountws returns, not the user's input!!!
-	return [miihash, screenname, id]
+	return [miihash, screenname, nnid]
 
 
 def recaptcha_verify(request, key):
@@ -196,3 +196,12 @@ def iphub(addr):
 			return True
 		else:
 			return False
+
+# NNID blacklist check
+def nnid_blacked(nnid):
+	blacklist = json.load(open(settings.nnid_forbiddens))
+	# The NNID server omits dashes and dots from NNIDs, gotta make sure nobody gets through this
+	nnid = nnid.lower().replace('-', '').replace('.', '')
+	if nnid in blacklist:
+		return True
+	return False

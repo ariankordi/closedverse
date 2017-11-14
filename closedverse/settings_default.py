@@ -191,3 +191,5 @@ LOGIN_EXEMPT_URLS = (
 	r'^help/rules$',
 	r'^help/contact$',
 )
+# The location to redirect to if a user's status is set to 2 (Redirect)
+inactive_redirect = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"

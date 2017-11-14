@@ -3,6 +3,8 @@ var splatoon = true;
 if(innerWidth <= 480 || navigator.userAgent.indexOf('Nintendo') > 0) {
    splatoon = false;
 }
+//var loading_animate = false;
+var loading_animate = true;
 var pjax_container = '#container';
 // Edge lies about being WebKit but it works anyway
 // Edit: This used to match 'WebKit' but it's now Gecko because WebKit will have that in here anyway
@@ -3032,7 +3034,51 @@ mode_post = 0;
 				NProgress.done();
 				}
 				});
-		})
+		});
+			
+			// Is there an NNID field? (signup)
+			// TODO: Make this way better and don't have this duplicated like it is now
+			if($('h3.label.nnid').length) {
+					inp = $('input[type=text][name=origin_id]')
+					icon = $('h3.label.nnid > label > img')
+						function getmiim() {
+							if(b.Closed.blank.test(inp.val())) {
+								icon.addClass('none');
+								icon.attr('src', '');
+								$('p.red').html(null);
+								return false;
+							}
+							if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
+								$('p.red').html('The NNID provided is invalid.')
+								return false;
+							} else {
+								$('p.red').html(null);
+							}
+								$.ajax({
+									url: inp.attr('data-action'),
+									type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
+									success: function(a) {
+										if(a == '') {
+											icon.addClass('none');
+											icon.attr('src', '');
+										} else {
+											icon.removeClass('none');
+											icon.attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_happy_face.png');
+										}
+									}, error: function(a) {
+										$('p.red').html(a.responseText);
+										icon.addClass('none');
+										icon.attr('src', '');
+									},
+									beforeSend:function(){NProgress.start()},complete:function(){NProgress.done()}
+								})
+						}
+							var timer;
+					inp.on('input', function() {
+						clearTimeout(timer);
+						timer = setTimeout(getmiim, 500);
+					})
+			}
 	}),
 	b.router.connect("^/reset/$", function(d, c, f) {
 		$("form[method=post]").on("submit", function(e) {
@@ -3119,7 +3165,7 @@ mode_post = 0;
 //			if($('.setting-nnid').length) {
 				
 				inp = $('input[type=text][name=origin_id]')
-					function getmiim() {
+					function getmiimtwo() {
 						if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
 							$('p.error').html('The NNID provided is invalid.')
 							return false
@@ -3127,7 +3173,7 @@ mode_post = 0;
 							$('p.error').html(null)
 						}
 							$.ajax({
-								url: inp.attr('data-action').replace('nil', inp.val()),
+								url: inp.attr('data-action'),
 								type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
 								success: function(a) {
 									if(a == '') {
@@ -3146,7 +3192,7 @@ mode_post = 0;
 				inp.on('input', function() {
 				    clearTimeout(timer);
 					if(inp.val()) {
-						timer = setTimeout(getmiim, 500);
+						timer = setTimeout(getmiimtwo, 500);
 					}
 				})
 				
@@ -3295,8 +3341,11 @@ Olv.Net.errorFeedbackHandler(event, textStatus, xhr, options);
 history.back();
 return false;
 });
+if(loading_animate) {
 $(document).on('pjax:send',function(){NProgress.start()});
+$(document).on('pjax:complete', function(){NProgress.done()});
+}
+
 $(document).on('pjax:complete',function(){
-NProgress.done();
 Olv.init.done();
 });

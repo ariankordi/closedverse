@@ -48,6 +48,18 @@
 			<input type="text" name="email" maxlength="255" placeholder="Email address" value="{{ user.email }}">
 		</div>
         <p class="note">Please note that your email can be a fake one, however if you need to reset your password, this must be accessible. You can't share emails.</p>
+		{% if user.email %}
+		<p class="settings-label"><label for="email_login">Allow logging in to your account with your e-mail address?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="email_login" id="email_login">
+              <option value="0"{% if profile.email_login == 0 %} selected{% endif %}>Do not allow (username login only)</option>
+              <option value="1"{% if profile.email_login == 1 %} selected{% endif %}>Allow</option>
+              <option value="2"{% if profile.email_login == 2 %} selected{% endif %}>Only allow (email login only)</option>
+            </select>
+          </div>
+        </div>
+		{% endif %}
       </li>
       <li class="setting-website">
         <p class="settings-label">Web URL</p>

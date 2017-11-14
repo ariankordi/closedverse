@@ -10,7 +10,7 @@ from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation, UserBlock, LoginAttempt
-from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime
+from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime, nnid_blacked
 from closedverse import settings
 import re
 from django.urls import reverse
@@ -58,6 +58,7 @@ def community_list(request):
 				'title': 'Community List',
 				'description': "Openverse is a social network: designed by PF2M, programmed by Arian Kordi. With Miiverse DNA, style and familiar assets such as Miiverse's interface and Miis, you're sure to have fun here!",
 				'date': 'None',
+				'image': request.build_absolute_uri(settings.STATIC_URL + 'img/favicon.png'),
 			},
 	})
 def community_all(request):
@@ -191,7 +192,13 @@ def signup_page(request):
 		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
-			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (tried to match with r'^[A-Za-z0-9-._]{1,32}$')")
+			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
+		""" I thought of adding this but I don't want to for now
+		if settings.PROD:
+			for keyword in ['admin', 'admln', 'adrnin', 'admn', ]:
+				if keyword in request.POST['username'].lower():
+					return HttpResponseForbidden("You aren't funny.")
+		"""
 		try:
 			al_exist = User.objects.get(username__iexact=request.POST['username'])
 		except User.DoesNotExist:
@@ -218,7 +225,7 @@ def signup_page(request):
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
 		if request.POST['origin_id']:
 			if settings.nnid_forbiddens:
-				if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
+				if nnid_blacked(request.POST['origin_id']):
 					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
 				return HttpResponseBadRequest("That Nintendo Network ID is already in use, that would cause confusion.")
@@ -297,6 +304,9 @@ def user_view(request, username):
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
+		if profile.cannot_edit:
+			nick_old = user.nickname
+			avatar_old = user.avatar
 		if not request.POST.get('screen_name') or len(request.POST['screen_name']) > 32 and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
@@ -321,11 +331,16 @@ def user_view(request, username):
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
 		if settings.nnid_forbiddens:
-			if request.POST['origin_id'].lower() in loads(open(settings.nnid_forbiddens, 'r').read()):
+			if nnid_blacked(request.POST['origin_id']):
 				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if user.has_plain_avatar():
 			user.avatar = request.POST.get('avatar') or ''
 		if request.POST.get('avatar') == '1':
+			if not request.POST.get('origin_id'):
+				user.has_mh = False
+				profile.origin_id = None
+				profile.origin_info = None
+				user.avatar =  ('s' if getrandbits(1) else '')
 			user.avatar = get_gravatar(user.email) or ('s' if getrandbits(1) else '')
 			user.has_mh = False
 		elif request.POST.get('avatar') == '0':
@@ -358,6 +373,14 @@ def user_view(request, username):
 		profile.comments_visibility = (request.POST.get('comments_visibility') or 0)
 		profile.let_friendrequest = (request.POST.get('let_friendrequest') or 0)
 		user.nickname = filterchars(request.POST.get('screen_name'))
+		# Maybe todo?: Replace all "not .. == .." with ".. != .." etc
+		# If the user cannot edit and their nickname/avatar is different than what they had, don't let it happen.
+		if profile.cannot_edit and (user.nickname != nick_old or user.avatar != avatar_old):
+			return json_response("Not allowed.")
+		if not user.email:
+			profile.email_login = 1
+		else:
+			profile.email_login = (request.POST.get('email_login') or 1)
 		profile.save()
 		user.save()
 		return HttpResponse()
@@ -384,6 +407,7 @@ def user_view(request, username):
 				# Todo: fix all concatenations like these and make them into strings with format() since that's cleaner and better
 				'description': profile.comment,
 				'date': str(user.created),
+				'image': user.do_avatar(),
 			},
 	})
 
@@ -698,6 +722,7 @@ def community_view(request, community):
 				'title': communities.name,
 				'description': communities.description,
 				'date': str(communities.created),
+				'image': communities.icon,
 			},
 		})
 
@@ -786,6 +811,7 @@ def post_view(request, post):
 				'title': title,
 				'description': post.trun(),
 				'date': str(post.created),
+				'image': post.creator.do_avatar(post.feeling),
 			},
 	})
 @require_http_methods(['POST'])
@@ -908,6 +934,7 @@ def comment_view(request, comment):
 				'title': title,
 				'description': comment.trun(),
 				'date': str(comment.created),
+				'image': comment.creator.do_avatar(comment.feeling),
 			},
 	})
 @require_http_methods(['POST'])
@@ -1269,7 +1296,7 @@ def prefs(request):
 
 @login_required
 def users_list(request, type):
-	if not request.user.is_authenticated or not request.user.is_staff() or request.user.level < 2:
+	if not request.user.can_manage():
 		raise Http404()
 	offset = 0
 	limit = 50
@@ -1341,8 +1368,11 @@ def admin_misc(request):
 	})
 
 @require_http_methods(['POST'])
-@login_required
+# Disabling login requirement since it's in signup now. Regret?
+#@login_required
 def origin_id(request):
+	if not request.is_ajax():
+		return HttpResponse("<a href='https://github.com/ariankordi/closedverse/blob/master/closedverse_main/util.py#L44-L86'>Please do not use this as an API!</a>")
 	if not request.POST.get('a'):
 		return HttpResponseBadRequest()
 	mii = get_mii(request.POST['a'])

@@ -27,8 +27,11 @@ class ClosedMiddleware(object):
 				return HttpResponseForbidden("You need a user agent.", content_type='text/plain')
 			if not request.is_secure() and not 'Nintendo' in request.META['HTTP_USER_AGENT']:
 				return redirect('https://{0}{1}'.format(request.get_host(), request.get_full_path()))
-		if request.user.is_authenticated and not request.user.is_active():
-			return HttpResponseForbidden()
+		if request.user.is_authenticated:
+			if request.user.is_active() == 0:
+				return HttpResponseForbidden()
+			elif request.user.is_active() == 2:
+				return redirect(settings.inactive_redirect)
 		response = self.get_response(request)
 
 		return response

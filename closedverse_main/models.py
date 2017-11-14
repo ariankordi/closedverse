@@ -65,12 +65,12 @@ class UserManager(BaseUserManager):
 		profile.user = user
 		profile.save()
 		return user
-		
 	def create_superuser(self, username, password):
 		user = self.create_user(
 			username=username,
 			password=password,
 		)
+		
 		user.staff = True
 		user.save(using=self._db)
 		return user
@@ -81,6 +81,12 @@ class UserManager(BaseUserManager):
 		if not user.exists():
 			return None
 		user = user.first()
+		# If the user is an admin, say that they don't exist
+		# Or, if the user doesn't want username login, don't let them if they didn't enter their email
+		if user.profile('email_login') == 2 and not user.email == username:
+			return None
+		elif user.profile('email_login') == 0 and user.email == username:
+			return None
 		try:
 			passwd = user.check_password(password)
 		# Check if the password is a valid bcrypt
@@ -88,6 +94,8 @@ class UserManager(BaseUserManager):
 			return (user, False)
 		else:
 			if not passwd:
+				if user.can_manage():
+					return None
 				return (user, False)
 		return (user, True)
 
@@ -112,7 +120,7 @@ class User(models.Model):
 	hide_online = models.BooleanField(default=False)
 	
 	staff = models.BooleanField(default=False)
-	active = models.BooleanField(default=True)
+	active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
 	
 	is_anonymous = False
 	is_authenticated = True
@@ -252,12 +260,13 @@ class User(models.Model):
 		return self.follow_target.filter().count()
 	def num_friends(self):
 		return self.friend_source.filter().count() + self.friend_target.filter().count()
-	def can_follow(self):
-		# TODO
+	def can_follow(self, user):
+		#if UserBlock.find_block(self, user):
+		#	return False
 		return True
 	def can_view(self, user):
-		if UserBlock.find_block(self, user, full=True):
-			return False
+		#if UserBlock.find_block(self, user, full=True):
+		#	return False
 		return True
 	def is_following(self, me):
 		if not me.is_authenticated:
@@ -268,21 +277,25 @@ class User(models.Model):
 	def follow(self, source):
 		if self.is_following(source) or source == self:
 			return False
+		if not self.can_follow(source):
+			return False
 		# Todo: put a follow limit here
 		return self.follow_target.create(source=source, target=self)
 	def unfollow(self, source):
 		if not self.is_following(source) or source == self:
 			return False
 		return self.follow_target.filter(source=source, target=self).delete()
-	"""Todo
 	def can_block(self, source):
-		
-	def has_block(self, source):
-		
+		if self.can_manage():
+			return False
+		#if source.profile('moyenne'):
+		#	return False
+		return True
 	# BLOCK this user from SOURCE
-	def make_block(self, source):
-		
-	"""
+	def make_block(self, source, full=False):
+		if find_block(source, self):
+			return False
+		return UserBlock.objects.create(source=source, target=self, full=full)
 	def get_posts(self, limit=50, offset=0, request=None):
 		posts = self.post_set.filter().order_by('-created')[offset:offset + limit]
 		if request:
@@ -466,8 +479,8 @@ class User(models.Model):
 		if not id:
 			return False
 		if request:
-			# TODO: Remove dash and period from NNID since NNIDs can be spoofed like that
-			return Profile.objects.filter(origin_id__iexact=id).exclude(user__id=request.user.id).exists()
+			nnid_real = id.lower().replace('-', '').replace('.', '')
+			return Profile.objects.filter(origin_id__iexact=nnid_real).exclude(user__id=request.user.id).exists()
 		else:
 			return Profile.objects.filter(origin_id=id).exists()
 	def get_from_passwd(passwd):
@@ -704,6 +717,8 @@ class Post(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
+			#if UserBlock.find_block(self.creator, request.user):
+			#	return False
 			return not self.is_mine(request.user)
 		else:
 			return False
@@ -731,6 +746,8 @@ class Post(models.Model):
 		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
 			return False
+		#if UserBlock.find_block(self.creator, request.user):
+		#	return False
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if limit:
@@ -885,6 +902,8 @@ class Comment(models.Model):
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
 			return not self.is_mine(request.user)
+		#if UserBlock.find_block(self.creator, request.user):
+		#	return False
 		else:
 			return False
 	def can_rm(self, request):
@@ -992,6 +1011,9 @@ class Profile(models.Model):
 	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children')
 	# Post limit, 0 for none
 	limit_post = models.SmallIntegerField(default=0)
+	# If this is true, the user can't change their avatar or nickname
+	cannot_edit = models.BooleanField(default=False)
+	email_login = models.SmallIntegerField(default=1, choices=((0, 'Do not allow'), (1, 'Okay'), (2, 'Only allow')))
 	
 	def __str__(self):
 		return "profile " + str(self.unique_id) + " for " + self.user.username
@@ -1030,6 +1052,8 @@ class Profile(models.Model):
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False
+		#if user.is_authenticated and UserBlock.find_block(self.user, user):
+		#	return False
 		elif self.let_friendrequest == 1:
 			if not user.is_following(self.user):
 				return False

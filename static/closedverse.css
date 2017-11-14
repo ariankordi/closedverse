@@ -922,6 +922,12 @@ h3.label {
   font-weight: bold;
   line-height: 1.2;
 }
+h3.label.nnid > label > img {
+  width: 64px;
+  height: 64px;
+  margin-top: -16px;
+  vertical-align: middle;
+}
 h3.label.label-wiiu {
   background: #d8f2fc;
   color: #1193c4;
@@ -8845,7 +8851,7 @@ margin: 10px 0px 15px !important;
 .login-page {
 text-align: center;
 }
-.login-page img {
+.login-page > form > img {
 margin-top: 30px;
 margin-bottom: 10px;
 max-width: 95%;
