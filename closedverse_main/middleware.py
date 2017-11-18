@@ -1,6 +1,7 @@
 from django.http import HttpResponseForbidden
 from closedverse import settings
 from django.shortcuts import redirect
+from django.contrib.auth import logout
 from re import compile
 
 # Taken from https://python-programming.com/recipes/django-require-authentication-pages/
@@ -28,10 +29,20 @@ class ClosedMiddleware(object):
 			if not request.is_secure() and not 'Nintendo' in request.META['HTTP_USER_AGENT']:
 				return redirect('https://{0}{1}'.format(request.get_host(), request.get_full_path()))
 		if request.user.is_authenticated:
+			""" User active; this doesn't work at the moment due to Postgres not being able to change bools to ints
 			if request.user.is_active() == 0:
 				return HttpResponseForbidden()
 			elif request.user.is_active() == 2:
 				return redirect(settings.inactive_redirect)
+			"""
+			if not request.user.is_active() :
+				return HttpResponseForbidden()
+			# If there isn't a request.session
+			if not request.session.get('passwd'):
+				request.session['passwd'] = request.user.password
+			else:
+				if request.session['passwd'] != request.user.password:
+					logout(request)
 		response = self.get_response(request)
 
 		return response

@@ -103,8 +103,8 @@ urlpatterns = [
 	
 	
 	# "API"
-	url(r'users.(json|html)$', views.users_list, name='users-list'),
-
+	url(r'users.html$', views.users_list, name='users-list'),
+	url(r'posts.json$', views.post_list, name='post-list'),
 	
 	# Util, right now we are away from the primary appo
 	url(r'origin$', views.origin_id, name='origin-id-get'),

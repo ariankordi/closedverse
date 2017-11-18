@@ -16,9 +16,13 @@ Including another URLconf
 from django.conf.urls import url, include
 
 from django.contrib import admin
+from .settings import INSTALLED_APPS
 
 handler500 = 'closedverse_main.views.server_err'
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 	url(r'^', include('closedverse_main.urls'))
 ]
+
+if 'silk' in INSTALLED_APPS:
+	urlpatterns += [url(r'^silk/', include('silk.urls', namespace='silk'))]

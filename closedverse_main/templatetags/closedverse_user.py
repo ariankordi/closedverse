@@ -72,7 +72,6 @@ def profile_user(user, request):
 
 @register.inclusion_tag('closedverse_main/elements/user-notification.html')
 def user_notification(notification, request):
-	notification.source.is_following = notification.source.is_following(request.user)
 	return {
 		'notification': notification,
 	}

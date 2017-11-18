@@ -6,10 +6,20 @@
 <div class="setting-form">
 <ul class="settings-list">
       <li class="setting-pruge1">
-        <p class="settings-label">Purge ALL yeahs + yeah notifications by a user</p>
+        <p class="settings-label">Purge ALL yeahs + yeah notifications by a user (permanent)</p>
 		<form>
 			<div class="center center-input">
 				<input type="hidden" name="action" value="purge1">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button" onclick="event.preventDefault()">Do it</button>
+		</form>
+      </li>
+      <li class="setting-pruge2">
+        <p class="settings-label">Purge ALL posts + comments by a user (recoverable)</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge2">
 				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
 			</div>
 			<button class="button" onclick="event.preventDefault()">Do it</button>
@@ -24,6 +34,13 @@
 $('li.setting-pruge1 > form > button').click(function() {
 	if(confirm("Really? This is PERMANENT!!!!!!!!")) {
 		Olv.Form.post(location.href, $('li.setting-pruge1 > form').serializeArray()).done(function(response) {
+			Olv.showMessage('', response);
+		});
+	}
+});
+$('li.setting-pruge2 > form > button').click(function() {
+	if(confirm("Really? This is recoverable.")) {
+		Olv.Form.post(location.href, $('li.setting-pruge2 > form').serializeArray()).done(function(response) {
 			Olv.showMessage('', response);
 		});
 	}

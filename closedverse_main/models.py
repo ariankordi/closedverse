@@ -23,6 +23,7 @@ post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3,
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
 class UserManager(BaseUserManager):
+	# idk why this is even here
 	def create_user(self, username, password):
 		user = self.model(
 			username=username,
@@ -66,13 +67,14 @@ class UserManager(BaseUserManager):
 		profile.save()
 		return user
 	def create_superuser(self, username, password):
-		user = self.create_user(
+		user = self.model(
 			username=username,
-			password=password,
 		)
-		
+		user.set_password(password)
 		user.staff = True
-		user.save(using=self._db)
+		user.save()
+		profile.user = user
+		profile.save()
 		return user
 	def authenticate(self, username, password):
 		if not username or username.isspace():
@@ -120,7 +122,8 @@ class User(models.Model):
 	hide_online = models.BooleanField(default=False)
 	
 	staff = models.BooleanField(default=False)
-	active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
+	#active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
+	active = models.BooleanField(default=True)
 	
 	is_anonymous = False
 	is_authenticated = True
@@ -297,14 +300,14 @@ class User(models.Model):
 			return False
 		return UserBlock.objects.create(source=source, target=self, full=full)
 	def get_posts(self, limit=50, offset=0, request=None):
-		posts = self.post_set.filter().order_by('-created')[offset:offset + limit]
+		posts = self.post_set.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter().order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
 		return posts
 	def get_comments(self, limit=50, offset=0, request=None):
-		posts = self.comment_set.filter().order_by('-created')[offset:offset + limit]
+		posts = self.comment_set.select_related('creator').filter().order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -312,9 +315,9 @@ class User(models.Model):
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
 		if type == 2:
-			yeahs = self.yeah_set.filter().order_by('-created')[offset:offset + limit]
+			yeahs = self.yeah_set.select_related('post').select_related('comment').filter().order_by('-created')[offset:offset + limit]
 		else:
-			yeahs = self.yeah_set.filter(type=type, post__is_rm=False).order_by('-created')[offset:offset + limit]
+			yeahs = self.yeah_set.select_related('post').select_related('comment').filter(type=type, post__is_rm=False).order_by('-created')[offset:offset + limit]
 		return yeahs
 	def get_following(self, limit=50, offset=0, request=None):
 		return self.follow_source.filter().order_by('-created')[offset:offset + limit]
@@ -325,7 +328,7 @@ class User(models.Model):
 	def notification_read(self):
 		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
-		return self.notification_to.filter(merged_with=None).order_by('-latest')[0:64]
+		return self.notification_to.select_related('context_post').select_related('context_comment').select_related('source').filter(merged_with=None).order_by('-latest')[0:64]
 	""" Broken - gives segfault
 	notifications_new = self.notification_ids()
 	self.notification_set.exclude(id__in=notifications_new).delete()
@@ -401,9 +404,9 @@ class User(models.Model):
 		for thing in follows:
 			friend_ids.append(thing)
 		if distinct:
-			posts = Post.objects.annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		else:
-			posts = Post.objects.filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -567,7 +570,7 @@ class Community(models.Model):
 	def clickable(self):
 		return not self.is_activity() and not self.type == 3
 	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
-		posts = Post.objects.filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+		posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
 			for post in posts:
 				post.setup(request)
@@ -709,10 +712,12 @@ class Post(models.Model):
 	def yeah_notification(self, request):
 		Notification.give_notification
 	def number_yeahs(self):
+		if hasattr(self, 'num_yeahs'):
+			return self.num_yeahs
 		return self.yeah_set.filter(post=self).count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
-			return self.yeah_set.filter(post=self, by=request.user).count() > 0
+			return self.yeah_set.filter(post=self, by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -739,6 +744,8 @@ class Post(models.Model):
 			return True
 		return self.yeah_set.filter(post=self, by=request.user).delete()
 	def number_comments(self):
+		if hasattr(self, 'num_comments'):
+			return self.num_comments
 		return self.comment_set.filter(original_post=self).count()
 	def get_yeahs(self, request):
 		return Yeah.objects.filter(type=0, post=self).order_by('-created')[0:30]
@@ -896,7 +903,7 @@ class Comment(models.Model):
 		return self.yeah_set.filter(comment=self, type=1).count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
-			return self.yeah_set.filter(comment=self, type=1, by=request.user).count() > 0
+			return self.yeah_set.filter(comment=self, type=1, by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -1098,6 +1105,7 @@ class Notification(models.Model):
 	(4, 'Follow to me'),
 	))
 	merged_with = models.ForeignKey('self', related_name='merged', null=True, blank=True)
+	merges = models.TextField(blank=True, default='')
 	context_post = models.ForeignKey(Post, null=True, blank=True)
 	context_comment = models.ForeignKey(Comment, null=True, blank=True)
 	
@@ -1124,19 +1132,47 @@ class Notification(models.Model):
 	def merge(self, user):
 		self.latest = timezone.now()
 		self.read = False
+		if not self.merges:
+			u = []
+		else:
+			u = json.loads(self.merges)
+		u.append(user.id)
+		self.merges = json.dumps(u)
 		self.save()
-		return self.merged.create(source=user, to=self.to, type=self.type, context_post=self.context_post, context_comment=self.context_comment)
+		#return self.merged.create(source=user, to=self.to, type=self.type, context_post=self.context_post, context_comment=self.context_comment)
 	def set_unread(self):
 		self.read = False
 		self.latest = timezone.now()
 		return self.save()
 	def all_users(self):
+		if not self.merges:
+			u = []
+		else:
+			u = json.loads(self.merges)
+		arr = []
+		arr.append(self.source)
+		for user in u:
+			# Todo: Clean this up and make this block better
+			try:
+				arr.append(User.objects.get(id=user))
+			except:
+				pass
+		del(u)
+		return arr
+		"""
 		arr = []
 		arr.append(self.source)
 		merges = self.merged.filter().order_by('created')
 		for merge in merges:
 			arr.append(merge.source)
 		return arr
+		"""
+	def setup(self, user):
+		# Only have is_following if the type is a follow; save SQL queries
+		if self.type == 4:
+			self.source.is_following = self.source.is_following(user)
+		else:
+			self.source.is_following = False
 	# In the future, please put giving notifications for classes into their respective classes (right now they're in views)
 	def give_notification(user, type, to, post=None, comment=None):
 		# Just keeping this simple for now, might want to make it better later

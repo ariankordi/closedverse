@@ -19,6 +19,10 @@ from json import dumps, loads
 import sys, traceback
 from random import choice
 from subprocess import Popen, PIPE
+from datetime import datetime
+import django.utils.dateformat
+
+#from silk.profiling.profiler import silk_profile
 
 def json_response(msg='', code=0, httperr=400):
 	thing = {
@@ -164,6 +168,7 @@ def login_page(request):
 				return HttpResponse("Invalid password.", status=401)
 			elif not user[0].is_active():
 				return HttpResponseForbidden("This user was disabled.")
+		request.session['passwd'] = user[0].password
 		login(request, user[0])
 		
 		# Then, let's get the referrer and either return that or the root.
@@ -178,7 +183,7 @@ def login_page(request):
 	else:
 		return render(request, 'closedverse_main/login_page.html', {
 			'title': 'Log in',
-			'classes': ['no-login-btn']
+			#'classes': ['no-login-btn']
 		})
 def signup_page(request):
 	"""Signup page, lots of checks here"""
@@ -240,6 +245,7 @@ def signup_page(request):
 			gravatar = True
 		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST.get('email'), addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
 		login(request, make)
+		request.session['passwd'] = make.password
 		return HttpResponse("/")
 	else:
 		if not settings.recaptcha_pub:
@@ -247,7 +253,7 @@ def signup_page(request):
 		return render(request, 'closedverse_main/signup_page.html', {
 			'title': 'Sign up',
 			'recaptcha': settings.recaptcha_pub,
-			'classes': ['no-login-btn'],
+			#'classes': ['no-login-btn'],
 		})
 def forgot_passwd(request):
 	"""Password email page / post endpoint."""
@@ -273,11 +279,11 @@ def forgot_passwd(request):
 			return HttpResponse("Success! Now you can log in with your new password!")
 		return render(request, 'closedverse_main/forgot_reset.html', {
 			'title': 'Reset password for ' + user.username,
-			'classes': ['no-login-btn'],
+			#'classes': ['no-login-btn'],
 		})
 	return render(request, 'closedverse_main/forgot_page.html', {
 		'title': 'Reset password',
-		'classes': ['no-login-btn'],
+		#'classes': ['no-login-btn'],
 	})
 
 def logout_page(request):
@@ -688,6 +694,7 @@ def special_community_tag(request, tag):
 	communities = get_object_or_404(Community, tags=tag)
 	return redirect(reverse('main:community-view', args=[communities.id]))
 
+#@silk_profile(name='Community view')
 def community_view(request, community):
 	"""View an individual community"""
 	communities = get_object_or_404(Community, id=community)
@@ -897,7 +904,7 @@ def post_comments(request, post):
 			else:
 				comments = post.get_comments(request)
 			for comment in comments:
-				if comment.creator not in users and not comment.creator == request.user:
+				if not comment.creator == request.user:
 					users.append(comment.creator)
 			for user in users:
 				Notification.give_notification(request.user, 3, user, post)
@@ -1094,9 +1101,12 @@ def notification_delete(request, notification):
 	remove = notification.delete()
 	return HttpResponse()
 
+#@silk_profile(name='Notifications view')
 @login_required
 def notifications(request):
 	notifications = request.user.get_notifications()
+	for notification in notifications:
+		notification.setup(request.user)
 	frs = request.user.get_frs_notif()
 	response = loader.get_template('closedverse_main/notifications.html').render({
 		'title': 'My notifications',
@@ -1295,7 +1305,7 @@ def prefs(request):
 	return JsonResponse(arr, safe=False)
 
 @login_required
-def users_list(request, type):
+def users_list(request):
 	if not request.user.can_manage():
 		raise Http404()
 	offset = 0
@@ -1327,6 +1337,46 @@ def users_list(request, type):
 	#	return JsonResponse(User.format_queryset(users), safe=False)
 
 @login_required
+def post_list(request):
+	if not request.user.is_staff():
+		return JsonResponse({"err": "Not authorized"})
+	if not request.GET.get('s') or not request.GET.get('e'):
+		return JsonResponse({"err": "Start time required with 's' query param and end required with 'e' param (epoch)"})
+	if not request.GET.get('l'):
+		return JsonResponse({"err": "Limit required via 'l' query param"})
+	else:
+	     	limit = int(request.GET['l'])
+	if not request.GET.get('o'):
+		return JsonResponse({"err": "Offset required via 'o' query param"})
+	else:
+	     	offset = int(request.GET['o'])
+
+	if limit > 250:
+		return JsonResponse({"err": "Limit cannot be higher than 250"})
+
+	dateone = datetime.fromtimestamp(int(request.GET['s']))
+	datetwo = datetime.fromtimestamp(int(request.GET['e']))
+	iable = Post.objects.filter(created__range=(dateone, datetwo)).order_by('-created')[offset:offset + limit]
+	resparr = []
+
+	for post in iable:
+		resparr.append({
+			'id': post.id,
+			'created': django.utils.dateformat.format(post.created, 'U'),
+			'user': post.creator.username,
+			'community': post.community_id,
+			'feeling': post.feeling,
+			'spoiler': post.spoils,
+			'content': (post.body or None),
+			'drawing': (post.drawing or None),
+			'screenshot': (post.screenshot or None),
+			'url': (post.url or None),
+		})
+
+	#return HttpResponse(msgpack.packb(resparr), content_type='application/x-msgpack')
+	return JsonResponse(resparr, safe=False)
+
+@login_required
 def admin_users(request):
 	if not request.user.can_manage():
 		raise Http404()
@@ -1355,13 +1405,18 @@ def admin_misc(request):
 		raise Http404()
 	if request.method == 'POST' and request.POST.get('action'):
 		# if this were PHP/JS/anything else, this would be a switch()
-		if request.POST['action'] == 'purge1' and request.POST.get('username'):
-			# purge1 - delete yeahs + yeah notifs given by a user
+		if request.POST.get('username'):
 			user = User.objects.filter(username__iexact=request.POST['username']).values_list('id', flat=True).first()
-			first = Yeah.objects.filter(by=user).delete()
-			second = Notification.objects.filter(Q(source=user, type=0) | Q(source=user, type=1)).delete()
-			return HttpResponse(str(first) + "\n\n" + str(second))
-		
+			if request.POST['action'] == 'purge1' and request.POST.get('username'):
+				# purge1 - delete yeahs + yeah notifs given by a user
+				first = Yeah.objects.filter(by=user).delete()
+				second = Notification.objects.filter(Q(source=user, type=0) | Q(source=user, type=1)).delete()
+				return HttpResponse(str(first) + "\n\n" + str(second))
+			elif request.POST['action'] == 'purge2' and request.POST.get('username'):
+				# purge2 - remove posts and comments by a user
+				first = Post.real.filter(creator=user).update(is_rm=True, status=5)
+				second = Comment.real.filter(creator=user).update(is_rm=True, status=5)
+				return HttpResponse(str(first) + "\n\n" + str(second))
 		return HttpResponseNotFound()
 	return render(request, 'closedverse_main/man/debug.html', {
 		'title': 'Misc utils',
