@@ -18,6 +18,11 @@
 		{% if community.type_platform %}{% load static %}	<img src="{% static community.type_platform %}">{% endif %}
 		</span>
       </span>
+	  {% if community.tags == 'announcements' %}
+	  <span class="news-community-badge">Announcement Community</span>
+	  {% elif community.tags == 'changelog' %}
+	  <span class="news-community-badge">Changelog Community</span>
+	  {% endif %}
       <h1 class="community-name">
         <a href="{% url "main:community-view" community.id %}">{{ community.name }}
         </a>      </h1>

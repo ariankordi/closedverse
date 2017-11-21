@@ -10,7 +10,8 @@ from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation, UserBlock, LoginAttempt
-from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime, nnid_blacked
+from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime, nnid_blacked, iphub
+from .serializers import CommunitySerializer
 from closedverse import settings
 import re
 from django.urls import reverse
@@ -42,6 +43,14 @@ def json_response(msg='', code=0, httperr=400):
 
 def community_list(request):
 	"""Lists communities / main page."""
+	if 'json' in request.META.get('HTTP_ACCEPT', ''):
+		cs = CommunitySerializer
+		response = {
+			'general': cs.many(Community.objects.filter(type=0).order_by('-created')),
+			'game': cs.many(Community.objects.filter(type=1).order_by('-created')),
+			'special': cs.many(Community.objects.filter(type=2).order_by('-created'))
+		}
+		return JsonResponse(response)
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -156,6 +165,13 @@ def login_page(request):
 			return HttpResponseBadRequest("You didn't fill in all of the fields.")
 		# Now let's authenticate.
 		# Wait, first check if the user exists. Remove spaces from the username, because some people do that.
+		# Hold up, first we need to check proxe.
+		if settings.PROD:
+			if iphub(request.META['REMOTE_ADDR']):
+				spamuser = True
+				if settings.disallow_proxy:
+					# This was for me, a server error will email admins of course.
+					raise ValueError
 		user = User.objects.authenticate(username=request.POST['username'].replace(' ', ''), password=request.POST['password'])
 		# None = doesn't exist, False = invalid password.
 		if user is None:
@@ -196,7 +212,7 @@ def signup_page(request):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
 		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
-		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']):
+		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
 		""" I thought of adding this but I don't want to for now
 		if settings.PROD:
@@ -244,6 +260,7 @@ def signup_page(request):
 			mii = None
 			gravatar = True
 		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST.get('email'), addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
+		LoginAttempt.objects.create(user=make, success=True, addr=request.META.get('REMOTE_ADDR'))
 		login(request, make)
 		request.session['passwd'] = make.password
 		return HttpResponse("/")
@@ -327,7 +344,7 @@ def user_view(request, username):
 		
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		if request.POST.get('email'):
+		if request.POST.get('email') and not request.POST.get('email') == 'None':
 			if User.email_in_use(request.POST['email'], request):
 				return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 			try:
@@ -898,13 +915,9 @@ def post_comments(request, post):
 		# Give the notification!
 		if post.is_mine(request.user):
 			users = []
-			all_comment_count = post.get_comments().count()
-			if all_comment_count > 20:
-				comments = post.get_comments(request, None, all_comment_count - 20)
-			else:
-				comments = post.get_comments(request)
+			comments = post.get_comments(request)
 			for comment in comments:
-				if not comment.creator == request.user:
+				if comment.creator != request.user:
 					users.append(comment.creator)
 			for user in users:
 				Notification.give_notification(request.user, 3, user, post)

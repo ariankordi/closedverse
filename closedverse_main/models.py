@@ -22,6 +22,12 @@ feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'fru
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
+# Like set() but orders
+def organ(seq):
+	seen = set()
+	seen_add = seen.add
+	return [x for x in seq if not (x in seen or seen_add(x))]
+
 class UserManager(BaseUserManager):
 	# idk why this is even here
 	def create_user(self, username, password):
@@ -73,6 +79,7 @@ class UserManager(BaseUserManager):
 		user.set_password(password)
 		user.staff = True
 		user.save()
+		profile = Profile.objects.model()
 		profile.user = user
 		profile.save()
 		return user
@@ -452,11 +459,9 @@ class User(models.Model):
 	def conversations(self):
 		return Conversation.objects.filter(Q(source=self) | Q(target=self)).order_by('-created')
 	def msg_count(self):
-		conversations = self.conversations()
-		count = 0
-		for conversation in conversations:
-			count += conversation.unread(self).count()
-		return count
+		# Gets messages with conversations I am involved in, then looks for those unread and not by me, gets count and returns it
+		messages = Message.objects.filter(Q(conversation__source=self.id) | Q(conversation__target=self.id)).filter(read=False).exclude(creator=self.id).count()
+		return messages
 	def password_reset_email(self, request):
 		htmlmsg = render_to_string('closedverse_main/help/email.html', {
 			'menulogo': request.build_absolute_uri(settings.STATIC_URL + 'img/menu-logo.png'),
@@ -606,7 +611,7 @@ class Community(models.Model):
 		if not self.post_perm(request):
 			return 4
 		limit = request.user.limit_remaining()
-		if not limit is False and not limit:
+		if not limit is False and not limit > 0:
 			return 8
 		del(limit)
 		if Post.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
@@ -626,7 +631,9 @@ class Community(models.Model):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
-		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
+		if request.POST.get('_post_type') == 'painting':
+			if not request.POST.get('painting'):
+				return 2
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
@@ -771,7 +778,7 @@ class Post(models.Model):
 		if not self.can_comment(request):
 			return False
 		limit = request.user.limit_remaining()
-		if not limit is False and not limit:
+		if not limit is False and not limit > 0:
 			return 8
 		del(limit)
 		if not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
@@ -786,7 +793,9 @@ class Post(models.Model):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
-		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
+		if request.POST.get('_post_type') == 'painting':
+			if not request.POST.get('painting'):
+				return 2
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
@@ -801,7 +810,7 @@ class Post(models.Model):
 	def change(self, request):
 		if not self.is_mine(request.user) or self.has_edit:
 			return 1
-		if not request.POST.get('body') or len(request.POST['body']) > 2200:
+		if len(request.POST['body']) > 2200 or len(request.POST['body']) < 1:
 			return 1
 		if not self.befores:
 			befores_json = []
@@ -938,7 +947,7 @@ class Comment(models.Model):
 	def change(self, request):
 		if not self.is_mine(request.user) or self.has_edit:
 			return 1
-		if not request.POST.get('body') or len(request.POST['body']) > 2200:
+		if len(request.POST['body']) > 2200 or len(request.POST['body']) < 1:
 			return 1
 		if not self.befores:
 			befores_json = []
@@ -1120,14 +1129,14 @@ class Notification(models.Model):
 			1: 'main:comment-view',
 			2: 'main:post-view',
 			3: 'main:post-view',
-			4: 'main:user-view',
+			4: 'main:user-followers',
 		}.get(self.type)
 		if self.type == 0 or self.type == 2 or self.type == 3:
 			what_id = self.context_post_id
 		elif self.type == 1:
 			what_id = self.context_comment_id
 		elif self.type == 4:
-			what_id = self.source.username
+			what_id = self.to.username
 		return reverse(what_type, args=[what_id])
 	def merge(self, user):
 		self.latest = timezone.now()
@@ -1148,15 +1157,16 @@ class Notification(models.Model):
 		if not self.merges:
 			u = []
 		else:
-			u = json.loads(self.merges)
+			u = organ(json.loads(self.merges))
 		arr = []
 		arr.append(self.source)
 		for user in u:
 			# Todo: Clean this up and make this block better
-			try:
-				arr.append(User.objects.get(id=user))
-			except:
-				pass
+			if not u in arr:
+				try:
+					arr.append(User.objects.get(id=user))
+				except:
+					pass
 		del(u)
 		return arr
 		"""
@@ -1329,7 +1339,9 @@ class Conversation(models.Model):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
 				return 2
-		if request.POST.get('painting') and request.POST.get('_post_type') == 'painting':
+		if request.POST.get('_post_type') == 'painting':
+			if not request.POST.get('painting'):
+				return 2
 			drawing = util.image_upload(request.POST['painting'])
 			if drawing == 1:
 				return 2
