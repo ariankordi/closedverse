@@ -31,9 +31,9 @@
       <div class="community-description js-community-description">
         <p class="text js-truncated-text">{{ community.description|linebreaksbr }}</p>
       </div>
+	  {% endif %}
 	  {% if request.user.is_authenticated %}
 		<button type="button" class="symbol button favorite-button{% if community.has_favorite %} checked{% endif %}" data-action-favorite="{% url "main:community-favorite-add" community.id %}" data-action-unfavorite="{% url "main:community-favorite-rm" community.id %}"><span class="favorite-button-text">Favorite</span></button>
-	  {% endif %}
 	  <!--<button class="button reload-btn">Refresh posts</button>
 	  -->
 	{% endif %}

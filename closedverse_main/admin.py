@@ -19,7 +19,7 @@ class UserForm(ModelForm):
 
 class UserAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', 'email', )
-	exclude = ('password', 'staff', )
+	exclude = ('staff', )
 	# Not yet
 	#form = UserForm
 
@@ -58,12 +58,12 @@ class MessageAdmin(admin.ModelAdmin):
 		return models.Message.real.get_queryset()
 
 class NotificationAdmin(admin.ModelAdmin):
-        raw_id_fields = ('to', 'source', 'context_post', 'context_comment', 'merged_with')
+        raw_id_fields = ('to', 'source', 'context_post', 'context_comment', )
         search_fields = ('unique_id', )
 
 class LoginAdmin(admin.ModelAdmin):
         raw_id_fields = ('user', )
-        search_fields = ('user', )
+        search_fields = ('user__username', )
 
 #class BlockAdmin(admin.ModelAdmin)
 

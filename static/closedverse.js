@@ -10,6 +10,12 @@ var pjax_container = '#container';
 // Edit: This used to match 'WebKit' but it's now Gecko because WebKit will have that in here anyway
 var webkit = navigator.userAgent.indexOf('WebKit') > 0 || navigator.userAgent.indexOf('Firefox') > 0;
 
+
+function chksum(r) {
+	for(var e=0,t=new Array(256),a=0;256!=a;++a)e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=a)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1,t[a]=e;for(var o,c="undefined"!=typeof Int32Array?new Int32Array(t):t,f=-1^0,A=0,d=r.length;A<d;)(e=r.charCodeAt(A++))<128?f=f>>>8^c[255&(f^e)]:e<2048?f=(f=f>>>8^c[255&(f^(192|e>>6&31))])>>>8^c[255&(f^(128|63&e))]:e>=55296&&e<57344?(e=64+(1023&e),o=1023&r.charCodeAt(A++),f=(f=(f=(f=f>>>8^c[255&(f^(240|e>>8&7))])>>>8^c[255&(f^(128|e>>2&63))])>>>8^c[255&(f^(128|o>>6&15|(3&e)<<4))])>>>8^c[255&(f^(128|63&o))]):f=(f=(f=f>>>8^c[255&(f^(224|e>>12&15))])>>>8^c[255&(f^(128|e>>6&63))])>>>8^c[255&(f^(128|63&e))];
+	return (-1^f) + '----/'
+}
+
 function setupDrawboard() {
 var canvas = document.getElementById("artwork-canvas");
 var ctx = canvas.getContext('2d');
@@ -27,6 +33,9 @@ var undoCanvas = document.getElementById('artwork-canvas-undo');
 var undoCtx = undoCanvas.getContext('2d');
 var redoCanvas = document.getElementById('artwork-canvas-redo');
 var redoCtx = redoCanvas.getContext('2d');
+undoCanvas.width = 320; undoCanvas.height = 120; 
+redoCanvas.width = 320; redoCanvas.height = 120; 
+canvas.width = 320; canvas.height = 120; 
 var mousePosOld = 0;
 var artworkTool = {type: 0, size: 1};
 var sizeSmall = 1;
@@ -208,7 +217,8 @@ var ctx = canvas.getContext('2d');
 $('.memo-finish-btn').on('click',function(){
 	var dataURL = canvas.toDataURL();
         if(typeof dataURL !== undefined) {
-        $("input[type=hidden][name=painting]").val(dataURL.split(",")[1]);
+			var img = dataURL.split(",")[1];
+        $("input[type=hidden][name=painting]").val(chksum(img) + img);
 		}
 	$("#drawing").remove();
 	$(".textarea-memo").append("<img id=\"drawing\" src=\"" + dataURL + "\" style=\"background:white;\"></img>");
@@ -3123,8 +3133,9 @@ mode_post = 0;
 				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.username + '"');
 				$('div.user-info').html(user.html);
 				$('input[name=username]').val(user.username);
-				$('input[name=nickname]').val(user.nickname);
-				$('input[name=nickname]').val(user.nickname);
+				$('input[name=email]').val(user.email);
+				$('input[name=addr]').val(user.addr);
+				$('form.goodform').attr('data-action', user.manager);
 				if(user.is_active) {
 					$('input[name=active]').attr('checked','');
 				} else {
@@ -3132,6 +3143,11 @@ mode_post = 0;
 				}
 				
 				var g = new b.ModalWindow($('#user-man-template'));g.open();
+				$('form.goodform').submit(function(a) {
+					a.preventDefault();
+					//alert('doing it');
+					b.Form.post($('form.goodform').attr('data-action'), $('form.goodform').serializeArray()).done(g.close());
+				})
 			}
 		b.Form.get('/users.html').done(function(a) {
 			$('.user-loads').html(a);
@@ -3140,11 +3156,11 @@ mode_post = 0;
 				NProgress.start();
 				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
 					NProgress.done();
-					openUserModal(a)
+					openUserModal(a);
 					b.print(a);
-				})
-			})
-		})
+				});
+			});
+		});
 	}),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
 		b.Closed.changesel('mymenu')
@@ -3338,7 +3354,8 @@ Olv.Locale.Data={
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false});
 $(document).on('pjax:error', function(event, xhr, textStatus, errorThrown, options) {
 Olv.Net.errorFeedbackHandler(event, textStatus, xhr, options);
-history.back();
+if(textStatus != 'abort') 
+	history.back();
 return false;
 });
 if(loading_animate) {

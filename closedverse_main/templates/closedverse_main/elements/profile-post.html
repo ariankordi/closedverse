@@ -29,7 +29,11 @@
 			{% if post.drawing %}
 			<p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 			{% else %}
-            <p class="post-content-text">{{ post.body|truncatechars:100|linebreaksbr }}</p>
+				{% if post.has_line_trun %}
+				<p class="post-content-text">{{ post.body|truncatechars:100 }}</p>
+				{% else %}
+				<p class="post-content-text">{{ post.body|truncatechars:100|linebreaksbr }}</p>
+				{% endif %}
 			{% endif %}
 			{% if post.spoils and not post.is_mine %}
 			<div class="hidden-content"><p>This post contains spoilers.

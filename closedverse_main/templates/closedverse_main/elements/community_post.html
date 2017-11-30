@@ -29,7 +29,11 @@
 			{% if post.drawing %}
 			<p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 			{% else %}
-            <p class="post-content-text">{{ post.body|truncatechars:200|linebreaksbr }}</p>
+				{% if post.has_line_trun %}
+				<p class="post-content-text">{{ post.body|truncatechars:200 }}</p>
+				{% else %}
+				<p class="post-content-text">{{ post.body|truncatechars:200|linebreaksbr }}</p>
+				{% endif %}
 			{% endif %}
 			{% if post.screenshot %}<a class="screenshot-container still-image" href="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}"><img src="{{ post.screenshot }}"></a>{% endif %}
 		{% if post.spoils and not post.is_mine %}

@@ -182,8 +182,10 @@ def login_page(request):
 			LoginAttempt.objects.create(user=user[0], success=successful, addr=request.META.get('REMOTE_ADDR'))
 			if user[1] is False:
 				return HttpResponse("Invalid password.", status=401)
+			elif user[1] is 2:
+				return HttpResponse("This account's password needs to be reset. Contact an admin or reset by email.", status=400)
 			elif not user[0].is_active():
-				return HttpResponseForbidden("This user was disabled.")
+				return HttpResponseForbidden("This account was disabled.")
 		request.session['passwd'] = user[0].password
 		login(request, user[0])
 		
@@ -330,7 +332,7 @@ def user_view(request, username):
 		if profile.cannot_edit:
 			nick_old = user.nickname
 			avatar_old = user.avatar
-		if not request.POST.get('screen_name') or len(request.POST['screen_name']) > 32 and not request.user.is_staff():
+		if request.POST.get('screen_name') is None or len(request.POST['screen_name']) > 32 and not request.user.is_staff():
 			return json_response('Nickname is too long or too short (length '+str(len(request.POST.get('screen_name')))+', max 32)')
 		if len(request.POST.get('profile_comment')) > 2200:
 			return json_response('Profile comment is too long (length '+str(len(request.POST.get('profile_comment')))+', max 2200)')
@@ -1126,7 +1128,8 @@ def notifications(request):
 		'notifications': notifications,
 		'frs': frs,
 	}, request)
-	update = request.user.notification_read()
+	request.user.notification_read()
+	request.user.notifications_clean()
 	return HttpResponse(response)
 @login_required
 def friend_requests(request):
@@ -1395,26 +1398,33 @@ def admin_users(request):
 		raise Http404()
 	return render(request, 'closedverse_main/man/users.html', {
 		'title': 'User management',
-		
 	})
 @login_required
-def user_manager(request, user):
+def user_manager(request, username):
 	if not request.user.can_manage():
 		raise Http404()
-	user = get_object_or_404(User, unique_id=user)
+	user = get_object_or_404(User, username=username)
+	if request.method == 'POST':
+		user.username = request.POST['username']
+		user.email = request.POST['email']
+		user.active = False if request.POST.get('active') is None else True
+		user.save()
+		return HttpResponse()
 	return JsonResponse({
 		'id': user.id,
 		'username': user.username,
-		'nickname': user.nickname,
+		'email': user.email,
 		'is_active': user.is_active(),
 		'addr': user.addr,
+		'manager': reverse('main:user-manager', args=[username]),
+		#'logins': LoginAttempt.objects.filter()[:20],
 		#'shared_addrs': User.format_queryset(user.find_shared_ip()),
 		'html': loader.get_template('closedverse_main/elements/user-sidebar-info.html').render({'user': user}, request)
 	})
 
 @login_required
 def admin_misc(request):
-	if not request.user.is_staff():
+	if not request.user.can_manage():
 		raise Http404()
 	if request.method == 'POST' and request.POST.get('action'):
 		# if this were PHP/JS/anything else, this would be a switch()
@@ -1495,7 +1505,9 @@ def help_contact(request):
 	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})
 def help_why(request):
 	return render(request, 'closedverse_main/help/why.html', {'title': "Why even join Closed?"})
-
+def help_login(request):
+	return render(request, 'closedverse_main/help/login-help.html', {'title': "Login help"})
+	
 
 def csrf_fail(request, reason):
 	return HttpResponseBadRequest("The CSRF check has failed.\nYour browser might not support cookies, or you need to refresh.")

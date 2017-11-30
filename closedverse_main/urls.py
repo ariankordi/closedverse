@@ -23,7 +23,7 @@ urlpatterns = [
 	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
 	# User pages
-	url(r'users/(?P<user>'+ uuidr +'+)\.manager$', views.user_manager, name='user-manager'),
+	url(r'users/'+ username +'\.manager$', views.user_manager, name='user-manager'),
 	url(r'users/'+ username +'\.follow.json$', views.user_follow, name='user-follow'),
 	url(r'users/'+ username +'\.unfollow.json$', views.user_unfollow, name='user-unfollow'),
 	url(r'users/'+ username +'$', views.user_view, name='user-view'),
@@ -95,6 +95,7 @@ urlpatterns = [
 	url(r'help/faq/?$', views.help_faq, name='help-faq'),
 	url(r'help/legal/?$', views.help_legal, name='help-legal'),
 	url(r'help/contact/?$', views.help_contact, name='help-contact'),
+	url(r'help/login/?$', views.help_login, name='help-login'),
 	url(r'why/?$', views.help_why, name='help-why'),
 	
 	# Manage

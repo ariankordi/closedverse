@@ -1,0 +1,30 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column" id="help">
+<div class="post-list-outline">
+    <h2 class="label">Login help</h2>
+    <div id="guide" class="help-content">
+      <div class="faq">
+        <p>I made this page because I had way too many people emailing me complaining that they couldn't log in.</p>
+		
+		<h2>It says that my user doesn't exist, but it does.</h2>
+		<p>Have you turned on email only login? It can only be on if you have an email address, so if you don't have one, it isn't on.<br>If it is on, please try logging in with your email address. Thank you.</p>
+		
+		<h2>I forgot my password and I don't have an email address.</h2>
+		<p>In this case, the only solution is to contact an admin and they will most probably give you a password reset link.</p>
+		
+		<h2>I'm getting "Your password must be reset"?</h2>
+		<p>This means that your password must be reset. Reset it via email, or ask an admin to reset it. In most cases, an admin has emailed you a password reset link.</p>
+		
+		<h2>i"m bEinG hAcKeD!!!!!!!!!!</h2>
+		<p>If others are in your account, no worry, when you change your password, everyone gets logged out.<br>
+		Unless your email was changed or you don't have one, in that case, contact an admin and they will help you ASAP.
+		<br><br>You should use a random password and keep it in your notes or something. In most cases, public user accounts are made due to one character passwords. Please do not use one character passwords.
+		<br>If you don't think your password is secure, but your e-mail address is secure, you can choose to have your account only be logged into via your email address, so that nobody can go into your account with your <i>public username</i> and try it.</p>
+       
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

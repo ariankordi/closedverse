@@ -100,7 +100,7 @@ class UserManager(BaseUserManager):
 			passwd = user.check_password(password)
 		# Check if the password is a valid bcrypt
 		except ValueError:
-			return (user, False)
+			return (user, 2)
 		else:
 			if not passwd:
 				if user.can_manage():
@@ -186,6 +186,10 @@ class User(models.Model):
 	def has_plain_avatar(self):
 		if not self.has_mh and 'http' in self.avatar and not 'gravatar.com' in self.avatar:
 			return True
+	def has_avatar(self):
+		if not self.avatar or len(self.avatar) == 1:
+			return False
+		return True
 	def let_yeahnotifs(self):
 		return self.profile('let_yeahnotifs')
 	def limit_remaining(self):
@@ -331,20 +335,17 @@ class User(models.Model):
 	def get_followers(self, limit=50, offset=0, request=None):
 		return self.follow_target.filter().order_by('-created')[offset:offset + limit]
 	def notification_count(self):
-		return self.notification_to.filter(read=False, merged_with=None).count()
+		return self.notification_to.filter(read=False).count()
 	def notification_read(self):
 		return self.notification_to.filter(read=False).update(read=True)
 	def get_notifications(self):
-		return self.notification_to.select_related('context_post').select_related('context_comment').select_related('source').filter(merged_with=None).order_by('-latest')[0:64]
-	""" Broken - gives segfault
-	notifications_new = self.notification_ids()
-	self.notification_set.exclude(id__in=notifications_new).delete()
-	def notification_ids(self):
-		notifications = list(self.notification_to.filter(merged_with=None).values_list('id', flat=True)[0:64])
-		for notification in notifications:
-			merges = self.notification_to.filter(merged_with=notification)
-			notifications.append(merges)
-	"""
+		return self.notification_to.select_related('context_post').select_related('context_comment').select_related('source').filter().order_by('-latest')[0:64]
+	def notifications_clean(self):
+		""" Broken - gives OperationError on MySQL
+		notif_get = self.notification_to.all().values_list('id', flat=True)
+		if notif_get.count() > 64:
+			self.notification_to.filter().exclude(id__in=notif_get).delete()
+		"""
 			
 	# Admin can-manage
 	def can_manage(self):
@@ -379,19 +380,28 @@ class User(models.Model):
 	def reject_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr.first().finish()
+			try:
+				fr.first().finish()
+			except:
+				pass
 	def send_fr(self, source, body=None):
 		if not self.get_fr(source):
 			return FriendRequest.objects.create(source=source, target=self, body=body)
 	def accept_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
-			fr.first().finish()
+			try:
+				fr.first().finish()
+			except:
+				pass
 			return Friendship.objects.create(source=self, target=target)
 	def cancel_fr(self, target):
 		fr = target.get_fr(self)
 		if fr:
-			fr.first().finish()
+			try:
+				fr.first().finish()
+			except:
+				pass
 	def read_fr(self):
 		return self.get_frs_target().update(read=True)
 	def delete_friend(self, target):
@@ -473,9 +483,10 @@ class User(models.Model):
 		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
 	def find_shared_ip(self):
 		return User.objects.filter(addr=self.addr).exclude(id=self.id)
-
+	@staticmethod
 	def search(query='', limit=50, offset=0, request=None):
 		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
+	@staticmethod
 	def email_in_use(addr, request=None):
 		if not addr:
 			return False
@@ -483,6 +494,7 @@ class User(models.Model):
 			return User.objects.filter(email__iexact=addr).exclude(id=request.user.id).exists()
 		else:
 			return User.objects.filter(email__iexact=addr).exists()
+	@staticmethod
 	def nnid_in_use(id, request=None):
 		if not id:
 			return False
@@ -491,6 +503,7 @@ class User(models.Model):
 			return Profile.objects.filter(origin_id__iexact=nnid_real).exclude(user__id=request.user.id).exists()
 		else:
 			return Profile.objects.filter(origin_id=id).exists()
+	@staticmethod
 	def get_from_passwd(passwd):
 		try:
 			user = User.objects.get(password=base64.urlsafe_b64decode(passwd))
@@ -498,25 +511,6 @@ class User(models.Model):
 		except:
 			return False
 		return user
-
-	def format_queryset(users):
-		user_list = []
-		for user in users:
-			user_dict = model_to_dict(user)
-			del(user_dict['password'], user_dict['staff'], user_dict['origin_id'])
-			user_dict['online_status'] = user.online_status(force=True)
-			try:
-				user_dict['origin_info'] = loads(user.profile('origin_info'))
-			except:
-				user_dict['origin_info'] = None
-			user_dict['unique_id'] = str(user.unique_id)
-			user_dict['created'] = user.created
-			user_dict['last_login'] = user.last_login
-			user_dict['avatar'] = user.do_avatar()
-			user_dict['num_posts'] = [user.num_posts(), reverse('main:user-posts', args=[user.id]), ]
-			user_list.append(user_dict)
-			del(user_dict)
-		return user_list
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -634,7 +628,7 @@ class Community(models.Model):
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
 				return 2
-			drawing = util.image_upload(request.POST['painting'])
+			drawing = util.image_upload(request.POST['painting'], False, True)
 			if drawing == 1:
 				return 2
 		# Check for spam using our OWN ALGO!!!!!!!!!
@@ -711,6 +705,10 @@ class Post(models.Model):
 		except:
 			return False
 		return thing
+	def has_line_trun(self):
+		if self.body and len(self.body.splitlines()) > 10:
+			return True
+		return False
 	def is_mine(self, user):
 		if user.is_authenticated:
 			return (self.creator == user)
@@ -781,7 +779,9 @@ class Post(models.Model):
 		if not limit is False and not limit > 0:
 			return 8
 		del(limit)
-		if not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=2)).exists():
+			return 3
+		elif not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
@@ -796,7 +796,7 @@ class Post(models.Model):
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
 				return 2
-			drawing = util.image_upload(request.POST['painting'])
+			drawing = util.image_upload(request.POST['painting'], False, True)
 			if drawing == 1:
 				return 2
 		new_post = self.comment_set.create(body=request.POST.get('body'), creator=request.user, community=self.community, original_post=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), drawing=drawing, screenshot=upload)
@@ -1113,7 +1113,6 @@ class Notification(models.Model):
 	(3, 'Comment on others\' post'),
 	(4, 'Follow to me'),
 	))
-	merged_with = models.ForeignKey('self', related_name='merged', null=True, blank=True)
 	merges = models.TextField(blank=True, default='')
 	context_post = models.ForeignKey(Post, null=True, blank=True)
 	context_comment = models.ForeignKey(Comment, null=True, blank=True)
@@ -1184,13 +1183,14 @@ class Notification(models.Model):
 		else:
 			self.source.is_following = False
 	# In the future, please put giving notifications for classes into their respective classes (right now they're in views)
+	@staticmethod
 	def give_notification(user, type, to, post=None, comment=None):
 		# Just keeping this simple for now, might want to make it better later
 		# If the user sent a notification to this user at least 5 seconds ago, return False
 		# Or if user is to
 		# Or if yeah notifications are off and this is a yeah notification
 		user_is_self_unk = (not type == 3 and user == to)
-		is_notification_too_fast = user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), type=type).exclude(type=4)
+		is_notification_too_fast = (user.notification_sender.filter(created__gt=timezone.now() - timedelta(seconds=5), type=type).exclude(type=4) and not type == 3)
 		user_no_yeahnotif = (not to.let_yeahnotifs() and (type == 0 or type == 1))
 		if user_is_self_unk or is_notification_too_fast or user_no_yeahnotif:
 			return False
@@ -1266,7 +1266,7 @@ class Friendship(models.Model):
 		if not conv:
 			return Conversation.objects.create(source=self.source, target=self.target)
 		return conv.first()
-
+	@staticmethod
 	def get_friendships(user, limit=50, offset=0, latest=False, online_only=False):
 		if not limit:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')
@@ -1287,8 +1287,10 @@ class Friendship(models.Model):
 				return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-latest')[offset:offset + limit]
 		else:
 			return Friendship.objects.filter(Q(source=user) | Q(target=user)).order_by('-created')[offset:offset + limit]
+	@staticmethod
 	def find_friendship(first, second):
 		return Friendship.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).order_by('-created').first()
+	@staticmethod
 	def get_friendships_message(user, limit=20, offset=0, online_only=False):
 		friends_list = Friendship.get_friendships(user, limit, offset, True, online_only)
 		friends = []
@@ -1342,7 +1344,7 @@ class Conversation(models.Model):
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
 				return 2
-			drawing = util.image_upload(request.POST['painting'])
+			drawing = util.image_upload(request.POST['painting'], False, True)
 			if drawing == 1:
 				return 2
 		new_post = self.message_set.create(body=request.POST.get('body'), creator=request.user, feeling=int(request.POST.get('feeling_id', 0)), drawing=drawing, screenshot=upload)
@@ -1480,7 +1482,20 @@ class UserBlock(models.Model):
 	def __str__(self):
 		return "Block created from " + str(self.source) + " to " + str(self.target)
 
+	@staticmethod
 	def find_block(first, second, full=False):
 		if full:
 			return UserBlock.objects.filter(Q(source=first, full=True) & Q(target=second, full=True) | Q(target=first, full=True) & Q(source=second, full=True)).exists()
 		return UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).exists()
+
+class AuditLog(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), ))
+	post = models.ForeignKey(Post, related_name='audit_post', null=True)
+	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True)
+	user = models.ForeignKey(User, related_name='audit_user', null=True)
+	by = models.ForeignKey(User, related_name='audit_by')
+	
+	def __str__(self):
+		return str(by) + " did " + self.get_type_display() + " at " + str(self.created)

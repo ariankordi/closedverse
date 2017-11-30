@@ -9,6 +9,7 @@ import time
 import os.path
 from PIL import Image, ExifTags, ImageFile
 from datetime import datetime
+from binascii import crc32
 from math import floor
 from hashlib import md5, sha1
 # lol bye Cloudinary, see you another day
@@ -77,7 +78,10 @@ def get_mii(id):
 	except:
 		return False
 	del(mii)
-	miihash = mii_dec[0][2][0][0].text.split('.net/')[1].split('_')[0]
+	try:
+		miihash = mii_dec[0][2][0][0].text.split('.net/')[1].split('_')[0]
+	except IndexError:
+		miihash = None
 	screenname = mii_dec[0][3].text
 	nnid = mii_dec[0][6].text
 	del(mii_dec)
@@ -96,15 +100,23 @@ def recaptcha_verify(request, key):
 	return True
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-def image_upload(img, stream=False):
+def image_upload(img, stream=False, drawing=False):
 	if stream:
 		decodedimg = img.read()
 	else:
-		if img == 'iVBORw0KGgoAAAANSUhEUgAAAUAAAAB4CAYAAACDziveAAADi0lEQVR4Xu3UAQ0AMAwCwc2/aJbMxl8dcDTcbTuOAAECQYFrAIOti0yAwBcwgB6BAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECBhAP0CAQFbAAGarF5wAAQPoBwgQyAoYwGz1ghMgYAD9AAECWQEDmK1ecAIEDKAfIEAgK2AAs9ULToCAAfQDBAhkBQxgtnrBCRAwgH6AAIGsgAHMVi84AQIG0A8QIJAVMIDZ6gUnQMAA+gECBLICBjBbveAECDyPXt6oD5NyewAAAABJRU5ErkJggg==':
-			return 1
+		# Brand New drawing checksum
+		# Never mind
+		if drawing:
+			if not '----/' in img:
+				return 1
+			hasha = img.split('----/')
+			# Appears to be broken; works some of the time, other times 
+			#if not 0 > int(hasha[0]) and crc32(bytes(hasha[1], 'utf-8')) != int(hasha[0]):
+			#	return 1
+			img = hasha[1]
 		try:
 			decodedimg = base64.b64decode(img)
-		except binascii.Error:
+		except ValueError:
 			return 1
 	if stream:
 		if not 'image' in img.content_type:
@@ -133,6 +145,12 @@ def image_upload(img, stream=False):
 			if orientation in rotations:
 				im = im.transpose(rotations[orientation])
 	im.thumbnail((1280, 1280), Image.ANTIALIAS)
+	
+	# Let's check the aspect ratio and see if it's crazy
+	# IF this is a drawing
+	if drawing and ((im.size[0] / im.size[1]) < 0.30):
+		return 1
+	
 	# I know some people have aneurysms when they see people actually using SHA1 in the real world, for anything in general.
 	# Yes, we are really using it. Sorry if that offends you. It's just fast and I don't feel I need anything more random, since we are talking about IMAGES.
 	imhash = sha1(im.tobytes()).hexdigest()
