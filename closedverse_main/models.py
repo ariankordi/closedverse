@@ -1198,12 +1198,9 @@ class Notification(models.Model):
 		merge_own = user.notification_sender.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
 		if merge_own:
 			# If it's merged, don't unread that one, but unread what it's merging.
-			if merge_own.first().merged_with:
-				return merge_own.first().merged_with.set_unread()
-			else:
-				return merge_own.first().set_unread()
+			return merge_own.first().set_unread()
 		# Search for a notification already there so we can merge with it if it exists
-		merge_s = Notification.objects.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment, merged_with=None)
+		merge_s = Notification.objects.filter(created__gt=timezone.now() - timedelta(hours=8), to=to, type=type, context_post=post, context_comment=comment)
 		# If it exists, merge with it. Else, create a new notification.
 		if merge_s:
 			return merge_s.first().merge(user)
