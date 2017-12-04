@@ -99,8 +99,8 @@ urlpatterns = [
 	url(r'why/?$', views.help_why, name='help-why'),
 	
 	# Manage
+	url(r'man/?$', views.admin_index, name='admin-index'),
 	url(r'man/users$', views.admin_users, name='admin-users'),
-	url(r'man/debug$', views.admin_misc, name='admin-misc'),
 	
 	
 	# "API"

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Count, Exists, OuterRef
 from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation, UserBlock, LoginAttempt
 from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime, nnid_blacked, iphub
 from .serializers import CommunitySerializer
@@ -16,12 +16,14 @@ from closedverse import settings
 import re
 from django.urls import reverse
 from random import getrandbits
+from random import choice
 from json import dumps, loads
 import sys, traceback
-from random import choice
 from subprocess import Popen, PIPE
 from datetime import datetime
 import django.utils.dateformat
+from binascii import hexlify
+from os import urandom
 
 #from silk.profiling.profiler import silk_profile
 
@@ -216,12 +218,10 @@ def signup_page(request):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
-		""" I thought of adding this but I don't want to for now
 		if settings.PROD:
 			for keyword in ['admin', 'admln', 'adrnin', 'admn', ]:
 				if keyword in request.POST['username'].lower():
-					return HttpResponseForbidden("You aren't funny.")
-		"""
+					return HttpResponseForbidden("You aren't funny. Please use a funny name.")
 		try:
 			al_exist = User.objects.get(username__iexact=request.POST['username'])
 		except User.DoesNotExist:
@@ -412,6 +412,8 @@ def user_view(request, username):
 	posts = user.get_posts(3, 0, request)
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
+		if user.is_me(request):
+			yeah.post.yeah_given = True
 		yeah.post.setup(request)
 	fr = None
 	if request.user.is_authenticated:
@@ -508,8 +510,12 @@ def user_yeahs(request, username):
 	posts = []
 	for yeah in yeahs:
 		if yeah.type == 1:
+			if user.is_me(request):
+				yeah.comment.yeah_given = True
 			posts.append(yeah.comment)
 		else:
+			if user.is_me(request):
+				yeah.post.yeah_given = True
 			posts.append(yeah.post)
 	for post in posts:
 		post.setup(request)
@@ -809,7 +815,11 @@ def post_create(request, community):
 		raise Http404()
 
 def post_view(request, post):
-	post = get_object_or_404(Post, id=post)
+	has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
+	try:
+		post = Post.objects.annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).get(id=post)
+	except Post.DoesNotExist:
+		raise Http404()
 	post.setup(request)
 	if post.poll:
 		post.poll.setup()
@@ -821,7 +831,7 @@ def post_view(request, post):
 		title = 'Your post'
 	else:
 		title = '{0}\'s post'.format(post.creator.nickname)
-	all_comment_count = post.get_comments().count()
+	all_comment_count = post.number_comments()
 	if all_comment_count > 20:
 		comments = post.get_comments(request, None, all_comment_count - 20)
 	else:
@@ -927,7 +937,7 @@ def post_comments(request, post):
 			Notification.give_notification(request.user, 2, post.creator, post)
 		return render(request, 'closedverse_main/elements/post-comment.html', { 'comment': new_post })
 	else:
-		comment_count = post.get_comments().count()
+		comment_count = post.number_comments()
 		if comment_count > 20:
 			comments = post.get_comments(request, comment_count - 20, 0)
 			return render(request, 'closedverse_main/elements/post_comments.html', { 'comments': comments })
@@ -1333,10 +1343,10 @@ def users_list(request):
 	if limit > 250:
 		return HttpResponseBadRequest()
 
-	if request.GET.get('query'):
-		if len(request.GET['query']) < 2:
+	if request.GET.get('q'):
+		if len(request.GET['q']) < 2:
 			return HttpResponseBadRequest()
-		users = User.search(request.GET['query'], limit, offset, request)
+		users = User.search(request.GET['q'], limit, offset, request)
 	else:
 		users = User.objects.filter().order_by('-created').exclude(staff=True, level__gte=request.user.level)[offset:offset + limit]
 	# I don't know if this will work or not, it might break cURL and such but whom cares anyway
@@ -1423,26 +1433,53 @@ def user_manager(request, username):
 	})
 
 @login_required
-def admin_misc(request):
+def admin_index(request):
 	if not request.user.can_manage():
 		raise Http404()
 	if request.method == 'POST' and request.POST.get('action'):
 		# if this were PHP/JS/anything else, this would be a switch()
 		if request.POST.get('username'):
-			user = User.objects.filter(username__iexact=request.POST['username']).values_list('id', flat=True).first()
-			if request.POST['action'] == 'purge1' and request.POST.get('username'):
+			user = User.objects.filter(username__iexact=request.POST['username'])
+			if not user.exists():
+				return json_response("User not found")
+			user = user.first()
+			if user.can_manage():
+				return json_response("User is admin")
+			if request.POST['action'] == 'purge1':
 				# purge1 - delete yeahs + yeah notifs given by a user
 				first = Yeah.objects.filter(by=user).delete()
 				second = Notification.objects.filter(Q(source=user, type=0) | Q(source=user, type=1)).delete()
 				return HttpResponse(str(first) + "\n\n" + str(second))
-			elif request.POST['action'] == 'purge2' and request.POST.get('username'):
+			elif request.POST['action'] == 'purge2':
 				# purge2 - remove posts and comments by a user
 				first = Post.real.filter(creator=user).update(is_rm=True, status=5)
 				second = Comment.real.filter(creator=user).update(is_rm=True, status=5)
 				return HttpResponse(str(first) + "\n\n" + str(second))
+			elif request.POST['action'] == 'purge3':
+				# purge3 - remove friendships and messages of a user
+				first = Message.real.filter(creator=user).update(is_rm=True)
+				second = Friendship.objects.filter(Q(source=user) | Q(target=user)).delete()
+				return HttpResponse(str(first) + "\n\n" + str(second))
+			elif request.POST['action'] == 'purge4':
+				# purge3 - remove following of a user
+				first = Follow.objects.filter(source=user).delete()
+				return HttpResponse(str(first))
+			elif request.POST['action'] == 'purge5':
+				# purge5 - Rename nickname, change avatar to Discordapp joke XDlol, don't let them change it back
+				nicky = "Deleted User " + hexlify(urandom(4)).decode()
+				avatar = "https://cdn.discordapp.com/embed/avatars/" + choice(['0', '1', '2', '3', '4']) + ".png"
+				user.nickname = nicky
+				user.avatar = avatar
+				user.has_mb = False
+				user.save()
+				prof = user.profile()
+				prof.cannot_edit = True
+				first = user.save()
+				second = prof.save()
+				return HttpResponse(nicky + "\n\n" + avatar)
 		return HttpResponseNotFound()
-	return render(request, 'closedverse_main/man/debug.html', {
-		'title': 'Misc utils',
+	return render(request, 'closedverse_main/man/main.html', {
+		'title': 'Admin management',
 	})
 
 @require_http_methods(['POST'])

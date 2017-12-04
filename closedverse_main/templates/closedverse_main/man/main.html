@@ -1,0 +1,86 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}{% load closedverse_tags %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column"><div class="post-list-outline">
+<h2 class="label">{{ title }}</h2>
+<div class="setting-form">
+<ul class="settings-list">
+	<h2 class="label">Management pages</h2>
+      <li class="setting-userman-go">
+        <p class="settings-label"><h3>User management</h3>
+		<br>Delete (new) users, disable people, see email addresses, change username, give profile editing restriction</p>
+			<button class="button" data-href="{% url "main:admin-users" %}">Go</button>
+      </li>
+	  <br>That's it for now
+	  <!--
+	  <li class="setting-userman-go">
+        <p class="settings-label"><h3>Server management</h3>
+		<br>Force logins, enable account approval.</p>
+			<br>Todo
+      </li>
+	  <li class="setting-userman-go">
+        <p class="settings-label"><h3>Images view</h3>
+		<br>Look at images posted on this server to identify bad activity, trace back, and delete.</p>
+			<br>Todo
+      </li>
+	  <li class="setting-userman-go">
+        <p class="settings-label"><h3>Audit log</h3>
+		<br>It's an audit log.</p>
+			<br>Todo
+      </li>
+	  -->
+	<h2 class="label">Bulk deletion stuff (janky, more or less temporary)</h2>
+      <li class="setting-pruge1">
+        <p class="settings-label">Purge ALL yeahs + yeah notifications by a user (permanent)</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge1">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button">Do it</button>
+		</form>
+      </li>
+      <li class="setting-pruge2">
+        <p class="settings-label">Purge ALL posts + comments by a user (recoverable)</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge2">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button">Do it</button>
+		</form>
+      </li>
+      <li class="setting-pruge3">
+        <p class="settings-label">Delete all of a user's friendships and messages</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge3">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button">Do it</button>
+		</form>
+      </li>
+      <li class="setting-pruge4">
+        <p class="settings-label">Delete a user's following list</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge4">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button">Do it</button>
+		</form>
+      </li>
+      <li class="setting-pruge5">
+        <p class="settings-label">Rename a user, change their avatar, and don't let them change it back to something else</p>
+		<form>
+			<div class="center center-input">
+				<input type="hidden" name="action" value="purge5">
+				<input type="text" name="username" maxlength="32" placeholder="Username" value="">
+			</div>
+			<button class="button">Do it</button>
+		</form>
+      </li>
+
+
+</ul></div></div></div>
+{% endblock %}

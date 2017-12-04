@@ -608,6 +608,9 @@ var Olv = Olv || {};
             a(window).on("click submit", this.onMayLeavePage)
         },
         onDataHrefClick: function(c) {
+			if (a(c.target).attr("data-href")) {
+                b.Net.go($(this).attr("data-href"));
+			}
             if (!c.isDefaultPrevented() && !a(c.target).closest("a,button").length) {
                 var d = a(this);
                 if (!d.hasClass("disabled")) {
@@ -3128,6 +3131,48 @@ mode_post = 0;
 			});
 		})
 	}),
+		b.router.connect("^/man/?$", function(c, d, e) {
+			$('li.setting-pruge1 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? This is PERMANENT!!!!!!!!")) {
+					Olv.Form.post(location.href, $('li.setting-pruge1 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
+			$('li.setting-pruge2 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? This is recoverable.")) {
+					Olv.Form.post(location.href, $('li.setting-pruge2 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
+			$('li.setting-pruge3 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? Friendships can't be recovered.")) {
+					Olv.Form.post(location.href, $('li.setting-pruge3 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
+			$('li.setting-pruge4 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? This is permanent.")) {
+					Olv.Form.post(location.href, $('li.setting-pruge4 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
+			$('li.setting-pruge5 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? This is permanent.")) {
+					Olv.Form.post(location.href, $('li.setting-pruge5 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
+		}),
     	b.router.connect("^/man/users$", function(c, d, e) {
 			function openUserModal(user) {
 				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.username + '"');
@@ -3137,9 +3182,9 @@ mode_post = 0;
 				$('input[name=addr]').val(user.addr);
 				$('form.goodform').attr('data-action', user.manager);
 				if(user.is_active) {
-					$('input[name=active]').attr('checked','');
+					$('input[name=active]').prop('checked', true);
 				} else {
-					$('input[name=active]').removeAttr('checked');
+					$('input[name=active]').prop('checked', false);
 				}
 				
 				var g = new b.ModalWindow($('#user-man-template'));g.open();
@@ -3149,7 +3194,7 @@ mode_post = 0;
 					b.Form.post($('form.goodform').attr('data-action'), $('form.goodform').serializeArray()).done(g.close());
 				})
 			}
-		b.Form.get('/users.html').done(function(a) {
+		b.Form.get('/users.html' + location.search).done(function(a) {
 			$('.user-loads').html(a);
 			b.Content.autopagerize('#user-man-list', e);
 			$('button.user-manage').on('click',function() {

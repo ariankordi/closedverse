@@ -19,7 +19,7 @@ class UserForm(ModelForm):
 
 class UserAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'username', 'nickname', 'addr', 'email', )
-	exclude = ('staff', )
+	#exclude = ('staff', )
 	# Not yet
 	#form = UserForm
 

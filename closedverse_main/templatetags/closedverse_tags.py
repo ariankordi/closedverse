@@ -49,7 +49,7 @@ def empathy_txt(feeling=0, has=False):
 	3: 'Yeah!?',
 	4: 'Yeah...',
 	5: 'Yeah...',
-	6: 'Nyeah~',
+	38: 'Nyeah~',
 	69: 'olv.portal.miitoo.',
 	}.get(feeling, 'Yeah!')
 	# olv.portal.miitoo is going to be the only easter egg in this thing ever

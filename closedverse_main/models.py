@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q, QuerySet, Max, F, Count, Case, When
+from django.db.models import Q, QuerySet, Max, F, Count, Case, When, Exists, OuterRef
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.utils.dateformat import format
@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 import re
 
-feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (6, 'japan'), (69, 'easter egg'), )
+feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (69, 'easter egg'), )
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
@@ -123,7 +123,7 @@ class User(models.Model):
 	email = models.EmailField(null=True, blank=True, default='')
 	has_mh = models.BooleanField(default=False)
 	avatar = models.CharField(max_length=1200, blank=True, default='')
-	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'urapp'), (2, 'moderator'), (3, 'admin'), (5, 'pf2m'), (10, 'master')))
+	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'moderator'), (3, 'trusted (admin without icon)'), (4, 'admin'), (5, 'pf2m'), (10, 'master')))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
 	hide_online = models.BooleanField(default=False)
@@ -209,16 +209,19 @@ class User(models.Model):
 		
 	def get_class(self):
 			first = {
-			1: 'urapp',
+			1: 'tester',
 			2: 'moderator',
-			#3: 'administrator',
+			3: '',
+			4: 'administrator',
 			5: 'openverse',
 			10: 'developer',
 			}.get(self.level, '')
 			second = {
-			1: "cave story official #1 fan",
+			1: "Bot",
 			2: "Moderator",
-			#3: "Admin",
+			3: "",
+			# 3 is trusted, do not give it anything cool
+			4: "Admin",
 			5: "O-PHP-enverse Man",
 			10: "Friendship ended with PHP / Now PYTHON is my best friend",
 			}.get(self.level, '')
@@ -287,6 +290,8 @@ class User(models.Model):
 			return False
 		if self == me:
 			return True
+		#if hasattr(self, 'has_follow'):
+		#	return self.has_follow
 		return self.follow_target.filter(source=me).count() > 0
 	def follow(self, source):
 		if self.is_following(source) or source == self:
@@ -311,14 +316,22 @@ class User(models.Model):
 			return False
 		return UserBlock.objects.create(source=source, target=self, full=full)
 	def get_posts(self, limit=50, offset=0, request=None):
-		posts = self.post_set.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter().order_by('-created')[offset:offset + limit]
+		if request.user.is_authenticated:
+			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
+			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
+		else:
+			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter().order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
 		return posts
 	def get_comments(self, limit=50, offset=0, request=None):
-		posts = self.comment_set.select_related('creator').filter().order_by('-created')[offset:offset + limit]
+		if request.user.is_authenticated:
+			has_yeah = Yeah.objects.filter(comment=OuterRef('id'), by=request.user.id)
+			posts = self.comment_set.select_related('original_post').select_related('creator').select_related('original_post__creator').annotate(num_yeahs=Count('yeah', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
+		else:
+			posts = self.comment_set.select_related('original_post').select_related('original_post__creator').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True)).filter().order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -326,14 +339,20 @@ class User(models.Model):
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
 		if type == 2:
-			yeahs = self.yeah_set.select_related('post').select_related('comment').filter().order_by('-created')[offset:offset + limit]
+			yeahs = self.yeah_set.select_related('post').select_related('comment').select_related('comment__original_post').select_related('comment__original_post__creator').annotate(num_yeahs_post=Count('post__yeah', distinct=True), num_yeahs_comment=Count('comment__yeah', distinct=True), num_comments=Count('post__comment', distinct=True)).filter().order_by('-created')[offset:offset + limit]
 		else:
-			yeahs = self.yeah_set.select_related('post').select_related('comment').filter(type=type, post__is_rm=False).order_by('-created')[offset:offset + limit]
+			yeahs = self.yeah_set.select_related('post').select_related('post__creator').annotate(num_yeahs_post=Count('post__yeah', distinct=True), num_comments=Count('post__comment', distinct=True)).filter(type=type, post__is_rm=False).order_by('-created')[offset:offset + limit]
+		for thing in yeahs:
+			if thing.post:
+				thing.post.num_yeahs = thing.num_yeahs_post
+				thing.post.num_comments = thing.num_comments
+			elif thing.comment:
+				thing.comment.num_yeahs = thing.num_yeahs_comment
 		return yeahs
 	def get_following(self, limit=50, offset=0, request=None):
-		return self.follow_source.filter().order_by('-created')[offset:offset + limit]
+		return self.follow_source.select_related('target').filter().order_by('-created')[offset:offset + limit]
 	def get_followers(self, limit=50, offset=0, request=None):
-		return self.follow_target.filter().order_by('-created')[offset:offset + limit]
+		return self.follow_target.select_related('source').filter().order_by('-created')[offset:offset + limit]
 	def notification_count(self):
 		return self.notification_to.filter(read=False).count()
 	def notification_read(self):
@@ -420,10 +439,12 @@ class User(models.Model):
 			friend_ids.append(self.id)
 		for thing in follows:
 			friend_ids.append(thing)
+		if request.user.is_authenticated:
+			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
 		if distinct:
-			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').select_related('community').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).annotate(max_created=Max('creator__post__created')).filter(created=F('max_created')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		else:
-			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').select_related('community').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(creator__in=friend_ids).order_by('-created')[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -529,7 +550,7 @@ class Community(models.Model):
 	is_rm = models.BooleanField(default=False)
 	is_feature = models.BooleanField(default=False)
 	allowed_users = models.TextField(null=True, blank=True)
-	creator = models.ForeignKey(User, blank=True, null=True)
+	creator = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
@@ -569,7 +590,11 @@ class Community(models.Model):
 	def clickable(self):
 		return not self.is_activity() and not self.type == 3
 	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
-		posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah'), num_comments=Count('comment')).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+		if request.user.is_authenticated:
+			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+		else:
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		if request:
 			for post in posts:
 				post.setup(request)
@@ -650,8 +675,8 @@ class Community(models.Model):
 # Links between communities for "related" communities
 class CommunityClink(models.Model):
 	# root/also order doesn't matter, time does though
-	root = models.ForeignKey(Community, related_name='one')
-	also = models.ForeignKey(Community, related_name='two')
+	root = models.ForeignKey(Community, related_name='one', on_delete=models.CASCADE)
+	also = models.ForeignKey(Community, related_name='two', on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 	# type: related (f) / sub (t)
 	kind = models.BooleanField(default=False)
@@ -659,8 +684,8 @@ class CommunityClink(models.Model):
 # Do this, or not
 class CommunityFavorite(models.Model):
 	id = models.AutoField(primary_key=True)
-	by = models.ForeignKey(User)
-	community = models.ForeignKey(Community)
+	by = models.ForeignKey(User, on_delete=models.CASCADE)
+	community = models.ForeignKey(Community, on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
@@ -669,7 +694,7 @@ class CommunityFavorite(models.Model):
 class Post(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	community = models.ForeignKey(Community, null=True)
+	community = models.ForeignKey(Community, null=True, on_delete=models.CASCADE)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
@@ -679,11 +704,11 @@ class Post(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
-	poll = models.ForeignKey('Poll', null=True, blank=True)
+	poll = models.ForeignKey('Poll', null=True, blank=True, on_delete=models.CASCADE)
 	has_edit = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0, choices=post_status)
-	creator = models.ForeignKey(User)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
@@ -722,7 +747,10 @@ class Post(models.Model):
 		return self.yeah_set.filter(post=self).count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
-			return self.yeah_set.filter(post=self, by=request.user).exists()
+			if hasattr(self, 'yeah_given'):
+				return self.yeah_given
+			else:
+				return self.yeah_set.filter(post=self, by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -762,12 +790,21 @@ class Post(models.Model):
 		#	return False
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
-		if limit:
-			comments = self.comment_set.filter(original_post=self).order_by('created')[offset:offset + limit]
-		elif offset:
-			comments = self.comment_set.filter(original_post=self).order_by('created')[offset:]
+		if request.user.is_authenticated:
+			has_yeah = Yeah.objects.filter(comment=OuterRef('id'), by=request.user.id)
+			if limit:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')[offset:offset + limit]
+			elif offset:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')[offset:]
+			else:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')
 		else:
-			comments = self.comment_set.filter(original_post=self).order_by('created')
+			if limit:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')[offset:offset + limit]
+			elif offset:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')[offset:]
+			else:
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')
 		if request:
 			for post in comments:
 				post.setup(request)
@@ -803,9 +840,9 @@ class Post(models.Model):
 		new_post.is_mine = True
 		return new_post
 	def recent_comment(self):
-		comments = self.comment_set.filter(spoils=False).exclude(creator=self.creator).order_by('-created')[:1]
-		if comments.count() < 1:
+		if self.number_comments() < 1:
 			return False
+		comments = self.comment_set.filter(spoils=False).exclude(creator=self.creator).order_by('-created')[:1]
 		return comments.first()
 	def change(self, request):
 		if not self.is_mine(request.user) or self.has_edit:
@@ -874,8 +911,8 @@ class Post(models.Model):
 class Comment(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	original_post = models.ForeignKey(Post)
-	community = models.ForeignKey(Community)
+	original_post = models.ForeignKey(Post, on_delete=models.CASCADE)
+	community = models.ForeignKey(Community, on_delete=models.CASCADE)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	screenshot = models.CharField(max_length=1200, null=True, blank=True, default='')
@@ -887,7 +924,7 @@ class Comment(models.Model):
 	has_edit = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0, choices=post_status)
-	creator = models.ForeignKey(User, blank=True, null=True)
+	creator = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
@@ -909,10 +946,15 @@ class Comment(models.Model):
 		else:
 			return False
 	def number_yeahs(self):
+		if hasattr(self, 'num_yeahs'):
+			return self.num_yeahs
 		return self.yeah_set.filter(comment=self, type=1).count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
-			return self.yeah_set.filter(comment=self, type=1, by=request.user).exists()
+			if hasattr(self, 'yeah_given'):
+				return self.yeah_given
+			else:
+				return self.yeah_set.filter(comment=self, type=1, by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -978,12 +1020,12 @@ class Comment(models.Model):
 class Yeah(models.Model):
 	# Todo: make this a plain int at some point
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-	by = models.ForeignKey(User)
+	by = models.ForeignKey(User, on_delete=models.CASCADE)
 	type = models.SmallIntegerField(default=0, choices=((0, 'post'), (1, 'comment'), ))
-	post = models.ForeignKey(Post, null=True, blank=True)
+	post = models.ForeignKey(Post, null=True, blank=True, on_delete=models.CASCADE)
 	# kldsjfldsfsdfd
 	#spam = models.BooleanField(default=False)
-	comment = models.ForeignKey(Comment, null=True, blank=True)
+	comment = models.ForeignKey(Comment, null=True, blank=True, on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
@@ -997,7 +1039,7 @@ class Yeah(models.Model):
 class Profile(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	user = models.ForeignKey(User)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 	origin_id = models.CharField(max_length=16, null=True, blank=True)
 	origin_info = models.CharField(max_length=255, null=True, blank=True)
@@ -1018,13 +1060,13 @@ class Profile(models.Model):
 	weblink = models.CharField(max_length=1200, blank=True, default='')
 	#gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default='')
-	favorite = models.ForeignKey(Post, blank=True, null=True)
+	favorite = models.ForeignKey(Post, blank=True, null=True, on_delete=models.CASCADE)
 
 	let_yeahnotifs = models.BooleanField(default=True)
 	let_freedom = models.BooleanField(default=True)
 	# Todo: When you see this, implement it; make it a bool that determines whether the user should be able to edit their avatar; if this is true and 
 	#let_avatar = models.BooleanField(default=False)
-	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children')
+	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 	# Post limit, 0 for none
 	limit_post = models.SmallIntegerField(default=0)
 	# If this is true, the user can't change their avatar or nickname
@@ -1092,8 +1134,8 @@ class Follow(models.Model):
 	# Todo: remove this
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	source = models.ForeignKey(User, related_name='follow_source')
-	target = models.ForeignKey(User, related_name='follow_target')
+	source = models.ForeignKey(User, related_name='follow_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='follow_target', on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
@@ -1103,8 +1145,8 @@ class Notification(models.Model):
 	# Todo: make this a plain int at some point
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	
-	to = models.ForeignKey(User, related_name='notification_to')
-	source = models.ForeignKey(User, related_name='notification_sender')
+	to = models.ForeignKey(User, related_name='notification_to', on_delete=models.CASCADE)
+	source = models.ForeignKey(User, related_name='notification_sender', on_delete=models.CASCADE)
 	read = models.BooleanField(default=False)
 	type = models.SmallIntegerField(choices=(
 	(0, 'Yeah on post'),
@@ -1114,8 +1156,8 @@ class Notification(models.Model):
 	(4, 'Follow to me'),
 	))
 	merges = models.TextField(blank=True, default='')
-	context_post = models.ForeignKey(Post, null=True, blank=True)
-	context_comment = models.ForeignKey(Comment, null=True, blank=True)
+	context_post = models.ForeignKey(Post, null=True, blank=True, on_delete=models.CASCADE)
+	context_comment = models.ForeignKey(Comment, null=True, blank=True, on_delete=models.CASCADE)
 	
 	created = models.DateTimeField(auto_now_add=True)
 	latest = models.DateTimeField(auto_now=True)
@@ -1210,7 +1252,7 @@ class Notification(models.Model):
 class Complaint(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	creator = models.ForeignKey(User)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE)
 	type = models.SmallIntegerField(choices=(
 	(0, 'Bug report'),
 	(1, 'Suggestion'),
@@ -1229,8 +1271,8 @@ class Complaint(models.Model):
 class FriendRequest(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	source = models.ForeignKey(User, related_name='fr_source')
-	target = models.ForeignKey(User, related_name='fr_target')
+	source = models.ForeignKey(User, related_name='fr_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='fr_target', on_delete=models.CASCADE)
 	body = models.TextField(blank=True, null=True, default='')
 	read = models.BooleanField(default=False)
 	finished = models.BooleanField(default=False)
@@ -1245,8 +1287,8 @@ class FriendRequest(models.Model):
 class Friendship(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	source = models.ForeignKey(User, related_name='friend_source')
-	target = models.ForeignKey(User, related_name='friend_target')
+	source = models.ForeignKey(User, related_name='friend_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='friend_target', on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 	latest = models.DateTimeField(auto_now=True)
 	
@@ -1301,8 +1343,8 @@ class Friendship(models.Model):
 class Conversation(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	source = models.ForeignKey(User, related_name='conv_source')
-	target = models.ForeignKey(User, related_name='conv_target')
+	source = models.ForeignKey(User, related_name='conv_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='conv_target', on_delete=models.CASCADE)
 	created = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
@@ -1350,7 +1392,7 @@ class Conversation(models.Model):
 class Message(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
-	conversation = models.ForeignKey(Conversation)
+	conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
@@ -1359,7 +1401,7 @@ class Message(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	read = models.BooleanField(default=False)
 	is_rm = models.BooleanField(default=False)
-	creator = models.ForeignKey(User)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
@@ -1389,9 +1431,9 @@ class Message(models.Model):
 
 class ConversationInvite(models.Model):
 	id = models.AutoField(primary_key=True)
-	conversation = models.ForeignKey(Conversation)
-	source = models.ForeignKey(User, related_name='convinvite_source')
-	target = models.ForeignKey(User, related_name='convinvite_target')
+	conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+	source = models.ForeignKey(User, related_name='convinvite_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='convinvite_target', on_delete=models.CASCADE)
 	body = models.TextField(blank=True, null=True, default='')
 	read = models.BooleanField(default=False)
 	finished = models.BooleanField(default=False)
@@ -1428,8 +1470,8 @@ class PollVote(models.Model):
 	id = models.AutoField(primary_key=True)
 	done = models.DateTimeField(auto_now_add=True)
 	choice = models.SmallIntegerField(default=0)
-	poll = models.ForeignKey(Poll)
-	by = models.ForeignKey(User)
+	poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+	by = models.ForeignKey(User, on_delete=models.CASCADE)
 	
 	def __str__(self):
 		return "A vote on option " + str(self.choice) + " for poll \"" + str(self.poll) + "\" by " + str(self.by)
@@ -1437,9 +1479,9 @@ class PollVote(models.Model):
 class RedFlag(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	post = models.ForeignKey(Post, blank=True, null=True)
-	comment = models.ForeignKey(Comment, blank=True, null=True)
-	user = models.ForeignKey(User, blank=True, null=True)
+	post = models.ForeignKey(Post, blank=True, null=True, on_delete=models.CASCADE)
+	comment = models.ForeignKey(Comment, blank=True, null=True, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 	type = models.SmallIntegerField(choices=((0, 'Post'), (1, 'Comment'), (2, 'User'), ))
 	reason = models.SmallIntegerField(choices=((0, "Actual harassment"), (1, "Spam"), (2, "I don't like this"), (3, "Personal info"), (4, "Obscene use of swearing"), (5, "NSFW where not allowed"), (6, "Overly advertising/spam"), (7, "Please delete this")))
 	reasoning = models.TextField(default='', null=True, blank=True)
@@ -1451,7 +1493,7 @@ class RedFlag(models.Model):
 class LoginAttempt(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	user = models.ForeignKey(User)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	success = models.BooleanField(default=False)
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
@@ -1462,7 +1504,7 @@ class LoginAttempt(models.Model):
 class ThermostatTouch(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	who = models.ForeignKey(User, blank=True, null=True)
+	who = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 	lvl = models.IntegerField(default=1)
 	
 	def __str__(self):
@@ -1472,8 +1514,8 @@ class ThermostatTouch(models.Model):
 class UserBlock(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	source = models.ForeignKey(User, related_name='block_source')
-	target = models.ForeignKey(User, related_name='block_target')
+	source = models.ForeignKey(User, related_name='block_source', on_delete=models.CASCADE)
+	target = models.ForeignKey(User, related_name='block_target', on_delete=models.CASCADE)
 	full = models.BooleanField(default=False)
 	
 	def __str__(self):
@@ -1488,11 +1530,26 @@ class UserBlock(models.Model):
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), ))
-	post = models.ForeignKey(Post, related_name='audit_post', null=True)
-	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True)
-	user = models.ForeignKey(User, related_name='audit_user', null=True)
-	by = models.ForeignKey(User, related_name='audit_by')
+	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "User purge"), ))
+	post = models.ForeignKey(Post, related_name='audit_post', null=True, on_delete=models.CASCADE)
+	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, related_name='audit_user', null=True, on_delete=models.CASCADE)
+	by = models.ForeignKey(User, related_name='audit_by', on_delete=models.CASCADE)
 	
 	def __str__(self):
 		return str(by) + " did " + self.get_type_display() + " at " + str(self.created)
+
+# TODO: MAKE THIS ACTUALLY WORK
+class Restriction(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	type = models.SmallIntegerField(choices=((0, "Prevent yeah"), (1, "Prevent follow"), (2, "Prevent comment"), ))
+	post = models.ForeignKey(Post, related_name='restriction_post', null=True, on_delete=models.CASCADE)
+	comment = models.ForeignKey(Comment, related_name='restriction_comment', null=True, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, related_name='restriction_user', null=True, on_delete=models.CASCADE)
+	by = models.ForeignKey(User, related_name='restriction_by', on_delete=models.CASCADE)
+	
+	def __str__(self):
+		return "Restrict " + str(self.user) + " on " + self.get_type_display() + " at " + str(self.created)
+
+#class UserRequest(User):
