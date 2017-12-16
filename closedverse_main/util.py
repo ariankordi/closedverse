@@ -27,7 +27,7 @@ from os import remove, rename
 def HumanTime(date, full=False):
 	now = time.time()
 	if ((now - date) >= 345600) or full:
-		return datetime.fromtimestamp(date).strftime('%m/%d/%Y %l:%M %p')
+		return datetime.fromtimestamp(date).strftime('%m/%d/%Y %I:%M %p')
 	interval = (now - date) or 1
 	if interval <= 59:
 		return 'Less than a minute ago'
