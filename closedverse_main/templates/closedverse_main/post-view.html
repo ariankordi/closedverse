@@ -63,13 +63,13 @@
 	      {% endif %}
 		  
 		  {% if post.poll %}
-		  <div class="post-poll" data-action="{% url "main:poll-vote" post.poll.unique_id %}" data-action-unvote="{% url "main:poll-unvote" post.poll.unique_id %}">
+		  <div class="post-poll{% if post.poll.has_vote %} selected{% endif %}" data-action="{% url "main:poll-vote" post.poll.unique_id %}" data-action-unvote="{% url "main:poll-unvote" post.poll.unique_id %}">
 			<a class="poll-votes">{{ post.poll.num_votes }} vote{% if not post.poll.num_votes == 1 %}s{% endif %}</a>
 				<div class="poll-options{% if post.screenshot %} with-background" style="background-image:url('{{ post.screenshot }}')"
 <div class="poll-background" style="width:50%"></div>{% else %}">{% endif %}
 						{% for choice in post.poll.choices %}
-					<a class="poll-option" votes="2">
-						{{ choice }}<span class="percentage">50%</span>
+					<a class="poll-option{% if post.poll.has_vote and post.poll.has_vote.1 == choice %} selected{% endif %}" votes="{{ choice.num_votes }}">
+						{{ choice }}<span class="percentage">%</span>
 					</a>
 						{% endfor %}
 				</div>

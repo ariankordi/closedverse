@@ -45,7 +45,7 @@
           <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
 		  {% if not post.can_yeah %}disabled{% endif %}
-		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
+		  " data-feeling="" data-action="{% if post.is_reply %}{% url "main:comment-add-yeah" post.id %}{% else %}{% url "main:post-add-yeah" post.id %}{% endif %}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
 		  {% if post.url %}
 		  <a class="link-confirm symbol button" href="{{ post.url }}"></a>
 		  {% endif %}

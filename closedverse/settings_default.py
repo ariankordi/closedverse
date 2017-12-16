@@ -137,6 +137,9 @@ STATICFILES_DIRS = [
 
 STATIC_URL = '/s/'
 
+
+# Media root
+# This MUST end with a trailing slash and there must be an 'rm' folder in it
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -193,3 +196,7 @@ LOGIN_EXEMPT_URLS = (
 )
 # The location to redirect to if a user's status is set to 2 (Redirect)
 inactive_redirect = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# Option to delete image if it's local
+# 0 - keep, 1 - move to 'rm' folder, 2 - DELETE
+image_delete_opt = 2

@@ -22,7 +22,7 @@ import imghdr
 import base64
 from closedverse import settings
 import re
-
+from os import remove, rename
 
 def HumanTime(date, full=False):
 	now = time.time()
@@ -168,6 +168,27 @@ def image_upload(img, stream=False, drawing=False):
 	if not os.path.exists(settings.MEDIA_ROOT + floc):
 		im.save(settings.MEDIA_ROOT + floc, target, optimize=True)
 	return settings.MEDIA_URL + floc
+
+# Todo: Put this into post/comment delete thingy method
+def image_rm(image_url):
+	if settings.image_delete_opt:
+		sysfile = image_url.split(settings.MEDIA_URL)[1]
+		sysloc = settings.MEDIA_ROOT + sysfile
+		if settings.image_delete_opt > 1:
+			try:
+				remove(sysloc)
+			except:
+				return False
+			else:
+				return True
+		# The RM'd directory to move it to
+		rmloc = sysloc.replace(settings.MEDIA_ROOT, settings.MEDIA_ROOT + 'rm/')
+		try:
+			rename(sysloc, rmloc)
+		except:
+			return False
+		else:
+			return True
 
 def get_gravatar(email):
 	try:

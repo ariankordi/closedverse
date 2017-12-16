@@ -11,11 +11,6 @@ var pjax_container = '#container';
 var webkit = navigator.userAgent.indexOf('WebKit') > 0 || navigator.userAgent.indexOf('Firefox') > 0;
 
 
-function chksum(r) {
-	for(var e=0,t=new Array(256),a=0;256!=a;++a)e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=a)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1,t[a]=e;for(var o,c="undefined"!=typeof Int32Array?new Int32Array(t):t,f=-1^0,A=0,d=r.length;A<d;)(e=r.charCodeAt(A++))<128?f=f>>>8^c[255&(f^e)]:e<2048?f=(f=f>>>8^c[255&(f^(192|e>>6&31))])>>>8^c[255&(f^(128|63&e))]:e>=55296&&e<57344?(e=64+(1023&e),o=1023&r.charCodeAt(A++),f=(f=(f=(f=f>>>8^c[255&(f^(240|e>>8&7))])>>>8^c[255&(f^(128|e>>2&63))])>>>8^c[255&(f^(128|o>>6&15|(3&e)<<4))])>>>8^c[255&(f^(128|63&o))]):f=(f=(f=f>>>8^c[255&(f^(224|e>>12&15))])>>>8^c[255&(f^(128|e>>6&63))])>>>8^c[255&(f^(128|63&e))];
-	return (-1^f) + '----/'
-}
-
 function setupDrawboard() {
 var canvas = document.getElementById("artwork-canvas");
 var ctx = canvas.getContext('2d');
@@ -218,7 +213,8 @@ $('.memo-finish-btn').on('click',function(){
 	var dataURL = canvas.toDataURL();
         if(typeof dataURL !== undefined) {
 			var img = dataURL.split(",")[1];
-        $("input[type=hidden][name=painting]").val(chksum(img) + img);
+        //$("input[type=hidden][name=painting]").val(b.Closed.chksum(img) + img);
+		$("input[type=hidden][name=painting]").val(img);
 		}
 	$("#drawing").remove();
 	$(".textarea-memo").append("<img id=\"drawing\" src=\"" + dataURL + "\" style=\"background:white;\"></img>");
@@ -442,6 +438,12 @@ var Olv = Olv || {};
 		changesel: function(a) {
 			$("li#global-menu-" + a).addClass("selected");
 		}
+		/*,
+		chksum: function(r) {
+			for(var e=0,t=new Array(256),a=0;256!=a;++a)e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=1&(e=a)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1)?-306674912^e>>>1:e>>>1,t[a]=e;for(var o,c="undefined"!=typeof Int32Array?new Int32Array(t):t,f=-1^0,A=0,d=r.length;A<d;)(e=r.charCodeAt(A++))<128?f=f>>>8^c[255&(f^e)]:e<2048?f=(f=f>>>8^c[255&(f^(192|e>>6&31))])>>>8^c[255&(f^(128|63&e))]:e>=55296&&e<57344?(e=64+(1023&e),o=1023&r.charCodeAt(A++),f=(f=(f=(f=f>>>8^c[255&(f^(240|e>>8&7))])>>>8^c[255&(f^(128|e>>2&63))])>>>8^c[255&(f^(128|o>>6&15|(3&e)<<4))])>>>8^c[255&(f^(128|63&o))]):f=(f=(f=f>>>8^c[255&(f^(224|e>>12&15))])>>>8^c[255&(f^(128|e>>6&63))])>>>8^c[255&(f^(128|63&e))];
+			return (-1^f) + '----/'
+		}
+		*/
 	},
     b.Net = {
         ajax: function(c) {
@@ -1447,7 +1449,7 @@ var Olv = Olv || {};
         var c = b.Entry.isEmpathyAdded(a)
           , d = !c
           , e = a.attr("data-action");
-        c && (e += ".delete"),
+        c && (e += "u"),
         a.trigger("olv:entry:empathy:toggle", [d]);
         var f = b.Form.post(e, null, a).done(function() {
             a.trigger("olv:entry:empathy:toggle:done", [d])
@@ -2456,7 +2458,7 @@ var Olv = Olv || {};
 		});
 	   
 	}),
-	b.router.connect("^/messages/([A-Za-z0-9-._]+)/?$", function(a, c, d) {
+	b.router.connect("^/messages/([^\/]+)/?$", function(a, c, d) {
 		b.Closed.changesel("message");
 		b.Content.autopagerize(".list.messages", d)
 			var ff = $('#post-form')
@@ -2703,14 +2705,13 @@ $('.post-poll .poll-option').on('click', function() {
 	if(!$(this).hasClass('selected')) {
 		$(this).siblings('.poll-option').removeClass('selected');
 		$(this).addClass('selected');
-		recalculateVotes($(this).siblings('.poll-option').addBack());
+		recalculateVotes($(this).siblings('.poll-option'));
 		$(this).parents('.post-poll').addClass('selected');
     b.Form.post($(this).parents('.post-poll').attr('data-action'), {'a': parseInt($(this).index())}).done(pollSuccess)
-
   } else {
   	$(this).parents('.post-poll').removeClass('selected');
 		$(this).removeClass('selected');
-		recalculateVotes($(this).siblings('.poll-option').addBack());
+		recalculateVotes($(this).siblings('.poll-option'));
 		
 		b.Form.post($(this).parents('.post-poll').attr('data-action-unvote'), {'a': '0'}).done(pollSuccess)
 
@@ -2875,13 +2876,13 @@ mode_post = 0;
             a("form.search").off("submit", b.Form.validateValueLength)
         })
     }),
-    b.router.connect("^/users/[0-9a-zA-Z\\-_.]+/(yeahs|posts|comments)$", function(a, c, d) {
+    b.router.connect("^/users/[^\/]+/(yeahs|posts|comments)$", function(a, c, d) {
         b.Content.autopagerize(".js-post-list", d)
     }),
-    b.router.connect("^/users/[0-9a-zA-Z\\-_.]+(/friends|/following|/followers)$", function(a, c, d) {
+    b.router.connect("^/users/[^\/]+(/friends|/following|/followers)$", function(a, c, d) {
         b.Content.autopagerize("#friend-list-content", d)
     }),
-    b.router.connect("^/users/[0-9a-zA-Z\\-_.]+(/diary)$", function(c, d, e) {
+    b.router.connect("^/users/[^\/]+(/diary)$", function(c, d, e) {
         function f(b, c) {
             var e = a(".js-post-list");
             e.find(".no-content").addClass("none");
@@ -2919,7 +2920,7 @@ mode_post = 0;
             j.off("click", g)
         })
     }),
-    b.router.connect("^/users/[0-9a-zA-Z\\-_.]+(/friends|/following|/followers|/yeahs|/posts|/comments)?$", function(c, d, e) {
+    b.router.connect("^/users/[^\/]+(/friends|/following|/followers|/yeahs|/posts|/comments)?$", function(c, d, e) {
 		if($("body").attr("sess-usern") == (c[0].split('/users/')[1])) {
 		b.Closed.changesel('mymenu');
 		}
@@ -3010,7 +3011,7 @@ mode_post = 0;
         }),
         b.Entry.setupEmpathyButtons(e)
     }),
-    b.router.connect("^/users/[0-9a-zA-Z\\-_.]+/favorites$", function(a, c, d) {
+    b.router.connect("^/users/[^\/]+/favorites$", function(a, c, d) {
         b.Content.autopagerize(".community-list", d)
     }),
 	b.router.connect("^/login/$|^/signup/$", function(c, d, e) {
@@ -3061,7 +3062,7 @@ mode_post = 0;
 								$('p.red').html(null);
 								return false;
 							}
-							if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
+							if(!inp.val().match(/^[^\/]{6,16}$/)) {
 								$('p.red').html('The NNID provided is invalid.')
 								return false;
 							} else {
@@ -3172,6 +3173,14 @@ mode_post = 0;
 					});
 				}
 			});
+			$('li.setting-unpurge1 > form > button').click(function(a) {
+				a.preventDefault();
+				if(confirm("Really? This is permanent.")) {
+					Olv.Form.post(location.href, $('li.setting-unpurge1 > form').serializeArray()).done(function(response) {
+						Olv.showMessage('', response);
+					});
+				}
+			});
 		}),
     	b.router.connect("^/man/users$", function(c, d, e) {
 			function openUserModal(user) {
@@ -3194,7 +3203,7 @@ mode_post = 0;
 					b.Form.post($('form.goodform').attr('data-action'), $('form.goodform').serializeArray()).done(g.close());
 				})
 			}
-		b.Form.get('/users.html' + location.search).done(function(a) {
+		b.Form.get('/man/users_list' + location.search).done(function(a) {
 			$('.user-loads').html(a);
 			b.Content.autopagerize('#user-man-list', e);
 			$('button.user-manage').on('click',function() {
@@ -3227,7 +3236,7 @@ mode_post = 0;
 				
 				inp = $('input[type=text][name=origin_id]')
 					function getmiimtwo() {
-						if(!inp.val().match(/^[A-Za-z0-9-._]{6,16}$/)) {
+						if(!inp.val().match(/^[^\/]{6,16}$/)) {
 							$('p.error').html('The NNID provided is invalid.')
 							return false
 						} else {
@@ -3323,7 +3332,7 @@ mode_post = 0;
             a(document).off("change", "#favorite-game-genre select", h)
         })
     }),
-    b.router.connect("^(/users/[0-9a-zA-Z\\-_.]+/communities/(favorites|played)|/my_menu)", function(a, c, d) {
+    b.router.connect("^(/users/[^\/]+/communities/(favorites|played)|/my_menu)", function(a, c, d) {
 		b.Closed.changesel('community');
         b.User.setupUserSidebar(d)
     }),

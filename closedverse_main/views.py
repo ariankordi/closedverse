@@ -41,7 +41,7 @@ def json_response(msg='', code=0, httperr=400):
 		],
 	'code': httperr,
 	}
-	return JsonResponse(thing, safe=False, status=400)
+	return JsonResponse(thing, safe=False, status=httperr)
 
 def community_list(request):
 	"""Lists communities / main page."""
@@ -168,13 +168,16 @@ def login_page(request):
 		# Now let's authenticate.
 		# Wait, first check if the user exists. Remove spaces from the username, because some people do that.
 		# Hold up, first we need to check proxe.
+		# Never mind
+		"""
 		if settings.PROD:
 			if iphub(request.META['REMOTE_ADDR']):
 				spamuser = True
 				if settings.disallow_proxy:
 					# This was for me, a server error will email admins of course.
 					raise ValueError
-		user = User.objects.authenticate(username=request.POST['username'].replace(' ', ''), password=request.POST['password'])
+		"""
+		user = User.objects.authenticate(username=request.POST['username'], password=request.POST['password'])
 		# None = doesn't exist, False = invalid password.
 		if user is None:
 			return HttpResponseNotFound("The user doesn't exist.")
@@ -222,11 +225,8 @@ def signup_page(request):
 			for keyword in ['admin', 'admln', 'adrnin', 'admn', ]:
 				if keyword in request.POST['username'].lower():
 					return HttpResponseForbidden("You aren't funny. Please use a funny name.")
-		try:
-			al_exist = User.objects.get(username__iexact=request.POST['username'])
-		except User.DoesNotExist:
-			al_exist = None
-		if al_exist:
+		conflicting_user = User.objects.filter(Q(username__iexact=request.POST['username']) | Q(username__iexact=request.POST['username'].replace(' ', '')))
+		if conflicting_user:
 			return HttpResponseBadRequest("A user with that username already exists.")
 		if not request.POST['password'] == request.POST['password_again']:
 			return HttpResponseBadRequest("Your passwords don't match.")
@@ -325,7 +325,7 @@ def user_view(request, username):
 	profile.setup(request)
 	if request.user.is_authenticated:
 		profile.can_friend = profile.can_friend(request.user)
-	if request.method == 'POST':
+	if request.method == 'POST' and request.user.is_authenticated:
 		user = request.user
 		profile	= user.profile()
 		profile.setup(request)
@@ -762,7 +762,8 @@ def community_view(request, community):
 @login_required
 def community_favorite_create(request, community):
 	the_community = get_object_or_404(Community, id=community)
-	the_community.favorite_add(request)
+	if not community.type == 3:
+		the_community.favorite_add(request)
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
@@ -822,7 +823,7 @@ def post_view(request, post):
 		raise Http404()
 	post.setup(request)
 	if post.poll:
-		post.poll.setup()
+		post.poll.setup(request.user)
 	if request.user.is_authenticated:
 		post.can_rm = post.can_rm(request)
 		post.is_favorite = post.is_favorite(request.user)
@@ -1419,6 +1420,7 @@ def user_manager(request, username):
 		user.email = request.POST['email']
 		user.active = False if request.POST.get('active') is None else True
 		user.save()
+		AuditLog.objects.create(type=2, user=user, by=request.user)
 		return HttpResponse()
 	return JsonResponse({
 		'id': user.id,
@@ -1445,6 +1447,7 @@ def admin_index(request):
 			user = user.first()
 			if user.can_manage():
 				return json_response("User is admin")
+			AuditLog.objects.create(type={'purge1': 6, 'purge2': 7, 'purge3': 8, 'purge4': 9, 'purge5': 10, 'unpurge1': 11}.get(request.POST.get('action'), 6), user=user, by=request.user)
 			if request.POST['action'] == 'purge1':
 				# purge1 - delete yeahs + yeah notifs given by a user
 				first = Yeah.objects.filter(by=user).delete()
@@ -1454,6 +1457,9 @@ def admin_index(request):
 				# purge2 - remove posts and comments by a user
 				first = Post.real.filter(creator=user).update(is_rm=True, status=5)
 				second = Comment.real.filter(creator=user).update(is_rm=True, status=5)
+				prof = user.profile()
+				prof.favorite = None
+				prof.save()
 				return HttpResponse(str(first) + "\n\n" + str(second))
 			elif request.POST['action'] == 'purge3':
 				# purge3 - remove friendships and messages of a user
@@ -1470,13 +1476,21 @@ def admin_index(request):
 				avatar = "https://cdn.discordapp.com/embed/avatars/" + choice(['0', '1', '2', '3', '4']) + ".png"
 				user.nickname = nicky
 				user.avatar = avatar
-				user.has_mb = False
+				user.has_mh = False
 				user.save()
 				prof = user.profile()
 				prof.cannot_edit = True
 				first = user.save()
 				second = prof.save()
 				return HttpResponse(nicky + "\n\n" + avatar)
+			elif request.POST['action'] == 'unpurge1':
+				# unpurge1 - recover purged posts, comments from a person + let them edit their profile again
+				first = Post.real.filter(creator=user, status=5).update(is_rm=False, status=0)
+				second = Comment.real.filter(creator=user, status=5).update(is_rm=False, status=0)
+				prof = user.profile()
+				prof.cannot_edit = False
+				prof.save()
+				return HttpResponse(str(first) + "\n\n" + str(second))
 		return HttpResponseNotFound()
 	return render(request, 'closedverse_main/man/main.html', {
 		'title': 'Admin management',

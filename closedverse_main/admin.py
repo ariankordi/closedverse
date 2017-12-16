@@ -7,6 +7,11 @@ from closedverse import settings
 
 from . import models
 
+# Override admin login page
+from closedverse_main.views import login_page
+admin.autodiscover()
+admin.site.login = login_page
+
 """
 class UserForm(ModelForm):
 	class Meta:
@@ -65,6 +70,10 @@ class LoginAdmin(admin.ModelAdmin):
         raw_id_fields = ('user', )
         search_fields = ('user__username', )
 
+class AuditAdmin(admin.ModelAdmin):
+        raw_id_fields = ('by', 'user', 'post', 'comment', )
+        search_fields = ('by__username', 'user__username', )
+
 #class BlockAdmin(admin.ModelAdmin)
 
 #admin.site.unregister(Group)
@@ -78,6 +87,7 @@ admin.site.register(models.Conversation, ConversationAdmin)
 admin.site.register(models.Notification, NotificationAdmin)
 admin.site.register(models.LoginAttempt, LoginAdmin)
 admin.site.register(models.UserBlock)
+admin.site.register(models.AuditLog, AuditAdmin)
 
 
 admin.site.register(models.Post, PostAdmin)

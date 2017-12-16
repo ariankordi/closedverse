@@ -16,6 +16,8 @@ import uuid, json, base64
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 import re
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (69, 'easter egg'), )
@@ -86,7 +88,7 @@ class UserManager(BaseUserManager):
 	def authenticate(self, username, password):
 		if not username or username.isspace():
 			return None
-		user = self.filter(Q(username__iexact=username) | Q(email=username))
+		user = self.filter(Q(username__iexact=username.replace(' ', '')) | Q(username__iexact=username) | Q(email=username))
 		if not user.exists():
 			return None
 		user = user.first()
@@ -112,6 +114,10 @@ class PostManager(models.Manager):
 	def get_queryset(self):
 		return super(PostManager, self).get_queryset().filter(is_rm=False)
 
+class CommunityFavoriteManager(models.Manager):
+	def get_queryset(self):
+		return super(CommunityFavoriteManager, self).get_queryset().filter(community__is_rm=False).exclude(community__type=3)
+
 class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -123,7 +129,10 @@ class User(models.Model):
 	email = models.EmailField(null=True, blank=True, default='')
 	has_mh = models.BooleanField(default=False)
 	avatar = models.CharField(max_length=1200, blank=True, default='')
-	level = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'moderator'), (3, 'trusted (admin without icon)'), (4, 'admin'), (5, 'pf2m'), (10, 'master')))
+	# LEVEL: 0-1 is default, everything else is just levels
+	level = models.SmallIntegerField(default=0)
+	# ROLE: This doesn't have anything
+	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'tester'), (7, 'urapp'), (8, 'developer'), ))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
 	hide_online = models.BooleanField(default=False)
@@ -146,7 +155,7 @@ class User(models.Model):
 	def __str__(self):
 		return self.username
 	def get_full_name(self):
-		return "{0} ({1})".format(self.nickname, self.username)
+		return self.username
 	def get_short_name(self):
 		return self.nickname
 	def get_username(self):
@@ -210,21 +219,24 @@ class User(models.Model):
 	def get_class(self):
 			first = {
 			1: 'tester',
-			2: 'moderator',
-			3: '',
-			4: 'administrator',
-			5: 'openverse',
-			10: 'developer',
-			}.get(self.level, '')
+			2: 'administrator',
+			3: 'moderator',
+			4: 'openverse',
+			5: 'donator',
+			6: 'tester',
+			7: 'urapp',
+			8: 'developer',
+			}.get(self.role, '')
 			second = {
 			1: "Bot",
-			2: "Moderator",
-			3: "",
-			# 3 is trusted, do not give it anything cool
-			4: "Admin",
-			5: "O-PHP-enverse Man",
-			10: "Friendship ended with PHP / Now PYTHON is my best friend",
-			}.get(self.level, '')
+			2: "Administrator",
+			3: "Moderator",
+			4: "O-PHP-enverse Man",
+			5: "Donator",
+			6: "Tester",
+			7: "cave story is okay",
+			8: "Friendship ended with PHP / Now PYTHON is my best friend",
+			}.get(self.role, '')
 			if first:
 				first = 'official ' + first
 			return [first, second]
@@ -502,8 +514,8 @@ class User(models.Model):
 		subj = 'Closedverse password reset for "{0}"'.format(self.username)
 		return send_mail(subject=subj, message="Bro, do you even HTML E-Mail?", html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
 		return EmailMessage(subj, htmlmsg, to=(self.email)).send()
-	def find_shared_ip(self):
-		return User.objects.filter(addr=self.addr).exclude(id=self.id)
+	def find_related(self):
+		return User.objects.filter(id__in=LoginAttempt.objects.filter(Q(addr=self.addr), Q(user=self.id)).values_list('user', flat=True)).exclude(id=self.id)
 	@staticmethod
 	def search(query='', limit=50, offset=0, request=None):
 		return User.objects.filter(Q(username__icontains=query) | Q(nickname__icontains=query)).order_by('-created')[offset:offset + limit]
@@ -633,7 +645,7 @@ class Community(models.Model):
 		if not limit is False and not limit > 0:
 			return 8
 		del(limit)
-		if Post.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		if Post.real.filter(Q(creator=request.user) | Q(creator__addr=request.user.addr), created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if request.POST.get('url'):
 			try:
@@ -680,6 +692,8 @@ class CommunityClink(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	# type: related (f) / sub (t)
 	kind = models.BooleanField(default=False)
+	
+	objects = CommunityFavoriteManager()
 
 # Do this, or not
 class CommunityFavorite(models.Model):
@@ -739,8 +753,9 @@ class Post(models.Model):
 			return (self.creator == user)
 		else:
 			return False
-	def yeah_notification(self, request):
-		Notification.give_notification
+	#def yeah_notification(self, request):
+	# ???? What is this
+	#Notification.give_notification
 	def number_yeahs(self):
 		if hasattr(self, 'num_yeahs'):
 			return self.num_yeahs
@@ -777,8 +792,9 @@ class Post(models.Model):
 			return True
 		return self.yeah_set.filter(post=self, by=request.user).delete()
 	def number_comments(self):
-		if hasattr(self, 'num_comments'):
-			return self.num_comments
+		# Number of comments cannot be accurate due to comment deleting
+		#if hasattr(self, 'num_comments'):
+		#	return self.num_comments
 		return self.comment_set.filter(original_post=self).count()
 	def get_yeahs(self, request):
 		return Yeah.objects.filter(type=0, post=self).order_by('-created')[0:30]
@@ -892,7 +908,14 @@ class Post(models.Model):
 			self.status = 1
 		else:
 			self.status = 2
+		if self.screenshot:
+			util.image_rm(self.screenshot)
+			self.screenshot = None
+		if self.drawing:
+			util.image_rm(self.drawing)
+			self.drawing = None
 		self.save()
+		AuditLog.objects.create(type=0, post=self, user=self.creator, by=request.user)
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
@@ -1011,7 +1034,14 @@ class Comment(models.Model):
 			self.status = 1
 		else:
 			self.status = 2
-		return self.save()
+		if self.screenshot:
+			util.image_rm(self.screenshot)
+			self.screenshot = None
+		if self.drawing:
+			util.image_rm(self.drawing)
+			self.drawing = None
+		self.save()
+		AuditLog.objects.create(type=1, comment=self, user=self.creator, by=request.user)
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
@@ -1422,7 +1452,13 @@ class Message(models.Model):
 	def rm(self, request):
 		if self.conversation.source == request.user or self.conversation.target == request.user:
 			self.is_rm = True
-			return self.save()
+			if self.screenshot:
+				util.image_rm(self.screenshot)
+				self.screenshot = None
+			if self.drawing:
+				util.image_rm(self.drawing)
+				self.drawing = None
+			self.save()
 
 	def makeopt(ls):
 		if len(ls) < 1:
@@ -1463,9 +1499,17 @@ class Poll(models.Model):
 		vote = self.pollvote_set.filter(by=user).first()
 		if vote:
 			vote.delete()
-	def setup(self):
+	def has_vote(self, user):
+		if not user.is_authenticated:
+			return False
+		vote = self.pollvote_set.filter(by=user)
+		if vote:
+			return (True, self.choices[vote.first().choice])
+		return False
+	def setup(self, user):
 		self.choices = json.loads(self.choices)
 		self.num_votes = self.num_votes()
+		self.has_vote = self.has_vote(user)
 class PollVote(models.Model):
 	id = models.AutoField(primary_key=True)
 	done = models.DateTimeField(auto_now_add=True)
@@ -1475,6 +1519,8 @@ class PollVote(models.Model):
 	
 	def __str__(self):
 		return "A vote on option " + str(self.choice) + " for poll \"" + str(self.poll) + "\" by " + str(self.by)
+	#def choice_votes(self):
+	#	return PollVote.objects.filter(poll=self.poll, choice=self.choice).count()
 
 class RedFlag(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -1530,14 +1576,33 @@ class UserBlock(models.Model):
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "User purge"), ))
+	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "Purge 1"), (7, "Purge 2"), (8, "Purge 3"), (9, "Purge 4"), (10, "Purge 5"), (11, "Un-purge 1"), ))
 	post = models.ForeignKey(Post, related_name='audit_post', null=True, on_delete=models.CASCADE)
 	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True, on_delete=models.CASCADE)
 	user = models.ForeignKey(User, related_name='audit_user', null=True, on_delete=models.CASCADE)
+	reasoning = models.TextField(null=True, blank=True, default="")
 	by = models.ForeignKey(User, related_name='audit_by', on_delete=models.CASCADE)
+	reversed_by = models.ForeignKey(User, null=True, related_name='audit_reverse_by', on_delete=models.CASCADE)
 	
 	def __str__(self):
-		return str(by) + " did " + self.get_type_display() + " at " + str(self.created)
+		return str(self.by) + " did " + self.get_type_display() + " at " + str(self.created)
+	def reverse(self, user=None):
+		# Try to reverse what this did
+		if user:
+			self.reversed_by = user
+		# No switches in Python, so
+		if self.type == 0:
+			self.post.is_rm = False
+			self.post.status = 0
+			self.post.save()
+			return True
+		elif self.type == 1:
+			self.post.is_rm = False
+			self.post.status = 0
+			self.post.save()
+			return True
+		else:
+			return False
 
 # TODO: MAKE THIS ACTUALLY WORK
 class Restriction(models.Model):
@@ -1552,4 +1617,21 @@ class Restriction(models.Model):
 	def __str__(self):
 		return "Restrict " + str(self.user) + " on " + self.get_type_display() + " at " + str(self.created)
 
-#class UserRequest(User):
+class UserRequest(User):
+	# USER AGENT
+	ua = models.TextField(default='', null=True, blank=True)
+	latest = models.DateTimeField(auto_now=True)
+	status = models.SmallIntegerField(default=0, choices=((0, 'submitted'), (1, 'viewed'), (2, 'accepted'), (3, 'decline'), (4, 'ignore'), ))
+
+
+# blah blah blah
+# this method will be executed when...
+def rm_post_image(sender, instance, **kwargs):
+	if instance.screenshot:
+		util.image_rm(instance.screenshot)
+	if instance.drawing:
+		util.image_rm(instance.drawing)
+# when pre_delete happens on these
+pre_delete.connect(rm_post_image, sender=Post)
+pre_delete.connect(rm_post_image, sender=Comment)
+pre_delete.connect(rm_post_image, sender=Message)

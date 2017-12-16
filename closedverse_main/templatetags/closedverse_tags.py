@@ -50,7 +50,7 @@ def empathy_txt(feeling=0, has=False):
 	4: 'Yeah...',
 	5: 'Yeah...',
 	38: 'Nyeah~',
-	69: 'olv.portal.miitoo.',
+	2012: 'olv.portal.miitoo.',
 	}.get(feeling, 'Yeah!')
 	# olv.portal.miitoo is going to be the only easter egg in this thing ever
 @register.inclusion_tag('closedverse_main/elements/p_username.html')
