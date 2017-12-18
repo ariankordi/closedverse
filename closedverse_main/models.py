@@ -55,6 +55,8 @@ class UserManager(BaseUserManager):
 					raise ValueError
 			else:
 				spamuser = False
+		else:
+			spamuser = False
 		profile = Profile.objects.model()
 		if nn:
 			user.avatar = nn[0]
@@ -214,7 +216,7 @@ class User(models.Model):
 		recent_posts = Post.real.filter(Q(creator=self.id, created__range=(today_min, today_max)) | Q(creator__addr=self.addr, created__range=(today_min, today_max))).count() + Comment.real.filter(Q(creator=self.id, created__range=(today_min, today_max)) | Q(creator__addr=self.addr, created__range=(today_min, today_max))).count()
 		
 		# Posts remaining
-		return limit - recent_posts
+		return int(limit) - recent_posts
 		
 	def get_class(self):
 			first = {
@@ -908,6 +910,7 @@ class Post(models.Model):
 			self.status = 1
 		else:
 			self.status = 2
+			AuditLog.objects.create(type=0, post=self, user=self.creator, by=request.user)
 		if self.screenshot:
 			util.image_rm(self.screenshot)
 			self.screenshot = None
@@ -915,7 +918,6 @@ class Post(models.Model):
 			util.image_rm(self.drawing)
 			self.drawing = None
 		self.save()
-		AuditLog.objects.create(type=0, post=self, user=self.creator, by=request.user)
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
@@ -1034,6 +1036,7 @@ class Comment(models.Model):
 			self.status = 1
 		else:
 			self.status = 2
+			AuditLog.objects.create(type=1, comment=self, user=self.creator, by=request.user)
 		if self.screenshot:
 			util.image_rm(self.screenshot)
 			self.screenshot = None
@@ -1041,7 +1044,6 @@ class Comment(models.Model):
 			util.image_rm(self.drawing)
 			self.drawing = None
 		self.save()
-		AuditLog.objects.create(type=1, comment=self, user=self.creator, by=request.user)
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
