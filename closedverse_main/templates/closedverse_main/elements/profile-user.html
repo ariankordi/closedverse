@@ -11,7 +11,7 @@
 
   <div class="body">
     <p class="title">
-      <span class="nick-name"><a href="{% url "main:user-view" user.username %}">{{ user.nickname }}</a></span>
+      <span class="nick-name"><a {% if user.color %}style=color:{{ user.color }}{% endif %} href="{% url "main:user-view" user.username %}">{{ user.nickname }}</a></span>
       <span class="id-name">{{ user.username }}</span>
     </p>
     <p class="text">{{ user.profile.comment }}</p>

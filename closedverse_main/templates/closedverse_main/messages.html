@@ -27,7 +27,7 @@
 
 					  <div class="body">
 						<p class="title">
-						  <span class="nick-name"><a href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
+						  <span class="nick-name"><a {% if friend.color %}style=color:{{ friend.color }}{% endif %} href="{% url "main:user-view" friend.username %}">{{ friend.nickname }}</a></span>
 						  <span class="id-name">{{ friend.username }}</span>
 						</p>
 						{% if friend.get_latest_msg %}
