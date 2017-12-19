@@ -30,7 +30,7 @@
 		<div class="news-list-content trigger" tabindex="0" id="{{ fr.unique_id }}" data-href="{% url "main:user-view" fr.source.username %}">
 		{% user_icon_container fr.source %}
 			<div class="body">
-				<a href="{% url "main:user-view" fr.source.username %}" class="nick-name">{{ fr.source.nickname }}</a><br><span class="timestamp"> {% time fr.created %}</span>
+				<a href="{% url "main:user-view" fr.source.username %}" class="nick-name"{% if fr.source.color %}style=color:{{ fr.source.color }}{% endif %}>{{ fr.source.nickname }}</a><br><span class="timestamp"> {% time fr.created %}</span>
 				<button class="button received-request-button" type="button">View friend request</button>
 			</div>
 		</div>

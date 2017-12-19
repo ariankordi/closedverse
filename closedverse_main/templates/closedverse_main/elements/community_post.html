@@ -11,7 +11,7 @@
   </p>
   {% endif %}
   {% user_icon_container post.creator post.feeling %}
-  <p class="user-name"><a href="{% url "main:user-view" post.creator.username %}">{{ post.creator.nickname }}</a></p>
+  <p class="user-name"><a href="{% url "main:user-view" post.creator.username %}"{% if post.creator.color %}style=color:{{ post.creator.color }}{% endif %}>{{ post.creator.nickname }}</a></p>
     <p class="timestamp-container">
 	  <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">Spoilers·</span>
 	  {% if post.has_edit %}

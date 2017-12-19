@@ -2,7 +2,7 @@
   {% user_icon_container comment.creator comment.feeling %}
   <div class="body">
     <div class="header">
-      <p class="user-name"><a href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
+      <p class="user-name"><a {% if comment.creator.color %}style=color:{{ comment.creator.color }}{% endif %} href="{% url "main:user-view" comment.creator.username %}">{{ comment.creator.nickname }}</a></p>
       <p class="timestamp-container">
         <a class="timestamp" {% if comment.spoils and not comment.is_mine %}data-href-hidden{% else %}href{% endif %}="{% url "main:comment-view" comment.id %}">{% time comment.created %}</a>
 				{% if comment.drawing %}

@@ -172,23 +172,26 @@ def image_upload(img, stream=False, drawing=False):
 # Todo: Put this into post/comment delete thingy method
 def image_rm(image_url):
 	if settings.image_delete_opt:
-		sysfile = image_url.split(settings.MEDIA_URL)[1]
-		sysloc = settings.MEDIA_ROOT + sysfile
-		if settings.image_delete_opt > 1:
+		if settings.MEDIA_URL in image_url:
+			sysfile = image_url.split(settings.MEDIA_URL)[1]
+			sysloc = settings.MEDIA_ROOT + sysfile
+			if settings.image_delete_opt > 1:
+				try:
+					remove(sysloc)
+				except:
+					return False
+				else:
+					return True
+			# The RM'd directory to move it to
+			rmloc = sysloc.replace(settings.MEDIA_ROOT, settings.MEDIA_ROOT + 'rm/')
 			try:
-				remove(sysloc)
+				rename(sysloc, rmloc)
 			except:
 				return False
 			else:
 				return True
-		# The RM'd directory to move it to
-		rmloc = sysloc.replace(settings.MEDIA_ROOT, settings.MEDIA_ROOT + 'rm/')
-		try:
-			rename(sysloc, rmloc)
-		except:
-			return False
 		else:
-			return True
+			return False
 
 def get_gravatar(email):
 	try:

@@ -3274,6 +3274,27 @@ mode_post = 0;
 						$('.setting-avatar > .icon-container > .nnid-icon.mii').addClass('none');
 						$('.nnid-icon.gravatar').removeClass('none');
 				})
+				$('.color-thing').click(function(a) {
+					a.preventDefault();
+						$('.color-thing').spectrum({
+							color: $('input[name=color]'),
+							preferredFormat: "hex",
+							showInput: true,
+							showButtons: false,
+							flat: true,
+							change: function(color) {
+								$('.nick-name').attr('style', 'color:' + color);
+								$('input[name=color]').val(color);
+							}
+						});
+						$('.color-thing').on('dragstop.spectrum', function(e, color) {
+							$('.nick-name').attr('style', 'color:' + color.toHexString());
+							$('input[name=color]').val(color);
+						});
+					$('div.form-buttons > input').click(function(a) {
+						$('.color-thing').spectrum('destroy');
+					});
+				});
 //			}
 	}
 		b.User.setupUserSidebar(e)

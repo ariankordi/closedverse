@@ -1,5 +1,5 @@
 #sidebar-profile-body .nick-name, .news-list .nick-name, .list-content-with-icon-and-text .nick-name a, .user-name a {
-    color: #fff !important;
+    color: #fff;
 }
 .post-permalink-button:hover, .favorite-community-link.symbol, .trigger:active, #wrapper, #reply-content button.more-button:hover, .spoiler-button:hover, #sidebar-profile-status, #guide-menu:hover, .community-eyecatch-info:hover, #community-favorite:hover, #reply-content .list > li.my:hover, .big-button:hover, .sidebar-setting a:hover, .multi-timeline-post-list .post.hidden .screenshot-container, .multi-timeline-post-list .post .screenshot-container, .trigger:hover, .textarea-container .community-container, .post-form-album-content, .admin-messages .post.my, #identified-user-banner:hover, .sidebar-setting a.selected, .sidebar-container h4 a:hover, #empathy-content, .sidebar-profile .profile-comment, .post-list .recent-reply-content, .community-name .owner, .post-list-heading-button, .topic-title-input, .textarea, .yeah-button, .hidden-content-button, .community-description {
     background-color: #161626 !important;

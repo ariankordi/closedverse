@@ -6,6 +6,6 @@
 	</div>
 	{% if user.get_class.1 %}<p class="user-organization">{% user_level user %}</p>{% endif %}
 
-		<a href="{% url "main:user-view" user.username %}" class="nick-name">{{ user.nickname }}</a>
+		<a href="{% url "main:user-view" user.username %}" class="nick-name"{% if user.color %}style=color:{{ user.color }}{% endif %}>{{ user.nickname }}</a>
 		<p class="id-name">{{ user.username }}</p>
 	</div>

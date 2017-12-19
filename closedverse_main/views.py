@@ -9,8 +9,8 @@ from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Exists, OuterRef
-from .models import User, Community, Post, Comment, Yeah, Profile, Notification, Complaint, FriendRequest, Friendship, Message, Follow, Poll, Conversation, UserBlock, LoginAttempt
-from .util import get_mii, recaptcha_verify, get_gravatar, filterchars, HumanTime, nnid_blacked, iphub
+from .models import *
+from .util import *
 from .serializers import CommunitySerializer
 from closedverse import settings
 import re
@@ -382,7 +382,25 @@ def user_view(request, username):
 				user.avatar = getmii[0]
 				profile.origin_id = getmii[2]
 				profile.origin_info = dumps(getmii)
-		user.email = request.POST.get('email')
+		if request.POST.get('color'):
+			try:
+				validate_color(request.POST['color'])
+			except ValidationError:
+				return json_response("Invalid color")
+			else:
+				dark = True if user.color == '#000000' else False
+				light = True if user.color == '#ffffff' else False
+				if dark:
+					return json_response("Too dark")
+				if light:
+					return json_response("Too light")
+				user.color = request.POST['color']
+		else:
+			user.color = None
+		if request.POST.get('email') == 'None':
+			user.email = None
+		else:
+			user.email = request.POST.get('email')
 		profile.country = request.POST.get('country')
 		website = request.POST.get('website')
 		if ' ' in website or not '.' in website:
@@ -762,7 +780,7 @@ def community_view(request, community):
 @login_required
 def community_favorite_create(request, community):
 	the_community = get_object_or_404(Community, id=community)
-	if not community.type == 3:
+	if not the_community.type == 3:
 		the_community.favorite_add(request)
 	return HttpResponse()
 @require_http_methods(['POST'])

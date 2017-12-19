@@ -5,7 +5,7 @@ from django.db.models import Q, QuerySet, Max, F, Count, Case, When, Exists, Out
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.utils.dateformat import format
-from django.core.validators import URLValidator
+from django.core.validators import RegexValidator, URLValidator
 from django.core.exceptions import ValidationError
 from datetime import timedelta, datetime, date, time
 from passlib.hash import bcrypt_sha256
@@ -120,6 +120,15 @@ class CommunityFavoriteManager(models.Manager):
 	def get_queryset(self):
 		return super(CommunityFavoriteManager, self).get_queryset().filter(community__is_rm=False).exclude(community__type=3)
 
+# Taken from https://github.com/jaredly/django-colorfield/blob/master/colorfield/fields.py
+color_re = re.compile('^#([A-Fa-f0-9]{6})$')
+validate_color = RegexValidator(color_re, "Enter a valid color", 'invalid')
+class ColorField(models.CharField):
+	default_validators = [validate_color]
+	def __init__(self, *args, **kwargs):
+		kwargs['max_length'] = 18
+		super(ColorField, self).__init__(*args, **kwargs)
+		
 class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -137,7 +146,9 @@ class User(models.Model):
 	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'tester'), (7, 'urapp'), (8, 'developer'), ))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
+	# Things that don't have to do with auth lol
 	hide_online = models.BooleanField(default=False)
+	color = ColorField(default='', null=True, blank=True)
 	
 	staff = models.BooleanField(default=False)
 	#active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))

@@ -75,6 +75,15 @@
 		</div>
         <p class="note">Actually, you don't have to put a DiscordTag here, you can put anything here, such as your PlayStation Network account. Discord sure is popular though.</p>
       </li>
+      <li class="setting-color">
+        <p class="settings-label">Nickname color</p>
+        <div class="center center-input">
+			<input type="hidden" name="color" maxlength="7" placeholder="Enter a hex color value here" value="{{ user.color }}">
+			<button class="button color-thing">Open color picker</button>
+		</div>
+        <p class="note">This is the color your nickname will appear as. Leave it blank for the default. It will appear like so.</p>
+		{% user_sidebar_info user %}
+      </li>
 	  	  {% if profile.origin_id %}
       <li>
         <p class="settings-label"><label for="id_visibility">Who should be able to see your Nintendo Network ID? ({{ profile.origin_id }})</label></p>

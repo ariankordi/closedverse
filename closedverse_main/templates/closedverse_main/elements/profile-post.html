@@ -6,7 +6,7 @@
     <div class="post-content">
 		  {% user_icon_container post.creator post.feeling %}
           
-          <p class="user-name"><a href="{% url "main:user-view" post.creator.username %}">{{ post.creator.nickname }}</a></p>
+          <p class="user-name"><a {% if post.creator.color %}style=color:{{ post.creator.color }}{% endif %} href="{% url "main:user-view" post.creator.username %}">{{ post.creator.nickname }}</a></p>
           
             <p class="timestamp-container">
 				{% if post.spoils %}

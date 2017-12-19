@@ -71,7 +71,7 @@ class LoginAdmin(admin.ModelAdmin):
         search_fields = ('user__username', )
 
 class AuditAdmin(admin.ModelAdmin):
-        raw_id_fields = ('by', 'user', 'post', 'comment', )
+        raw_id_fields = ('by', 'user', 'post', 'comment', 'reversed_by', )
         search_fields = ('by__username', 'user__username', )
 
 #class BlockAdmin(admin.ModelAdmin)

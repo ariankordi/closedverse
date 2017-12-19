@@ -63,7 +63,7 @@ urlpatterns = [
 	url(r'posts/'+ post +'\.rm$', views.post_rm, name='post-rm'),
 	url(r'comments/'+ comment +'$', views.comment_view, name='comment-view'),
 	url(r'comments/'+ comment +'/yeah$', views.comment_add_yeah, name='comment-add-yeah'),
-	url(r'comments/'+ comment +'/unyeah$', views.comment_delete_yeah, name='comment-delete-yeah'),
+	url(r'comments/'+ comment +'/yeahu$', views.comment_delete_yeah, name='comment-delete-yeah'),
 	url(r'comments/'+ comment +'/change$', views.comment_change, name='comment-change'),
 	url(r'comments/'+ comment +'/rm$', views.comment_rm, name='comment-rm'),
 	# Post-meta: polls
