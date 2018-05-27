@@ -262,7 +262,7 @@ class User(models.Model):
 		return self.profile('let_freedom')	
 	# This is the coolest one
 	def online_status(self, force=False):
-	# Okay so this returns True if the user's offline, 2 if they're AFK, False if they're offline and None if they hide it
+	# Okay so this returns True if the user's online, 2 if they're AFK, False if they're offline and None if they hide it
 		if self.hide_online:
 			return None
 		if (timezone.now() - timedelta(seconds=50)) > self.last_login:
