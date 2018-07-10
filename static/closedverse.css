@@ -1398,8 +1398,17 @@ content: "F";
   width: 22px;
   height: 22px;
 }
-.post-permalink-feeling-icon.openverse:after {
+.post-permalink-feeling-icon.openverse:after { 
   content: url("/s/img/open-dev.png");
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+}
+.post-permalink-feeling-icon.openverse:after {
+  content: url("/s/img/open-zsdev.png");
   position: absolute;
   display: block;
   top: 0;
