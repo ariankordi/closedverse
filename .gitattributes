@@ -1,1 +1,3 @@
+# Make GitHub show the repository as dominantly Python
+# instead of just CSS like it usually does.
 *.css linguist-language=Python

@@ -1,14 +1,11 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-*$py.class
-pip-log.txt
-pip-delete-this-directory.txt
+*.pyc
 
 # My
 closedverse/settings.py
-# I might remove this one
+
 closedverse/urls.py
+
 # //
 settings.py
 closedverse/settingscool.py
@@ -21,7 +18,6 @@ media2
 closedverse_main/media
 closedverse/media
 closedverse_main/migrations
-*.pyc
 *.db3
 *.db
 *.log
