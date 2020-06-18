@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -137,7 +136,7 @@ STATICFILES_DIRS = [
 AUTH_USER_MODEL = 'closedverse_main.User'
 CSRF_FAILURE_VIEW = 'closedverse_main.views.csrf_fail'
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/login/' 
+LOGIN_REDIRECT_URL = '/login/'
 
 # User-uploaded media paths for Closedverse
 MEDIA_URL = '/media/'
@@ -160,6 +159,32 @@ MARKDOWN_DEUX_STYLES = {
 # and routines, such as HTTPS scheme redirection and
 # proxy detection via IPHub.
 CLOSEDVERSE_PROD = False
+
+# Initialize version and Git URL
+CLOSEDVERSE_GIT_VERSION = 'unknown'
+CLOSEDVERSE_GIT_URL = ''
+CLOSEDVERSE_GIT_HAS_CHANGES = False
+
+# Only set git version/URL if .git folder exists
+if os.path.isdir(os.path.join(BASE_DIR, '.git')):
+    # Get version from Git. This is shown in the layout
+    git_process = os.popen('git rev-parse HEAD', 'r')
+    CLOSEDVERSE_GIT_VERSION = git_process.read()[:-1]
+
+    # if this command returns a non-zero exit code, then
+    # there have been some changes so let's indicate that
+    if os.system('git diff-index --quiet HEAD --'):
+        CLOSEDVERSE_GIT_HAS_CHANGES = True
+
+    git_process = os.popen('git remote get-url origin', 'r')
+    CLOSEDVERSE_GIT_URL = git_process.read()[:-1]
+
+    try:
+        git_url_without_ext = CLOSEDVERSE_GIT_URL.split('.git')[0]
+    except IndexError:
+        pass
+    else:
+        CLOSEDVERSE_GIT_URL = git_url_without_ext + '/commit/' + CLOSEDVERSE_GIT_VERSION
 
 # Google reCAPTCHA (v2) settings
 # This feature won't work if these fields are not populated.

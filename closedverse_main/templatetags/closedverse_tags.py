@@ -76,8 +76,24 @@ def print_names(names):
 		'nameallmn': len(names) - 4,
 		'names': names,
 	}
-@register.inclusion_tag('closedverse_main/elements/discordapp-spinner.html')
-def discordapp_spinner():
+@register.inclusion_tag('closedverse_main/elements/loading-spinner.html')
+def loading_spinner():
 	return {
 		
 	}
+@register.simple_tag
+def get_version_information():
+	return {
+		CLOSEDVERSE_GIT_VERSION: settings.CLOSEDVERSE_GIT_VERSION,
+		CLOSEDVERSE_GIT_URL: settings.CLOSEDVERSE_GIT_URL,
+		CLOSEDVERSE_GIT_HAS_CHANGES: settings.CLOSEDVERSE_GIT_HAS_CHANGES,
+	}
+@register.simple_tag
+def get_git_version():
+	if settings.CLOSEDVERSE_GIT_HAS_CHANGES:
+		return settings.CLOSEDVERSE_GIT_VERSION + ' (dirty)'
+	return settings.CLOSEDVERSE_GIT_VERSION
+
+@register.simple_tag
+def get_git_url():
+	return settings.CLOSEDVERSE_GIT_URL

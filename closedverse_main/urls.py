@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 
 from . import views
 
-from django.conf import settings
+from closedverse import settings
 
 username = r'(?P<username>[A-Za-z0-9-\'-._ ]+)'
 community = r'(?P<community>[0-9]+)'
@@ -95,7 +95,6 @@ urlpatterns = [
 	url(r'server$', views.server_stat, name='server-stat'),
 	url(r'help/rules/?$', views.help_rules, name='help-rules'),
 	url(r'help/faq/?$', views.help_faq, name='help-faq'),
-	url(r'help/legal/?$', views.help_legal, name='help-legal'),
 	url(r'help/contact/?$', views.help_contact, name='help-contact'),
 	url(r'help/login/?$', views.help_login, name='help-login'),
 	url(r'why/?$', views.help_why, name='help-why'),

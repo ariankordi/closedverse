@@ -7,10 +7,6 @@
 		<form action="{% url "main:community-search" %}" class="search">
 			<input maxlength="32" name="query" placeholder="Search all communities" type="text"><input title="Search" type="submit" value="q">
 		</form>
-		<!--
-		<div id="identified-user-banner">
-			<a class="list-button" href="/identified_user_posts"><span class="title">Get the latest news here!</span><span class="text">Posts from Verified Users</span></a>
-		</div>-->
 		{% if settings.memo_title and settings.memo_msg %}
 		<div class="post-list-outline index-memo">
 			<h2 class="label">{{ settings.memo_title }}</h2>
@@ -52,7 +48,6 @@
 			<a class="arrow-button" href="{% url "main:help-rules" %}"><span>Closedverse Rules</span></a>
 			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
 			{% if settings.CLOSEDVERSE_PROD %}
-			<a class="arrow-button" href="{% url "main:help-legal" %}"><span>Legal information</span></a>
 			<a class="arrow-button" href="{% url "main:help-contact" %}"><span>Contact information</span></a>
 			{% endif %}
 			<a class="arrow-button" href="https://pf2m.com/openverse/"><span>Info about Openverse</span></a>

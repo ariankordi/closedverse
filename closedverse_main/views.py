@@ -187,7 +187,7 @@ def login_page(request):
 			LoginAttempt.objects.create(user=user[0], success=successful, addr=request.META.get('REMOTE_ADDR'))
 			if user[1] is False:
 				return HttpResponse("Invalid password.", status=401)
-			elif user[1] is 2:
+			elif user[1] == 2:
 				return HttpResponse("This account's password needs to be reset. Contact an admin or reset by email.", status=400)
 			elif not user[0].is_active():
 				return HttpResponseForbidden("This account was disabled.")
@@ -1489,9 +1489,9 @@ def admin_index(request):
 				first = Follow.objects.filter(source=user).delete()
 				return HttpResponse(str(first))
 			elif request.POST['action'] == 'purge5':
-				# purge5 - Rename nickname, change avatar to Discordapp joke XDlol, don't let them change it back
-				nicky = "Deleted User " + hexlify(urandom(4)).decode()
-				avatar = "https://cdn.discordapp.com/embed/avatars/" + choice(['0', '1', '2', '3', '4']) + ".png"
+				# purge5 - Rename nickname, change avatar to default, don't let them change it back
+				nicky = 'stupib'
+				avatar = 's'
 				user.nickname = nicky
 				user.avatar = avatar
 				user.has_mh = False
@@ -1566,10 +1566,6 @@ def help_rules(request):
 	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules'})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
-def help_legal(request):
-	if not settings.CLOSEDVERSE_PROD:
-		return HttpResponseForbidden()
-	return render(request, 'closedverse_main/help/legal.html', {})
 def help_contact(request):
 	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})
 def help_why(request):

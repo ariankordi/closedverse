@@ -3,23 +3,21 @@
 {% user_sidebar request user user.profile 0 True %}
 <div class="main-column" id="help">
 <div class="post-list-outline">
-    <h2 class="label">Server stats</h2>
+    <h2 class="label">Server statistics</h2>
     <div id="guide" class="help-content">
       <div class="faq">
-        <p>Ever wanted to see the server's statistics? Well, now you can!</p>
 		<ul>
 		<li>Communities: <strong>{{ communities }}</strong></li>
 		<li>Posts: <strong>{{ posts }}</strong></li>
 		<li>Users: <strong>{{ users }}</strong></li>
 		<li>Comments: <strong>{{ comments }}</strong></li>
-		<li>Messages: <strong>{{ messages }}</strong></li>
 		<li>Yeahs: <strong>{{ yeahs }}</strong></li>
 		<li>Complaints: <strong>{{ complaints }}</strong></li>
 		<li>Notifications: <strong>{{ notifications }}</strong></li>
 		<li>Follows: <strong>{{ follows }}</strong></li>
 		<li>Friendships: <strong>{{ friendships }}</strong></li>
 		</ul>
-        <button class="button reload-btn">Refresh please</button>
+        <button class="button reload-btn">Refresh</button>
       </div>
     </div>
   </div>
