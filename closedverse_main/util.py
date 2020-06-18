@@ -104,16 +104,6 @@ def image_upload(img, stream=False, drawing=False):
 	if stream:
 		decodedimg = img.read()
 	else:
-		# Brand New drawing checksum
-		# Never mind
-		if drawing:
-			if not '----/' in img:
-				return 1
-			hasha = img.split('----/')
-			# Appears to be broken; works some of the time, other times 
-			#if not 0 > int(hasha[0]) and crc32(bytes(hasha[1], 'utf-8')) != int(hasha[0]):
-			#	return 1
-			img = hasha[1]
 		try:
 			decodedimg = base64.b64decode(img)
 		except ValueError:
