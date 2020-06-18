@@ -4,7 +4,8 @@ from django.conf.urls.static import static
 from django.shortcuts import redirect
 
 from . import views
-from closedverse.settings import MEDIA_URL, MEDIA_ROOT 
+
+from django.conf import settings
 
 username = r'(?P<username>[A-Za-z0-9-\'-._ ]+)'
 community = r'(?P<community>[0-9]+)'
@@ -17,6 +18,7 @@ app_name = 'main'
 urlpatterns = [
 	# Root
 	url(r'^^$|^communities$|^index.*$$', views.community_list, name='community-list'),
+	
 	# Accounts
 	url(r'login/$', views.login_page, name='login'),
 	url(r'signup/$', views.signup_page, name='signup'),
@@ -113,4 +115,4 @@ urlpatterns = [
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
 	url(r'debug$', lambda request: redirect('https://youtu.be/dQw4w9WgXcQ'), name='rickroll'),
 
-] + static(MEDIA_URL, document_root=MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

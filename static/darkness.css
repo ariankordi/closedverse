@@ -451,10 +451,10 @@ border-top: 1px solid #222;
     border: 1px solid rgba(221, 221, 221, 0);
 }
 #wrapper, #image-header-content {
-    background-image: url(/s/img/op.png) !important;
+    background-image: url(img/op.png) !important;
 }
 #empathy-content:before {
-    background: url(/s/img/rks.png) no-repeat 0 0 !important;
+    background: url(img/rks.png) no-repeat 0 0 !important;
 }
 .community-switcher .community-switcher-tab {
     background-color: #202030;

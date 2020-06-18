@@ -47,10 +47,10 @@ class UserManager(BaseUserManager):
 		addr = addr,
 		email = email,
 		)
-		if settings.PROD:
+		if settings.CLOSEDVERSE_PROD:
 			if util.iphub(addr):
 				spamuser = True
-				if settings.disallow_proxy:
+				if settings._DISALLOW_PROXY:
 					# This was for me, a server error will email admins of course.
 					raise ValueError
 			else:

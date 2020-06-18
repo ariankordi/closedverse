@@ -1,30 +1,29 @@
+# TODO: add requirements.txt then remove this line
+requirements.txt
+
+# Python cache and compiled files
 __pycache__/
 *.pyc
 
-# My
+# Databases
+*.db
+*.sqlite3
+*.sql
+
+# Swap and save file for editors
+*.swp
+*.kate-swp
+*.save
+
+# Local settings
 closedverse/settings.py
 
-closedverse/urls.py
-
-# //
-settings.py
-closedverse/settingscool.py
-settingscool.py
-managecool.py
-closedverse/wsgicool.py
-wsgicool.py
-media
-media2
-closedverse_main/media
-closedverse/media
+# Migrations
 closedverse_main/migrations
-*.db3
-*.db
-*.log
-*.sql
-local_settings.py
+
+# Media contents
+media/*
+!media/.keep
+
+# Just in case
 .DS_Store
-.python-version
-closederse_main/migrations-old
-migrations-old
-gitignore-this

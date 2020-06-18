@@ -51,7 +51,7 @@
 			<a class="arrow-button" href="{% url "main:help-why" %}"><span>Why join?</span></a>
 			<a class="arrow-button" href="{% url "main:help-rules" %}"><span>Closedverse Rules</span></a>
 			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
-			{% if settings.PROD %}
+			{% if settings.CLOSEDVERSE_PROD %}
 			<a class="arrow-button" href="{% url "main:help-legal" %}"><span>Legal information</span></a>
 			<a class="arrow-button" href="{% url "main:help-contact" %}"><span>Contact information</span></a>
 			{% endif %}

@@ -171,11 +171,11 @@ def image_upload(img, stream=False, drawing=False):
 
 # Todo: Put this into post/comment delete thingy method
 def image_rm(image_url):
-	if settings.image_delete_opt:
+	if settings.IMAGE_DELETE_SETTING:
 		if settings.MEDIA_URL in image_url:
 			sysfile = image_url.split(settings.MEDIA_URL)[1]
 			sysloc = settings.MEDIA_ROOT + sysfile
-			if settings.image_delete_opt > 1:
+			if settings.IMAGE_DELETE_SETTING > 1:
 				try:
 					remove(sysloc)
 				except:
@@ -233,8 +233,8 @@ def getipintel(addr):
 """
 # Now using iphub
 def iphub(addr):
-	if settings.iphub_key and not '192.168' in addr:
-		get = requests.get('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.iphub_key})
+	if settings.IPHUB_KEY and not '192.168' in addr:
+		get = requests.get('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
 		if get.json()['block'] == 1:
 			return True
 		else:
@@ -242,7 +242,7 @@ def iphub(addr):
 
 # NNID blacklist check
 def nnid_blacked(nnid):
-	blacklist = json.load(open(settings.nnid_forbiddens))
+	blacklist = json.load(open(settings.NNID_FORBIDDEN_LIST, 'r'))
 	# The NNID server omits dashes and dots from NNIDs, gotta make sure nobody gets through this
 	nnid = nnid.lower().replace('-', '').replace('.', '')
 	if nnid in blacklist:

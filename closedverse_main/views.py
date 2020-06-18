@@ -170,10 +170,10 @@ def login_page(request):
 		# Hold up, first we need to check proxe.
 		# Never mind
 		"""
-		if settings.PROD:
+		if settings.CLOSEDVERSE_PROD:
 			if iphub(request.META['REMOTE_ADDR']):
 				spamuser = True
-				if settings.disallow_proxy:
+				if settings.DISALLOW_PROXY:
 					# This was for me, a server error will email admins of course.
 					raise ValueError
 		"""
@@ -214,14 +214,14 @@ def signup_page(request):
 	if request.user.is_authenticated:
 		return redirect('/')
 	if request.method == 'POST':
-		if settings.recaptcha_pub:
-			if not recaptcha_verify(request, settings.recaptcha_priv):
+		if settings.RECAPTCHA_PUBLIC_KEY:
+			if not recaptcha_verify(request, settings.RECAPTCHA_PRIVATE_KEY):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
 		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
-		if settings.PROD:
+		if settings.CLOSEDVERSE_PROD:
 			for keyword in ['admin', 'admln', 'adrnin', 'admn', ]:
 				if keyword in request.POST['username'].lower():
 					return HttpResponseForbidden("You aren't funny. Please use a funny name.")
@@ -247,7 +247,7 @@ def signup_page(request):
 		if check_others:
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
 		if request.POST['origin_id']:
-			if settings.nnid_forbiddens:
+			if settings.NNID_FORBIDDEN_LIST:
 				if nnid_blacked(request.POST['origin_id']):
 					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
@@ -267,11 +267,11 @@ def signup_page(request):
 		request.session['passwd'] = make.password
 		return HttpResponse("/")
 	else:
-		if not settings.recaptcha_pub:
-			settings.recaptcha_pub = None
+		if not settings.RECAPTCHA_PUBLIC_KEY:
+			settings.RECAPTCHA_PUBLIC_KEY = None
 		return render(request, 'closedverse_main/signup_page.html', {
 			'title': 'Sign up',
-			'recaptcha': settings.recaptcha_pub,
+			'recaptcha': settings.RECAPTCHA_PUBLIC_KEY,
 			#'classes': ['no-login-btn'],
 		})
 def forgot_passwd(request):
@@ -355,7 +355,7 @@ def user_view(request, username):
 				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
-		if settings.nnid_forbiddens:
+		if settings.NNID_FORBIDDEN_LIST:
 			if nnid_blacked(request.POST['origin_id']):
 				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if user.has_plain_avatar():
@@ -1021,7 +1021,7 @@ def poll_unvote(request, poll):
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
-	if settings.PROD:
+	if settings.CLOSEDVERSE_PROD:
 		# Issue 69420: PF2M is getting more follows than me.
 		if user.username == 'PF2M':
 			try:
@@ -1037,7 +1037,7 @@ def user_follow(request, username):
 @login_required
 def user_unfollow(request, username):
 	user = get_object_or_404(User, username=username)
-	if settings.PROD:
+	if settings.CLOSEDVERSE_PROD:
 		# Issue 69420 is still active
 		if user.id == 1:
 			try:
@@ -1567,7 +1567,7 @@ def help_rules(request):
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
 def help_legal(request):
-	if not settings.PROD:
+	if not settings.CLOSEDVERSE_PROD:
 		return HttpResponseForbidden()
 	return render(request, 'closedverse_main/help/legal.html', {})
 def help_contact(request):

@@ -1,15 +1,15 @@
 @charset 'UTF-8';
 @font-face {
   font-family: 'MiiverseSymbols';
-  src: url('/s/img/font/Symbols.eot');
-  src: url('/s/img/font/Symbols-IEFix.eot') format('embedded-opentype'), url('/s/img/font/Symbols.woff') format('woff'), url('/s/img/font/Symbols.ttf') format('truetype');
+  src: url('img/font/Symbols.eot');
+  src: url('img/font/Symbols-IEFix.eot') format('embedded-opentype'), url('img/font/Symbols.woff') format('woff'), url('img/font/Symbols.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 @font-face {
   font-family: 'MiiverseSymbols';
-  src: url('/s/img/font/Symbols.eot');
-  src: url('/s/img/font/Symbols-IEFix.eot') format('embedded-opentype'), url('/s/img/font/Symbols.woff') format('woff'), url('/s/img/font/Symbols.ttf') format('truetype');
+  src: url('img/font/Symbols.eot');
+  src: url('img/font/Symbols-IEFix.eot') format('embedded-opentype'), url('img/font/Symbols.woff') format('woff'), url('img/font/Symbols.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -831,7 +831,7 @@ left: 10% !important;
   content: "Z";
 }
 #global-menu #global-my-menu .my-menu-white-power:before {
-  content: url(/s/img/font/wp.svg);
+  content: url(img/font/wp.svg);
   width: 20px;
 }
 #global-menu #global-my-menu .my-menu-account-setting:before {
@@ -1094,7 +1094,7 @@ h2.label-topic .with-filter-right {
   padding: 10px 10px 8px;
   font-size: 14px;
   font-weight: bold;
-  background: url("/s/img/button-bg.gif") repeat-x 0 bottom #ffffff;
+  background: url("img/button-bg.gif") repeat-x 0 bottom #ffffff;
   background-color: #ffffff;
   background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#e6e6e6), color-stop(0.5, #ffffff));
   background: -webkit-linear-gradient(top, #ffffff 0%, #ffffff 50%, #e6e6e6 100%);
@@ -1184,7 +1184,7 @@ h2.label-topic .with-filter-right {
 .tab2 a.selected,
 .tab3 a.selected {
   color: #FFF;
-  background: url("/s/img/color-button-bg.gif") repeat-x 0 bottom #2e81e5;
+  background: url("img/color-button-bg.gif") repeat-x 0 bottom #2e81e5;
   background-color: #81e52e;
   background: -webkit-gradient(linear, left top, left bottom, from(#2e81e5), to(#005ac8));
   background: -webkit-linear-gradient(top, #2e81e5 #005ac8);
@@ -1276,28 +1276,28 @@ content: "F";
   height: 22px;
 }
 .icon-container.administrator:after {
-  content: url("/s/img/administrator.png");
+  content: url("img/administrator.png");
 }
 .icon-container.developer:after {
-  content: url("/s/img/developer.png");
+  content: url("img/developer.png");
 }
 .icon-container.openverse:after {
-  content: url("/s/img/open-dev.png");
+  content: url("img/open-dev.png");
 }
 .icon-container.urapp:after {
-  content: url("/s/img/open-zsdev.png");
+  content: url("img/open-zsdev.png");
 }
 .icon-container.moderator:after {
-  content: url("/s/img/moderator.png");
+  content: url("img/moderator.png");
 }
 .icon-container.donator:after {
-  content: url("/s/img/donator.png");
+  content: url("img/donator.png");
 }
 .icon-container.tester:after {
-  content: url("/s/img/tester.png");
+  content: url("img/tester.png");
 }
 .icon-container.verified:after {
-  content: url("/s/img/verified.png");
+  content: url("img/verified.png");
 }
 
 .multi-timeline-post-list .post .icon-container.offline:before,
@@ -1381,7 +1381,7 @@ content: "F";
   position: relative;
 }
 .post-permalink-feeling-icon.administrator:after {
-  content: url("/s/img/administrator.png");
+  content: url("img/administrator.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1390,7 +1390,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.developer:after {
-  content: url("/s/img/developer.png");
+  content: url("img/developer.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1399,7 +1399,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.openverse:after {
-  content: url("/s/img/open-dev.png");
+  content: url("img/open-dev.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1408,7 +1408,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.moderator:after {
-  content: url("/s/img/moderator.png");
+  content: url("img/moderator.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1417,7 +1417,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.donator:after {
-  content: url("/s/img/donator.png");
+  content: url("img/donator.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1426,7 +1426,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.verified:after {
-  content: url("/s/img/verified.png");
+  content: url("img/verified.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1435,7 +1435,7 @@ content: "F";
   height: 22px;
 }
 .post-permalink-feeling-icon.tester:after {
-  content: url("/s/img/tester.png");
+  content: url("img/tester.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1561,7 +1561,7 @@ content: "F";
   clear: both;
   display: block;
   padding: 11px 20px 9px 15px;
-  background: url('/s/img/icon-arrow-right.png') no-repeat 97.5% center;
+  background: url('img/icon-arrow-right.png') no-repeat 97.5% center;
   color: #323232;
   -webkit-background-size: 9px 15px;
   -moz-background-size: 9px 15px;
@@ -1675,7 +1675,7 @@ font-size: 18px;
   font-size: 14px;
   font-weight: bold;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
-  background: url("/s/img/black-button-bg.gif") repeat-x 0 bottom #646464;
+  background: url("img/black-button-bg.gif") repeat-x 0 bottom #646464;
   background-color: #646464;
   background: -webkit-gradient(linear, left top, left bottom, from(#646464), to(#323232), color-stop(0.96, #434343));
   background: -webkit-linear-gradient(top, #646464 0%, #434343 96%, #323232 100%);
@@ -1733,7 +1733,7 @@ font-size: 18px;
   font-size: 14px;
   font-weight: bold;
   text-shadow: 0 1px 0 #fff;
-  background: url("/s/img/gray-button-bg.gif") repeat-x 0 bottom #ffffff;
+  background: url("img/gray-button-bg.gif") repeat-x 0 bottom #ffffff;
   background-color: #ffffff;
   background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#bbbbbb), color-stop(0.96, #dddddd));
   background: -webkit-linear-gradient(top, #ffffff 0%, #dddddd 96%, #bbbbbb 100%);
@@ -2913,7 +2913,7 @@ input.file-button {
   margin: 0;
   padding: 0;
   border: 0;
-  background: url('/s/img/mask-bg-white.png');
+  background: url('img/mask-bg-white.png');
   background: rgba(240, 240, 240, 0.6);
   z-index: 31;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -3113,7 +3113,7 @@ border-top: 1px solid #78c9ff;
   clear: both;
   display: block;
   padding: 11px 20px 9px 15px;
-  background: url('/s/img/icon-arrow-right.png') no-repeat 97.5% center;
+  background: url('img/icon-arrow-right.png') no-repeat 97.5% center;
   color: #323232;
   -webkit-background-size: 9px 15px;
   -moz-background-size: 9px 15px;
@@ -3211,7 +3211,7 @@ border-top: 1px solid #78c9ff;
 .sidebar-setting a {
   clear: both;
   padding: 11px 20px 9px 15px;
-  background: url('/s/img/icon-arrow-right.png') no-repeat 97.5% center;
+  background: url('img/icon-arrow-right.png') no-repeat 97.5% center;
   color: #323232;
   -webkit-background-size: 9px 15px;
   -moz-background-size: 9px 15px;
@@ -3442,7 +3442,7 @@ border-top: 1px solid #78c9ff;
 }
 #sidebar-profile-status li a.selected {
   font-weight: bold;
-  background-image: url('/s/img/bg-select.png');
+  background-image: url('img/bg-select.png');
   background-size: 6px auto;
 }
 #sidebar-profile-status .number {
@@ -3623,13 +3623,13 @@ border-top: 1px solid #78c9ff;
   background-size: 26px auto;
 }
 .user-data .game-skill span.beginner:before {
-  background-image: url('/s/img/skill-beginner.png');
+  background-image: url('img/skill-beginner.png');
 }
 .user-data .game-skill span.intermediate:before {
-  background-image: url('/s/img/skill-intermediate.png');
+  background-image: url('img/skill-intermediate.png');
 }
 .user-data .game-skill span.expert:before {
-  background-image: url('/s/img/skill-expert.png');
+  background-image: url('img/skill-expert.png');
 }
 .user-data .game .note > div {
   display: inline-block;
@@ -4364,7 +4364,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   clear: both;
   display: block;
   padding: 11px 20px 9px 15px;
-  background: url('/s/img/icon-arrow-right.png') no-repeat 97.5% center;
+  background: url('img/icon-arrow-right.png') no-repeat 97.5% center;
   color: #323232;
   -webkit-background-size: 9px 15px;
   -moz-background-size: 9px 15px;
@@ -5862,7 +5862,7 @@ h2.label-topic_post .label-topic_post-msgid {
   display: inline-block;
   width: 22px;
   height: 10px;
-  background: url('/s/img/tutorial-window-balloon.png');
+  background: url('img/tutorial-window-balloon.png');
   background-size: 22px 10px;
   position: absolute;
   top: -10px;
@@ -6080,7 +6080,7 @@ h2.label-topic_post .label-topic_post-msgid {
   height: 7px;
   top: -6px;
   left: 22px;
-  background: url('/s/img/balloon-part-empathy.png') no-repeat 0 0;
+  background: url('img/balloon-part-empathy.png') no-repeat 0 0;
   -webkit-background-size: 10px 7px;
   -moz-background-size: 10px 7px;
   -ms-background-size: 10px 7px;
@@ -6248,7 +6248,7 @@ h2.label-topic_post .label-topic_post-msgid {
   text-align: center;
 }
 .post-permalink-button {
-  background: #ffffff url('/s/img/icon-arrow-left.png') no-repeat 15px center;
+  background: #ffffff url('img/icon-arrow-left.png') no-repeat 15px center;
   color: #323232;
   display: table;
   width: 100%;
@@ -6490,7 +6490,7 @@ h2.label-topic_post .label-topic_post-msgid {
 #diary-container #diary-user-content {
   padding: 5px 10px 10px;
   text-align: center;
-  background-image: url('/s/img/bg-gray-dot.png');
+  background-image: url('img/bg-gray-dot.png');
   background-size: 14px auto;
   border-bottom: 1px solid #dddddd;
   border-top: 4px solid #04c9db;
@@ -6552,7 +6552,7 @@ h2.label-topic_post .label-topic_post-msgid {
   background-position: center bottom;
   background-repeat: repeat-x;
   background-size: 14px auto;
-  background-image: url('/s/img/bg-gray.png');
+  background-image: url('img/bg-gray.png');
   min-height: 140px;
   width: 100%;
   position: relative;
@@ -7516,49 +7516,49 @@ margin: 10px 0px 15px !important;
   #empathy-content .icon-container.donator:after,
   #reply-content .icon-container.donator:after,
   .news-list .icon-container.donator:after {
-    content: url(/s/img/donator.png);
+    content: url(img/donator.png);
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.verified:after,
   #reply-content .icon-container.verified:after,
   .news-list .icon-container.verified:after {
-    content: url(/s/img/verified.png);
+    content: url(img/verified.png);
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.tester:after,
   #reply-content .icon-container.tester:after,
   .news-list .icon-container.tester:after {
-    content: url(/s/img/tester.png);
+    content: url(img/tester.png);
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.moderator:after,
   #reply-content .icon-container.moderator:after,
   .news-list .icon-container.moderator:after {
-    content: url(/s/img/moderator.png);
+    content: url(img/moderator.png);
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.administrator:after,
   #reply-content .icon-container.administrator:after,
   .news-list .icon-container.administrator:after {
-    content: url("/s/img/administrator.png");
+    content: url("img/administrator.png");
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.developer:after,
   #reply-content .icon-container.developer:after,
   .news-list .icon-container.developer:after {
-    content: url("/s/img/developer.png");
+    content: url("img/developer.png");
     width: 17px;
     height: 17px;
   }
   #empathy-content .icon-container.openverse:after,
   #reply-content .icon-container.openverse:after,
   .news-list .icon-container.openverse:after {
-    content: url("/s/img/open-dev.png");
+    content: url("img/open-dev.png");
     width: 17px;
     height: 17px;
   }
@@ -8370,7 +8370,7 @@ margin: 10px 0px 15px !important;
     font-size: 14px;
   }
   .post-permalink-button {
-    background: #ffffff url('/s/img/icon-arrow-left.png') no-repeat 10px center;
+    background: #ffffff url('img/icon-arrow-left.png') no-repeat 10px center;
     min-height: 56px;
   }
   .post-permalink-button > span {
@@ -8642,7 +8642,7 @@ margin: 10px 0px 15px !important;
 .textarea-with-menu .textarea-menu-memo:before,
 .textarea-with-menu .textarea-menu-poll:before {
   content: "";
-  background: url(/s/img/form-icons.png);
+  background: url(img/form-icons.png);
   position: absolute;
   top: 3px;
   left: 50%;
@@ -8887,7 +8887,7 @@ display: block !important;
   top: 0px;
   left: 0px;
   z-index: 2000;
-  background: transparent url("/s/img/load.png") 0 0 no-repeat;
+  background: transparent url("img/load.png") 0 0 no-repeat;
   animation: woomy 0.36s steps(17) infinite;
 }
 @keyframes woomy {
@@ -9396,7 +9396,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 .open-spin {
     width: 40px;
 	margin: -2px 0 -2px 0;
-	content: url(/s/img/favicon.png);
+	content: url(img/favicon.png);
     animation: spin 1.6s linear infinite;
 }
 @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
