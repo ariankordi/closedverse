@@ -30,7 +30,7 @@ class UserAdmin(admin.ModelAdmin):
 
 class ProfileAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'origin_id', )
-	raw_id_fields = ('user', 'favorite', 'adopted', )
+	raw_id_fields = ('user', 'favorite', )
 
 class ComplaintAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'body', )
@@ -94,7 +94,6 @@ admin.site.register(models.Post, PostAdmin)
 admin.site.register(models.Comment, CommentAdmin)
 
 if settings.DEBUG:
-	admin.site.register(models.CommunityClink)
 	admin.site.register(models.Yeah)
 	admin.site.register(models.Follow)
 	admin.site.register(models.FriendRequest)

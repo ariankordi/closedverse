@@ -696,18 +696,6 @@ class Community(models.Model):
 	class Meta:
 		verbose_name_plural = "communities"
 
-# Links between communities for "related" communities
-class CommunityClink(models.Model):
-	# root/also order doesn't matter, time does though
-	root = models.ForeignKey(Community, related_name='one', on_delete=models.CASCADE)
-	also = models.ForeignKey(Community, related_name='two', on_delete=models.CASCADE)
-	created = models.DateTimeField(auto_now_add=True)
-	# type: related (f) / sub (t)
-	kind = models.BooleanField(default=False)
-	
-	objects = CommunityFavoriteManager()
-
-# Do this, or not
 class CommunityFavorite(models.Model):
 	id = models.AutoField(primary_key=True)
 	by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -1108,7 +1096,6 @@ class Profile(models.Model):
 	let_freedom = models.BooleanField(default=True)
 	# Todo: When you see this, implement it; make it a bool that determines whether the user should be able to edit their avatar; if this is true and 
 	#let_avatar = models.BooleanField(default=False)
-	adopted = models.ForeignKey(User, null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 	# Post limit, 0 for none
 	limit_post = models.SmallIntegerField(default=0)
 	# If this is true, the user can't change their avatar or nickname
@@ -1558,15 +1545,6 @@ class LoginAttempt(models.Model):
 	def __str__(self):
 		return 'A login attempt to ' + str(self.user) + ' from ' + self.addr + ', ' + str(self.success)
 		
-# Fun
-class ThermostatTouch(models.Model):
-	id = models.AutoField(primary_key=True)
-	created = models.DateTimeField(auto_now_add=True)
-	who = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
-	lvl = models.IntegerField(default=1)
-	
-	def __str__(self):
-		return str(created) + " touched the thermostat, setting it to " + str(lvl) + " degrees celsius"
 
 # Finally
 class UserBlock(models.Model):
