@@ -82,13 +82,6 @@ def loading_spinner():
 		
 	}
 @register.simple_tag
-def get_version_information():
-	return {
-		CLOSEDVERSE_GIT_VERSION: settings.CLOSEDVERSE_GIT_VERSION,
-		CLOSEDVERSE_GIT_URL: settings.CLOSEDVERSE_GIT_URL,
-		CLOSEDVERSE_GIT_HAS_CHANGES: settings.CLOSEDVERSE_GIT_HAS_CHANGES,
-	}
-@register.simple_tag
 def get_git_version():
 	if settings.CLOSEDVERSE_GIT_HAS_CHANGES:
 		return settings.CLOSEDVERSE_GIT_VERSION + ' (dirty)'

@@ -45,7 +45,7 @@
       <li class="setting-email">
         <p class="settings-label">E-mail address</p>
         <div class="center center-input">
-			<input type="text" name="email" maxlength="255" placeholder="Email address" value="{{ user.email }}">
+			<input type="text" name="email" maxlength="255" placeholder="Email address" value="{{ user.email|default_if_none:"" }}">
 		</div>
         <p class="note">Please note that your email can be a fake one, however if you need to reset your password, this must be accessible. You can't share emails.</p>
 		{% if user.email %}
@@ -78,10 +78,10 @@
       <li class="setting-color">
         <p class="settings-label">Nickname color</p>
         <div class="center center-input">
-			<input type="hidden" name="color" maxlength="7" placeholder="Enter a hex color value here" value="{{ user.color }}">
+			<input type="hidden" name="color" maxlength="7" placeholder="Enter a hex color value here" value="{{ user.color|default_if_none:"" }}">
 			<button class="button color-thing">Open color picker</button>
 		</div>
-        <p class="note">This is the color your nickname will appear as. Leave it blank for the default. It will appear like so.</p>
+        <p class="note">This is the color your nickname will appear as. Set it to white (#ffffff) and it will return to the default. It will appear like so.</p>
 		{% user_sidebar_info user %}
       </li>
 	  	  {% if profile.origin_id %}

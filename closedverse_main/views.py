@@ -234,7 +234,7 @@ def signup_page(request):
 			return HttpResponseBadRequest("You didn't fill in an NNID, so you need a nickname.")
 		if request.POST['nickname'] and len(request.POST['nickname']) > 32:
 			return HttpResponseBadRequest("Your nickname is either too long or too short (1-32 characters)")
-		if request.POST['origin_id'] and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
+		if request.POST.get('origin_id') and (len(request.POST['origin_id']) > 16 or len(request.POST['origin_id']) < 6):
 			return HttpResponseBadRequest("The NNID provided is either too short or too long.")
 		if request.POST.get('email'):
 			if User.email_in_use(request.POST['email']):
@@ -246,7 +246,7 @@ def signup_page(request):
 		check_others = Profile.objects.filter(user__addr=request.META['REMOTE_ADDR'], let_freedom=False).exists()
 		if check_others:
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
-		if request.POST['origin_id']:
+		if request.POST.get('origin_id'):
 			if settings.NNID_FORBIDDEN_LIST:
 				if nnid_blacked(request.POST['origin_id']):
 					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
@@ -346,7 +346,7 @@ def user_view(request, username):
 		
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		if request.POST.get('email') and not request.POST.get('email') == 'None':
+		if request.POST.get('email'):
 			if User.email_in_use(request.POST['email'], request):
 				return HttpResponseBadRequest("That email address is already in use, that can't happen.")
 			try:
@@ -382,22 +382,19 @@ def user_view(request, username):
 				user.avatar = getmii[0]
 				profile.origin_id = getmii[2]
 				profile.origin_info = dumps(getmii)
-		if request.POST.get('color'):
+		if not request.POST.get('color'):
+			user.color = None
+		else:
 			try:
 				validate_color(request.POST['color'])
 			except ValidationError:
 				return json_response("Invalid color")
 			else:
-				dark = True if user.color == '#000000' else False
-				light = True if user.color == '#ffffff' else False
-				if dark:
-					return json_response("Too dark")
-				if light:
-					return json_response("Too light")
-				user.color = request.POST['color']
-		else:
-			user.color = None
-		if request.POST.get('email') == 'None':
+				if request.POST['color'] == '#000000' or request.POST['color'] == '#ffffff':
+					user.color = None
+				else:
+					user.color = request.POST['color']
+		if not request.POST.get('email'):
 			user.email = None
 		else:
 			user.email = request.POST.get('email')
