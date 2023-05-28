@@ -201,11 +201,7 @@ def filterchars(str=""):
 		if char in str:
 			str = str.replace(char, " ")
 	if str.isspace():
-		try:
-			girls = json.load(open(settings.BASE_DIR + '/girls.json'))
-		except:
-			girls = ['None']
-		return choice(girls)
+		return 'None'
 	return str
 	
 """ Not using getipintel anymore
@@ -229,12 +225,3 @@ def iphub(addr):
 			return True
 		else:
 			return False
-
-# NNID blacklist check
-def nnid_blacked(nnid):
-	blacklist = json.load(open(settings.NNID_FORBIDDEN_LIST, 'r'))
-	# The NNID server omits dashes and dots from NNIDs, gotta make sure nobody gets through this
-	nnid = nnid.lower().replace('-', '').replace('.', '')
-	if nnid in blacklist:
-		return True
-	return False

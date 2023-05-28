@@ -66,7 +66,7 @@ function artworkUpdate(evt) {
 	var mousePos = getMousePos(evt);
 	if(artworkTool.type < 2) {
 	if(mousePosOld == 0) mousePosOld = mousePos;
-	if(evt.which == 1 || evt.type == 'touchmove') {
+	if(evt.originalEvent.buttons == 1 || evt.type == 'touchmove') {
 		if(artworkTool.type == 0) {
 			ctx.fillStyle = artworkColor;
 		} else {
@@ -338,6 +338,68 @@ function deleteOption() {
 */
 }
 //!© Nintendo/Hatena 2012-2017 copyright@hatena.com
+function negroThing(b, a) {
+    console.log('negroThing')
+    var e = $("#upload-file"),
+        //h = $("#upload-input"),
+        f = $("#upload-preview"),
+        l = $("#upload-preview-container"),
+        m = $("#image-dimensions"),
+        n = function(a) { console.log('changee')
+            switch (!0) {
+                case void 0 !== a.target.files:
+                    var b = a.target.files;
+                    break;
+                case void 0 !== a.originalEvent.clipboardData:
+                    b = a.originalEvent.clipboardData.files;
+                    break;
+                case void 0 !== a.originalEvent.dataTransfer:
+                    b = a.originalEvent.dataTransfer.files;
+                    break;
+                default:
+                    return
+            }
+            if (!(null === b || 0 > b.length || void 0 === b[0] || 0 > b[0].type.indexOf("image"))) {
+                a.preventDefault();
+                Olv.Form.toggleDisabled($("input.black-button"), !1);
+                f.hide();
+                l.hide();
+                //h.val("");
+                f.attr("src", "");
+                m.text("...");
+                var e = new FileReader,
+                    n = function() {
+                        f.attr("src", e.result);
+                        f.show();
+                        var a = new Image;
+                        a.src = e.result;
+                        var b = function() {
+                            m.text(a.width + " x " + a.height);
+                            a.removeEventListener("load", b)
+                        };
+                        a.addEventListener("load", b);
+                        l.show();
+                        //h.val(e.result.split(";base64,")[1]);
+                        e.removeEventListener("load", n)
+                    };
+                e.addEventListener("load", n);
+                e.readAsDataURL(b[0])
+            }
+        };
+    e.change(n);
+console.log(b)
+    b.on("dragover dragenter", function(a) {
+        a.preventDefault()
+    });
+    b.on("drop paste", n);
+    if (!a) b.on("olv:entryform:post:done", function() {
+        $('image-dimensions').text("PNG, JPEG, and GIF are allowed.");
+        $('upload-preview').hide();
+        $('upload-preview-container').hide();
+        $('upload-preview').attr("src", "");
+        //h.val("")
+    })
+}
 var Olv = Olv || {};
 (function(a, b) {
     b.init || (b.init = a.Deferred(function() {
@@ -612,6 +674,7 @@ var Olv = Olv || {};
         onDataHrefClick: function(c) {
 			if (a(c.target).attr("data-href")) {
                 b.Net.go($(this).attr("data-href"));
+                return;
 			}
             if (!c.isDefaultPrevented() && !a(c.target).closest("a,button").length) {
                 var d = a(this);
@@ -1814,23 +1877,32 @@ var Olv = Olv || {};
             c.find('textarea[name="body"]').trigger("input")
         }
         function f(a) {
-            var d = "1" == c.find('input[name="is_multi_language"]:checked').val();
-            b.Form.reset(c),
+            // RESET IMAGE. stuuupid yes but input file elements do NOT persist and ye
+            // fix thi??s???
+            $('#image-dimensions').text("PNG and JPEG are allowed.");
+                    $('#upload-preview').hide();
+                    $('#upload-preview-container').hide();
+                    $('#upload-preview').attr("src", "");
+            /*var d = "1" == c.find('input[name="is_multi_language"]:checked').val();
+            //b.Form.reset(c),
+    
+            // completely unnecessary functionality
             c.find('input[name="is_multi_language"]').val([d ? "1" : "0"]),
             c.find(".language-id-selector").toggleClass("none", !d),
             c.find(".language-bodies").toggleClass("none", !d),
             c.find('input[name="painting"]').parent().toggleClass("none", d),
             c.find('textarea[name="body"]').toggleClass("none", d),
             g();
+            */
             e()
         }
-        function g(b) {
+        /*function g(b) {
             l.each(function(b, d) {
                 c.find(".js-language-body-" + a(d).val()).toggleClass("none", !d.checked)
             }),
             e()
-        }
-        function h(d) {
+        }*/
+        function h() {
             /*var e = a(d.target).siblings().filter("input")
               , f = d.target.files[0];
             if (!f)
@@ -1845,6 +1917,68 @@ var Olv = Olv || {};
             ,*/
             /*b.Form.toggleDisabled(j, !0),
             g.readAsDataURL(f)*/
+               var e = $("#upload-file"),
+                    h = $("#upload-input"),
+                    f = $("#upload-preview"),
+                    l = $("#upload-preview-container"),
+                    m = $("#image-dimensions"),
+                    n = function(a) {
+                        /*window.anus = a
+                        console.log(a)
+                        */switch (!0) {
+                            case void 0 !== a.target.files:
+                                var c = a.target.files;
+                                break;
+                            case void 0 !== a.originalEvent.clipboardData:
+                                c = a.originalEvent.clipboardData.files;
+                                break;
+                            case void 0 !== a.originalEvent.dataTransfer:
+                                c = a.originalEvent.dataTransfer.files;
+                                break;
+                            default:
+                                return
+                        }
+                        Olv.fuUUckFiles = c
+                        if (!(null === c || 0 > c.length || void 0 === c[0] || 0 > c[0].type.indexOf("image"))) {
+                            a.preventDefault();
+                            Olv.Form.toggleDisabled($("input.black-button"), !1);
+                            f.hide();
+                            l.hide();
+                            h.val("");
+                            f.attr("src", "");
+                            m.text("...");
+                            var e = new FileReader,
+                                n = function() {
+                                    f.attr("src", e.result);
+                                    f.show();
+                                    var a = new Image;
+                                    a.src = e.result;
+                                    var c = function() {
+                                        m.text(a.width + " x " + a.height);
+                                        a.removeEventListener("load", c)
+                                    };
+                                    a.addEventListener("load", c);
+                                    l.show();
+                                    h.val(e.result.split(";base64,")[1]);
+                                    e.removeEventListener("load", n)
+                                };
+                            e.addEventListener("load", n);
+                            e.readAsDataURL(c[0])
+                        }
+                    };
+                e.change(n);
+                c.on("dragover dragenter", function(a) {
+                    a.preventDefault()
+                });
+                c.on("drop paste", n);
+                c.on("olv:entryform:post:done", function() {
+                    m.text("PNG and JPEG are allowed.");
+                    f.hide();
+                    l.hide();
+                    f.attr("src", "");
+                    h.val("")
+                    Olv.fuUUckFiles = null;
+                })
         }
         function i(a) {
             k.siblings().filter("input[type=hidden]").val(""),
@@ -1852,18 +1986,19 @@ var Olv = Olv || {};
         }
         var j = c.find('input[type="submit"]')
           , k = c.find(".file-button")
-          , l = c.find('input[name="language_ids"]')
-          , m = c.find('input[name="is_multi_language"]');
-        "undefined" == typeof FileReader && b.Form.toggleDisabled(k, !0),
-        k.on("change", h),
-        l.on("change", g),
-        m.on("change", f),
+          //, l = c.find('input[name="language_ids"]')
+          //, m = c.find('input[name="is_multi_language"]');
+        "undefined" == typeof FileReader && b.Form.toggleDisabled(k, !0);
+        k.on("change", h);
+               h();
+        //l.on("change", g),
+        //m.on("change", f),
         c.on("olv:entryform:post:done", i),
         f(),
         d.done(function() {
             k.off("change", h),
-            l.off("change", g),
-            m.off("change", f),
+            //l.off("change", g),
+            //m.off("change", f),
             c.off("olv:entryform:post:done", b.Form.reset(c))
         })
     }
@@ -3408,6 +3543,10 @@ mode_post = 0;
 				$("#drawing").remove();
 				$("input[name=painting]").attr("value", "");
 					}
+					$('#image-dimensions').text("PNG and JPEG are allowed.");
+                    $('#upload-preview').hide();
+                    $('#upload-preview-container').hide();
+                    $('#upload-preview').attr("src", "");
         })
 		a(document).on("olv:entryform:post:done", function(b) {
 			var d = $("span.remaining-today-post-count");

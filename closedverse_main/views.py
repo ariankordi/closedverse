@@ -247,9 +247,6 @@ def signup_page(request):
 		if check_others:
 			return HttpResponseBadRequest("Unfortunately, you cannot make any accounts at this time. This restriction was set for a reason, please contact the administration. Please don't bypass this, as if you do, you are just being ignorant. If you have not made any accounts, contact the administration and this restriction will be removed for you.")
 		if request.POST.get('origin_id'):
-			if settings.NNID_FORBIDDEN_LIST:
-				if nnid_blacked(request.POST['origin_id']):
-					return HttpResponseForbidden("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 			if User.nnid_in_use(request.POST['origin_id']):
 				return HttpResponseBadRequest("That Nintendo Network ID is already in use, that would cause confusion.")
 			mii = get_mii(request.POST['origin_id'])
@@ -355,9 +352,6 @@ def user_view(request, username):
 				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
-		if settings.NNID_FORBIDDEN_LIST:
-			if nnid_blacked(request.POST['origin_id']):
-				return json_response("You are very funny. Unfortunately, your funniness blah blah blah fuck off.")
 		if user.has_plain_avatar():
 			user.avatar = request.POST.get('avatar') or ''
 		if request.POST.get('avatar') == '1':
@@ -790,7 +784,7 @@ def community_favorite_rm(request, community):
 @require_http_methods(['POST'])
 @login_required
 def post_create(request, community):
-	if request.method == 'POST' and request.is_ajax():
+	if request.method == 'POST':
 		# Wake
 		request.user.wake(request.META['REMOTE_ADDR'])
 		# Required
@@ -920,8 +914,6 @@ def comment_rm(request, comment):
 @login_required
 def post_comments(request, post):
 	post = get_object_or_404(Post, id=post)
-	if not request.is_ajax():
-		raise Http404()
 	if request.method == 'POST':
 		# Wake
 		request.user.wake(request.META['REMOTE_ADDR'])
@@ -1515,7 +1507,7 @@ def admin_index(request):
 # Disabling login requirement since it's in signup now. Regret?
 #@login_required
 def origin_id(request):
-	if not request.is_ajax():
+	if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
 		return HttpResponse("<a href='https://github.com/ariankordi/closedverse/blob/master/closedverse_main/util.py#L44-L86'>Please do not use this as an API!</a>")
 	if not request.POST.get('a'):
 		return HttpResponseBadRequest()

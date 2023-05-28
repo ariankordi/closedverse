@@ -16,7 +16,7 @@ __pycache__/
 *.save
 
 # Local settings
-closedverse/settings.py
+/closedverse/settings.py
 
 # Migrations
 closedverse_main/migrations
@@ -27,3 +27,12 @@ media/*
 
 # Just in case
 .DS_Store
+
+
+#My
+closedverse todo
+closedverse todo (copy 1)
+closedverse_main/models_new.py
+db-dot.pdf
+db-osage.pdf
+sqleton

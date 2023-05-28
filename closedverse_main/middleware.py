@@ -18,7 +18,7 @@ class ClosedMiddleware(object):
 		# Force logins if it's set
 		if settings.FORCE_LOGIN and not request.user.is_authenticated:
 			if not any(m.match(request.path_info.lstrip('/')) for m in EXEMPT_URLS):
-				if request.is_ajax():
+				if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 					return HttpResponseForbidden("Login is required")
 				return redirect(settings.LOGIN_REDIRECT_URL)
 		# Fix this ; put something in settings signifying if the server supports HTTPS or not

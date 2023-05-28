@@ -1,5 +1,16 @@
 
-  <label class="file-button-container">
-      <span class="input-label">Image <span>PNG, JPG, and BMP are allowed.</span></span>
-      <input type="file" class="file-button" accept="image/png, image/jpeg, image/svg+xml,  image/bmp, image/gif">
-    </label>
+<!--  <div class="file-button-container">
+      <span class="input-div">Image <span>PNG, JPG, and GIF are allowed.</span></span>
+      <input type="file" class="file-button" accept="image/png, image/jpeg, image/jpg, image/svg+xml, image/bmp, image/gif">
+    </div>
+-->
+<label class="file-button-container">
+  <span class="input-label">Image <span id="image-dimensions">PNG, JPG, JPEG and GIF are allowed.</span></span>
+  <span class="button file-upload-button">Upload</span>
+  <input accept="image/gif, image/png, image/jpeg, image/jpg, image/svg+xml, image/bmp" type="file" style="display: none;" id="upload-file">
+  <input type="hidden" id="upload-input" name="screen">
+    <div id="upload-preview-container" class="screenshot-container still-image" style="display: none;">
+      <img id="upload-preview">
+    </div>
+</label>
+
