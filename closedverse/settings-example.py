@@ -27,6 +27,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+# Memo title and message on communities list
+memo_title = "Closedverse demo"
+memo_msg = "Heyyyy!"
+
 # Test app
 #INSTALLED_APPS += 'silk'
 
@@ -42,3 +46,5 @@ DATABASES = {
 
 TIME_ZONE = 'EST'
 
+
+# other settings you want to change in settings_default.py should be moved into here

@@ -1,6 +1,3 @@
-# TODO: add requirements.txt then remove this line
-requirements.txt
-
 # Python cache and compiled files
 __pycache__/
 *.pyc
@@ -9,6 +6,8 @@ __pycache__/
 *.db
 *.sqlite3
 *.sql
+# someone has a mysql cnf here apparently
+*.cnf
 
 # Swap and save file for editors
 *.swp
@@ -16,7 +15,7 @@ __pycache__/
 *.save
 
 # Local settings
-/closedverse/settings.py
+closedverse/settings.py
 
 # Migrations
 closedverse_main/migrations
@@ -24,6 +23,10 @@ closedverse_main/migrations
 # Media contents
 media/*
 !media/.keep
+
+# collectstatic output
+static/admin/*
+static/admin
 
 # Just in case
 .DS_Store

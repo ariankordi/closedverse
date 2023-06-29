@@ -1,0 +1,10 @@
+# 3.2.19 might also work
+django==2.2
+django-markdown-deux
+lxml
+bcrypt
+
+# idk how necessary these are
+passlib
+pillow
+django-markdown2
