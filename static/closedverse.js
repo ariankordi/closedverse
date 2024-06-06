@@ -28,9 +28,9 @@ var undoCanvas = document.getElementById('artwork-canvas-undo');
 var undoCtx = undoCanvas.getContext('2d');
 var redoCanvas = document.getElementById('artwork-canvas-redo');
 var redoCtx = redoCanvas.getContext('2d');
-undoCanvas.width = 320; undoCanvas.height = 120; 
-redoCanvas.width = 320; redoCanvas.height = 120; 
-canvas.width = 320; canvas.height = 120; 
+undoCanvas.width = 320; undoCanvas.height = 120;
+redoCanvas.width = 320; redoCanvas.height = 120;
+canvas.width = 320; canvas.height = 120;
 var mousePosOld = 0;
 var artworkTool = {type: 0, size: 1};
 var sizeSmall = 1;
@@ -252,7 +252,7 @@ function setupPostForm2() {
                     setupDrawboard();
                 }
             });
-            
+
 $("label.textarea-menu-text").on("click", switchtext);
 
 //$("label.textarea-menu-poll").on("click", switchpoll);
@@ -557,7 +557,7 @@ var Olv = Olv || {};
             }
 			break;
 			}
-			
+
         },
         _isLeavingPage: !1,
         willLeavePage: function() {
@@ -1011,7 +1011,7 @@ var Olv = Olv || {};
     }
     ,
     b.UpdateChecker.prototype.callback_ = function() {
-		
+
         var c = {};
         a.each(this._settings, a.proxy(function(d) {
             void 0 != this._settings[d].pathname && this._settings[d].pathname != location.pathname ? delete this._settings[d] : a.each(this._settings[d].params, a.proxy(function(a, d) {
@@ -1025,7 +1025,7 @@ var Olv = Olv || {};
         }).done(a.proxy(function(b) {
             a(this).triggerHandler("update", [b])
         }, this))
-		
+
     }
     ,
     b.UpdateChecker.prototype.onUpdate = function(a, b, c, d) {
@@ -1051,10 +1051,10 @@ var Olv = Olv || {};
     b.ModalWindowManager.currentWindow = null,
     b.ModalWindowManager.closeAll = function() {
 		//b.ModalWindowManager._windows = [];
-		
+
         for (; this.currentWindow; )
             this.currentWindow.close()
-		
+
     }
     ,
     b.ModalWindowManager.closeUntil = function(a) {
@@ -1278,7 +1278,7 @@ var Olv = Olv || {};
 			if(!(Number.isInteger(a.error_code))) {
 			return b.showMessage(a.error_code, a.message);
 			}
-            
+
 			var c = +a.error_code
               , d = a.message || a.msgid && b.loc(a.msgid);
             c || (c = 0,
@@ -1852,7 +1852,7 @@ var Olv = Olv || {};
                     $('#upload-preview').attr("src", "");
             /*var d = "1" == c.find('input[name="is_multi_language"]:checked').val();
             //b.Form.reset(c),
-    
+
             // completely unnecessary functionality
             c.find('input[name="is_multi_language"]').val([d ? "1" : "0"]),
             c.find(".language-id-selector").toggleClass("none", !d),
@@ -1977,7 +1977,7 @@ var Olv = Olv || {};
 									default:
 										  return;
 							}
-							
+
 							if (!(null === files || files.length < 1 || void 0 === files[0] || files[0].type.indexOf("image") < 0)) {
 									event.preventDefault();
 									uploadFile[0].files = files;
@@ -1987,7 +1987,7 @@ var Olv = Olv || {};
 									uploadInput.val("");
 									uploadPreview.attr("src", "");
 									imageDimensions.text("...");
-									
+
 									/*window.ass = uploadFile[0].files;window.uploadFile = uploadFile
 									console.log('here is your fileList, and uploadFile')
 									*/
@@ -1995,36 +1995,36 @@ var Olv = Olv || {};
 									//console.log(uploadFile[0].files[0])
 									uploadPreview.attr("src", blobURL);
 									uploadPreview.show();
-									
+
 									var handleImageLoad = function() {
 									    imageDimensions.text(uploadPreview[0].width + " x " + uploadPreview[0].height);
 									    uploadPreview[0].removeEventListener("load", handleImageLoad);
 									};
-									
+
 									uploadPreview[0].addEventListener("load", handleImageLoad);
 									uploadPreviewContainer.show();
-									
-									
+
+
 									/*var fileReader = new FileReader();
 									var handleReaderLoad = function() {
 										  uploadPreview.attr("src", fileReader.result);
 										  uploadPreview.show();
-										  
+
 										  var image = new Image();
 										  image.src = fileReader.result;
-										  
+
 										  var handleImageLoad = function() {
 										      imageDimensions.text(image.width + " x " + image.height);
 										      image.removeEventListener("load", handleImageLoad);
 										  };
-										  
+
 										  image.addEventListener("load", handleImageLoad);
 										  uploadPreviewContainer.show();
 										  console.log('...now!')
 										  uploadInput.val(fileReader.result.split(";base64,")[1]);
 										  fileReader.removeEventListener("load", handleReaderLoad);
 									};
-									
+
 									fileReader.addEventListener("load", handleReaderLoad);
 									fileReader.readAsDataURL(fileList[0]);
 									*/
@@ -2330,7 +2330,7 @@ var Olv = Olv || {};
         a(document).on("click", function(a) {
             !c.hasClass("none") && b.Global.atOutsideOfMyMenu(a.target) && c.addClass("none")
         })
-		
+
 		// Thing
 		$('.my-menu-white-power').on('click', function(e) {
 		e.preventDefault()
@@ -2340,13 +2340,12 @@ var Olv = Olv || {};
 				b.Form.toggleDisabled($('.d-send'), !$(this).length < 0 || (b.Closed.blank.test($(this).val())))
         });
 		$('.d-send').on('click', function() {
-			b.Form.post('/complaints', $('#feedback-form').serializeArray()).done(function() { 
+			b.Form.post('/complaints', $('#feedback-form').serializeArray()).done(function() {
 				g.close();$('.feedback-dialog').remove()
 				b.showMessage("", "That was successfully submitted, and hopefully someone will see it. Thank you!")
 			})
 		})
 		});
-		
 		$('.my-menu-account-setting').on('click', function(e) {
 			e.preventDefault();
 				$.ajax({url: '/pref',
@@ -2368,6 +2367,7 @@ var Olv = Olv || {};
 				});
 			
 		});
+
 		// Unthing
     }
     ,
@@ -2411,7 +2411,7 @@ var Olv = Olv || {};
 						f += b[0].charCodeAt()
 					e.text(f),
 					e.toggle(f > 0)
-					
+
 					// Message
 					var g = a("#global-menu-message")
 					  , h = g.find(".badge");
@@ -2492,7 +2492,7 @@ var Olv = Olv || {};
                     a(".content-load-error-window").removeClass("none")
                 }, 5e3)
             });
-			
+
 			/*
             var l = "friend" !== b.Cookie.get("view_activity_filter");
 			i = l ? b.Net.ajax({
@@ -2501,13 +2501,13 @@ var Olv = Olv || {};
                 silent: !0
             }) : a.Deferred().resolve().promise()
 			*/
-			
+
         }  else
             h = a.Deferred().resolve().promise(),
             //i = a.Deferred().resolve().promise();
         h.then(function() {
             f()
-        }); 
+        });
 		/*
 		a.when(h).done(function(b) {
             var d = a(a.parseHTML(a.trim(c[0])));
@@ -2522,7 +2522,7 @@ var Olv = Olv || {};
             h.abort && h.abort()
         })
 		*/
-	
+
 	$('div.post-filter > form > input[type=checkbox]').on('click', function() {
 		b.Net.go(d.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
 	});
@@ -2640,16 +2640,16 @@ var Olv = Olv || {};
 	b.router.connect("^/messages(\/)?$", function(a, c, d) {
 	   b.Closed.changesel("message");
 	   b.Content.autopagerize(".list-content-with-icon-and-text", d);
-	   
+
 	   	$('form.search').on('submit', function(s) {
 			s.preventDefault();
 			b.Net.go($(this).attr('action') + '?'+$(this).serialize());
 		});
-	   
+
 	   $('h2 > span > input[type=checkbox]').on('click', function() {
 		b.Net.go(location.pathname + "?" + $(this).attr('name') + "=" + $(this).attr('value'))
 		});
-	   
+
 	}),
 	b.router.connect("^/messages/([^\/]+)/?$", function(a, c, d) {
 		b.Closed.changesel("message");
@@ -2719,7 +2719,7 @@ mode_post = 0;
 	}
 
 	msg_rm_load();
-	
+
 	$('button.msg-update').on('click',function(e){
 			msglist = $('.list.messages')
 			NProgress.start();
@@ -2905,7 +2905,7 @@ $('.post-poll .poll-option').on('click', function() {
   	$(this).parents('.post-poll').removeClass('selected');
 		$(this).removeClass('selected');
 		recalculateVotes($(this).siblings('.poll-option'));
-		
+
 		b.Form.post($(this).parents('.post-poll').attr('data-action-unvote'), {'a': '0'}).done(pollSuccess)
 
   }
@@ -2985,7 +2985,7 @@ $('.post-poll .poll-votes').on('click', function() {
 				})
 			}
 	}
-		
+
 if($("#reply-form").length) {
 var mode_post = 0;
 $("label.textarea-menu-memo > input").on("click", function() {
@@ -3034,7 +3034,7 @@ mode_post = 0;
         e.done(function() {
             a(document).off("olv:report:done", f)
         })
-		
+
 				if($('.edit-post-button').length) {
 			var t = $("#edit-form");
 			var submit_btn = $('#edit-form div.form-buttons button.post-button.black-button')
@@ -3156,7 +3156,7 @@ mode_post = 0;
             b.Net.reload()
         })
     });
-    
+
 		$('.friend-button.create').on('click', function(a) {
 			a.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=post-friend-request]'));fr.open();
@@ -3170,7 +3170,7 @@ mode_post = 0;
 						b.Net.reload()
 				})
 			})
-		
+
 		$('.friend-button.accept').on('click', function(g) {
 			g.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=accept-friend-request]'));fr.open();
@@ -3278,6 +3278,7 @@ mode_post = 0;
 		});
 			
 		Olv.EntryForm.setupIdentifiedUserForm($(".login-page"), {done:function(){}});
+
 			// Is there an NNID field? (signup)
 			// TODO: Make this way better and don't have this duplicated like it is now
 			if($('h3.label.nnid').length) {
@@ -3436,7 +3437,7 @@ mode_post = 0;
 					})
 				})
 //			if($('.setting-nnid').length) {
-				
+
 				inp = $('input[type=text][name=origin_id]')
 					function getmiimtwo() {
 						if(!inp.val().match(/^[^\/]{6,16}$/)) {
@@ -3468,7 +3469,7 @@ mode_post = 0;
 						timer = setTimeout(getmiimtwo, 500);
 					}
 				})
-				
+
 				$("input[name=avatar][value=0]").change(function() {
 					$(".setting-avatar > .icon-container > .nnid-icon.mii").removeClass("none");
 					$(".setting-avatar > .icon-container > .nnid-icon.mii-studio").addClass("none");
@@ -3715,7 +3716,7 @@ Olv.Locale.Data={
 $(document).pjax("a",pjax_container),$(document).on('pjax:timeout',function(){return false});
 $(document).on('pjax:error', function(event, xhr, textStatus, errorThrown, options) {
 Olv.Net.errorFeedbackHandler(event, textStatus, xhr, options);
-if(textStatus != 'abort') 
+if(textStatus != 'abort')
 	history.back();
 return false;
 });

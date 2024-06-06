@@ -930,7 +930,7 @@ h2.reply-label {
     padding: 10px 10px 8px;
     font-size: 14px;
     font-weight: bold;
-    background: url("/img/button-bg.gif") repeat-x 0 bottom #FFFFFF;
+    background: url("img/button-bg.gif") repeat-x 0 bottom #FFFFFF;
     background-color: #ffffff;
     background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#e6e6e6), color-stop(0.5, #FFFFFF));
     background: -webkit-linear-gradient(top, #FFFFFF 0%, #FFFFFF 50%, #e6e6e6 100%);

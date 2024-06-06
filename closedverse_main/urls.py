@@ -17,7 +17,7 @@ app_name = 'main'
 urlpatterns = [
 	# Root
 	url(r'^^$|^communities$|^index.*$$', views.community_list, name='community-list'),
-	
+
 	# Accounts
 	url(r'login/$', views.login_page, name='login'),
 	url(r'signup/$', views.signup_page, name='signup'),
@@ -114,7 +114,7 @@ urlpatterns = [
 	#url(r'help/actclones/?$', views.active_clones, name='active-clones'),
 	#url(r'help/approval/?$', views.help_approval, name='help-approval'),
 	url(r'why/?$', views.help_why, name='help-why'),
-	
+
 
 	# Util, right now we are away from the primary appo
 	url(r'origin$', views.origin_id, name='origin-id-get'),

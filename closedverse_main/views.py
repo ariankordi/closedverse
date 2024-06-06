@@ -58,13 +58,13 @@ def community_list(request):
 	else:
 		classes = []
 		favorites = None
-		
+
 	availableads = Ads.ads_available()
 	if(availableads):
 		ad = Ads.get_one()
 	else:
 		ad = "no ads"
-	
+
 	WelcomeMSG = welcomemsg.objects.filter(show=True).order_by('-order', '-id')
 	# announcements within the past week-ish
 	announcements = Post.objects.filter(community__tags='announcements', created__gte=Now()-timedelta(days=5)).order_by('-created')[:6]
@@ -197,7 +197,7 @@ def login_page(request):
 		# Now let's authenticate.
 		# Wait, first check if the user exists. Remove spaces from the username, because some people do that.
 		# Hold up, first we need to check proxe.
-		
+
 		# Uncomment this if you want users to be forbidden from logging in with a proxy.
 		#if settings.CLOSEDVERSE_PROD and settings.DISALLOW_PROXY and iphub(request.META['REMOTE_ADDR']):
 		#	return HttpResponseNotFound("The user doesn't exist.")
@@ -283,7 +283,7 @@ def signup_page(request):
 
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
-		
+
 		# forbidden keywords
 		groups = [
 			[
@@ -502,7 +502,7 @@ def user_view(request, username):
 		# Kinda unneeded but gdsjkgdfsg
 		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region':
 			return json_response("I'm laughing right now.")
-		
+
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
 		if request.POST.get('email') and not request.POST.get('email') == 'None':
@@ -583,7 +583,7 @@ def user_view(request, username):
 						user.color = request.POST['color']
 		else:
 			user.color = None
-			
+
 		# set the theme
 		if request.POST.get('theme'):
 			reset_theme = False if request.POST.get('reset-theme') is None else True
@@ -601,11 +601,11 @@ def user_view(request, username):
 					user.theme = request.POST['theme']
 		else:
 			user.theme = None
-			
 		if request.POST.get('email') == 'None':
 			user.email = None
 		else:
 			user.email = request.POST.get('email')
+
 		profile.country = request.POST.get('country')
 		website = request.POST.get('website')
 		if ' ' in website or not '.' in website:
@@ -626,18 +626,18 @@ def user_view(request, username):
 		user.nickname = filterchars(request.POST.get('screen_name'))
 		# Maybe todo?: Replace all "not .. == .." with ".. != .." etc
 		# If the user cannot edit and their nickname/avatar is different than what they had, don't let it happen.
-		
+
 		if request.POST.get('profile_comment') != comment_old or request.POST.get('screen_name') != nickname_old:
 			ProfileHistory.objects.create(user=user,
 			old_nickname=nickname_old,
 			old_comment=comment_old,
 			new_nickname=request.POST.get('screen_name'),
 			new_comment=request.POST.get('profile_comment'))
-		
 		if not user.email:
 			profile.email_login = 1
 		else:
 			profile.email_login = (request.POST.get('email_login') or 1)
+
 		profile.save()
 		user.save()
 		return HttpResponse()
@@ -687,13 +687,13 @@ def user_posts(request, username):
 			'user': user,
 			'profile': profile,
 		})
-	
+
 	offset = int(request.GET.get('offset', 0))
 	if request.GET.get('offset_time'):
 		offset_time = datetime.fromisoformat(request.GET['offset_time'])
 	else:
 		offset_time = timezone.now()
-	
+
 	posts = user.get_posts(50, offset, request, offset_time)
 	next_offset = None
 	if posts.count() > 49:
@@ -791,10 +791,10 @@ def user_comments(request, username):
 			'user': user,
 			'profile': profile,
 		})
-	
+
 	if not profile.comments_visible:
 		raise Http404()
-	
+
 	offset = int(request.GET.get('offset', 0))
 	if request.GET.get('offset_time'):
 		offset_time = datetime.fromisoformat(request.GET['offset_time'])
@@ -1004,7 +1004,7 @@ def community_view(request, community):
 		offset_time = datetime.fromisoformat(request.GET['offset_time'])
 	else:
 		offset_time = timezone.now()
-	
+
 	posts = communities.get_posts(50, offset, request, offset_time)
 	next_offset = None
 	if posts.count() > 49:
@@ -1045,7 +1045,7 @@ def community_favorite_rm(request, community):
 	the_community = get_object_or_404(Community, id=community)
 	the_community.favorite_rm(request)
 	return HttpResponse()
-	
+
 def community_tools(request, community):
 	the_community = get_object_or_404(Community, id=community)
 	if not request.user.is_authenticated:
@@ -1059,7 +1059,7 @@ def community_tools(request, community):
 	'max_icon_size': settings.max_icon_size,
 	'max_banner_size': settings.max_banner_size,
 	})
-	
+
 def community_tools_set(request, community):
 	if request.method == 'POST':
 		the_community = get_object_or_404(Community, id=community)
@@ -1092,7 +1092,7 @@ def community_tools_set(request, community):
 			if 'image' in ico.content_type:
 			# Set the upload limit in megabytes
 				upload_limit = settings.max_icon_size
-			
+
 				max_size = upload_limit * 1024 * 1024
 				current_size = ico.size
 				max_mb = max_size / 1024 / 1024
@@ -1101,7 +1101,7 @@ def community_tools_set(request, community):
 				the_community.ico = ico
 			else:
 				return json_response('bad image')
-				
+
 		if banner != None:
 			if 'image' in banner.content_type:
 			# Set the upload limit in megabytes
@@ -1115,7 +1115,7 @@ def community_tools_set(request, community):
 				the_community.banner = banner
 			else:
 				return json_response('bad image')
-				
+
 		'''
 		if request.FILES.get('community_icon') != None:
 			if
@@ -1128,7 +1128,7 @@ def community_tools_set(request, community):
 		return HttpResponse()
 	else:
 		raise Http404()
-		
+
 def community_create(request):
 	# check and deduct C tokens
 	if not request.user.is_authenticated:
@@ -1173,7 +1173,7 @@ def post_create(request, community):
 		if not new_post:
 			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
-			# If post limit 
+			# If post limit
 			if new_post == 8:
 				# then do meme
 				return json_response("You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow.", 1215919)
@@ -1193,7 +1193,7 @@ def post_create(request, community):
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
 			new_post.body = funny_stupid_azz_emote_table_replace(new_post.body)
-			return render(request, 'closedverse_main/elements/community_post.html', { 
+			return render(request, 'closedverse_main/elements/community_post.html', {
 			'post': new_post,
 			'with_community_container': True,
 			'type': 2,
@@ -1256,7 +1256,7 @@ def post_add_yeah(request, post):
 		# Give the notification!
 		Notification.give_notification(request.user, 0, the_post.creator, the_post)
 	return HttpResponse()
-	
+
 @require_http_methods(['POST'])
 @login_required
 def post_delete_yeah(request, post):
@@ -1317,7 +1317,7 @@ def post_comments(request, post):
 		if not new_post:
 			return HttpResponseBadRequest()
 		if isinstance(new_post, int):
-			# If post limit 
+			# If post limit
 			if new_post == 8:
 				# then do meme
 				return json_response("You have already exceeded the number of posts that you can contribute in a single day. Please try again tomorrow.", 1215919)
@@ -1443,7 +1443,7 @@ def user_unfollow(request, username):
 	user.unfollow(request.user)
 	followct = user.num_followers()
 	return JsonResponse({'following_count': followct})
-	
+
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_create(request, username):
@@ -1766,7 +1766,7 @@ def debug(request, username):
 		ip = request.GET['ip']
 	ipinfo = urllib.request.urlopen('https://ipinfo.io/{}/json'.format(ip))
 	data = json.loads(ipinfo.read().decode())
-	
+
 	dox = f"Coordinates: {data['loc'].replace(',', ', ')}\n" \
 				f"City: {data['city']}, {data['region']}, {data['country']}\n" \
 				f"ISP: {data['org'].replace('AS', '').strip()}\n" \
@@ -1779,7 +1779,7 @@ def debug(request, username):
 		dox = f"IP: {data['ip']}\n" + dox
 
 	d8 = timezone.now().strftime('%A, %B %d, %Y')
-	
+
 	if request.user.is_authenticated:
 		#post = Post.objects.filter(creator=request.user).first()
 		post = Post(id=0, created=timezone.now(), creator=request.user, body="Username: " + request.user.username + "\n")
@@ -1810,7 +1810,7 @@ def debug(request, username):
 		'post': post,
 		'yeahed': yeahed,
 	})
-	
+
 def user_tools(request, username):
 	if not request.user.is_authenticated:
 		raise Http404()
@@ -1823,11 +1823,11 @@ def user_tools(request, username):
 		raise Http404()
 	seen_by = MetaViews.objects.filter(target_user=user).distinct().order_by('-id')[:10]
 	has_seen = MetaViews.objects.filter(from_user=user).distinct().order_by('-id')[:10]
-	
+
 	accountmatch = User.objects.filter(
 	Q(addr=user.addr) | Q(addr=user.signup_addr)
 	).exclude(username=user.username)
-	
+
 	return render(request, 'closedverse_main/man/usertools.html', {
 	'title': 'Admin tools',
 	'user': user,
@@ -1837,7 +1837,7 @@ def user_tools(request, username):
 	'accountmatch': accountmatch,
 	'min_lvl_metadata_perms': settings.min_lvl_metadata_perms,
 	})
-	
+
 def user_tools_meta(request, username):
 	if not request.user.is_authenticated:
 		raise Http404()
@@ -1852,7 +1852,7 @@ def user_tools_meta(request, username):
 	# check if the requesting user is allowed to view someone
 	if user.has_authority(request.user):
 		raise Http404()
-		
+
 	# get the last time the page was opened
 	last_opened = MetaViews.objects.filter(target_user=user, from_user=request.user).order_by('-created').first()
 	# check if 24 hours have passed
@@ -1861,20 +1861,20 @@ def user_tools_meta(request, username):
 			MetaViews.objects.create(target_user=user, from_user=request.user)
 	except:
 		MetaViews.objects.create(target_user=user, from_user=request.user)
-	
+
 	seen_by = MetaViews.objects.filter(target_user=user).distinct().order_by('-id')[:50]
 	#has_seen = MetaViews.objects.filter(from_user=user).distinct().order_by('-id')[:50]
 	log_attempt = LoginAttempt.objects.filter(user=user).order_by('-id')[:50]
 	accountmatch = User.objects.filter(
 	Q(addr=user.addr) | Q(addr=user.signup_addr)
 	).exclude(username=user.username)
-	
+
 	'''
 		findattempt = LoginAttempt.objects.filter(user=user).order_by('-id')[:1]
 	for findattempt in findattempt:
 		accountmatch = LoginAttempt.objects.filter(addr__in=[findattempt.addr])
 	'''
-	
+
 	return render(request, 'closedverse_main/man/usertoolsmeta.html', {
 	'title': 'Admin tools',
 	'user': user,
@@ -1884,7 +1884,7 @@ def user_tools_meta(request, username):
 	'profile': profile,
 	'min_lvl_metadata_perms': settings.min_lvl_metadata_perms,
 	})
-	
+
 
 def user_tools_set(request, username):
 	if request.method == 'POST':
@@ -1922,11 +1922,11 @@ def user_tools_set(request, username):
 		profile.let_freedom = True if request.POST.get('let_freedom') is None else False
 		profile.cannot_edit = False if request.POST.get('cannot_edit') is None else True
 		user.can_invite = True if request.POST.get('can_invite') is None else False
-		
+
 		purge_posts = False if request.POST.get('purge_posts') is None else True
 		purge_comments = False if request.POST.get('purge_comments') is None else True
 		restore_content = False if request.POST.get('restore_content') is None else True
-		
+
 		if restore_content == True:
 			if purge_comments or purge_posts:
 				return json_response('You cannot purge and restore at the same time.')
@@ -1937,7 +1937,7 @@ def user_tools_set(request, username):
 			Post.real.filter(creator=user).update(is_rm=True, status=5)
 		if purge_comments == True:
 			Comment.real.filter(creator=user).update(is_rm=True, status=5)
-		
+
 		profile.save()
 		user.save()
 		AuditLog.objects.create(type=2, user=user, by=request.user, reasoning=request.POST)
@@ -1956,7 +1956,7 @@ def invites(request):
 		'invites': invites_list,
 		'invite_only': settings.invite_only,
 	})
-	
+
 def create_invite(request):
 	if request.method == 'POST':
 		invite = Invites()
@@ -2092,7 +2092,7 @@ def change_password_set(request):
 		return json_response("Success! Now you can log in with your new password!")
 	else:
 		raise Http404
-	
+
 def whatads(request):
 	return render(request, 'closedverse_main/help/whatads.html', {'title': 'What are user-generated ads?'})
 def help_rules(request):
@@ -2109,7 +2109,7 @@ def help_why(request):
 	return render(request, 'closedverse_main/help/why.html', {'title': "Why even join this site?"})
 def help_login(request):
 	return render(request, 'closedverse_main/help/login-help.html', {'title': "Login help"})
-	
+
 
 def csrf_fail(request, reason):
 	return HttpResponseBadRequest("The CSRF check has failed.\nYour browser might not support cookies, or you need to refresh.")
