@@ -850,6 +850,9 @@ left: 10% !important;
 #global-menu #global-my-menu .my-menu-openman:before {
   content: "w";
 }
+#global-menu #global-my-menu .my-menu-star-dark:before {
+  content: "P";
+}
 #global-menu #global-my-menu .my-menu-guide:before {
   content: "g";
 }

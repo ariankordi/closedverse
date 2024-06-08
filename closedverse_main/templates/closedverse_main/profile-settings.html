@@ -49,25 +49,6 @@
 		<a class="get-ipinfo" href="#">If you want to use your location, you can get it automatically here (it will not be automatically saved).</a>
 		</p>
       </li>
-      <li class="setting-email">
-        <p class="settings-label">E-mail address</p>
-        <div class="center center-input">
-			<input type="text" name="email" maxlength="255" placeholder="Email address" value="{{ user.email|default_if_none:"" }}">
-		</div>
-        <p class="note">Please note that your email can be a fake one, however if you need to reset your password, this must be accessible. You can't share emails.</p>
-		{% if user.email %}
-		<p class="settings-label"><label for="email_login">Allow logging in to your account with your e-mail address?</label></p>
-        <div class="select-content">
-          <div class="select-button">
-            <select name="email_login" id="email_login">
-              <option value="0"{% if profile.email_login == 0 %} selected{% endif %}>Do not allow (username login only)</option>
-              <option value="1"{% if profile.email_login == 1 %} selected{% endif %}>Allow</option>
-              <option value="2"{% if profile.email_login == 2 %} selected{% endif %}>Only allow (email login only)</option>
-            </select>
-          </div>
-        </div>
-		{% endif %}
-      </li>
       <li class="setting-website">
         <p class="settings-label">Web URL</p>
         <div class="center center-input">
@@ -197,13 +178,7 @@
 		{% if user.theme %}<input type="checkbox" name="reset-theme">Reset to default{% endif %}
 		{% if settings.site_wide_theme_hex %}<p class="note">Default theme: "{{ settings.site_wide_theme_hex }}"</p>{% endif %}
       </li>
-		<li class="setting-background">
-        <p class="settings-label">Change your password:</p>
-	  	  <div class="center center-input">
-		  <a class="button" href={% url "main:change-password" %}>Change password</a>
-		</div>
-		</li>
-		<li class="setting-nnid">
+		<li class="setting-nnid none">
                 <p class="settings-label">Nintendo Network ID</p>
                 <div class="icon-container">
                     <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
@@ -212,7 +187,7 @@
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>
-              </li>
+    </li>
               <li class="setting-avatar">
                 <div class="icon-container">
                     <img class="icon nnid-icon mii{% if not user.has_mh or user.avatar|length == 94 %} none{% endif %}" src="{% miionly user.mh %}">
@@ -222,7 +197,7 @@
                     <img class="icon nnid-icon custom{% if not user.has_plain_avatar %} none{% endif %}" src="{{ user.do_avatar }}">
                     {% endif %}
                   </div>
-                <p class="settings-label">Do you want the avatar shown beside your content to use the Mii from your Nintendo Network ID or a Gravatar or a custom avatar the way God intended?</p>
+                <p class="settings-label">Do you want the avatar shown beside your content to use a Mii, a Gravatar, or a custom avatar the way God intended?</p>
                 <label><input type="radio" name="avatar" value="0"{% if user.has_mh and user.avatar|length != 94 %} checked{% endif %}>Mii</label>
                 <label><input type="radio" name="avatar" value="3"{% if user.has_mh and user.avatar|length == 94 %} checked{% endif %}>Mii Studio</label>
                 <label><input type="radio" name="avatar" value="1"{% if not user.has_mh %} checked{% endif %}>Gravatar</label>
@@ -243,6 +218,27 @@
                 </div>
                 <p class="note">Selecting the Gravatar option will cause your avatar to be pulled from the <a href="https://gravatar.com">Gravatar account</a> linked to your email address, and feelings won't be shown in your posts unless you choose to use a Mii instead. Same with the custom avatar option but who really cared anyway?</p>
          </li>
+    <li class="setting-mii">
+        <p class="settings-label">Choose Mii</p>
+        <span class="note">Use the below interface to choose a Mii from a Nintendo Network ID, Pretendo Network ID, Mii QR code, raw Mii data/file/Mii Studio data, from amiibo data... whatever you want. <b>Hit Submit and it will set your Mii, then save your settings.</b></span>
+
+        <iframe style="border: none; overflow: scroll;
+            width: 100%; height: 400px;" id="mii-unsecure-frame" src="https://mii-unsecure.ariankordi.net/?iframeMode" allowtransparency="true"></iframe>
+
+        <ul id="params-list"></ul>
+
+        <script>
+        const ul = document.getElementById('params-list');
+        var frame = document.getElementById('mii-unsecure-frame');
+        window.onmessage = function(e) {
+          debugger;
+
+          // NOTE: you NEED THIS to undisable the submit button
+          frame.contentWindow.postMessage('releaseSubmit', '*');
+        };
+
+        </script>
+    </li>
 
 	{% csrf_token %}
 	<div class="form-buttons">

@@ -505,13 +505,6 @@ def user_view(request, username):
 
 		if len(request.POST.get('avatar')) > 255:
 			return json_response('Avatar is too long (length '+str(len(request.POST.get('avatar')))+', max 255)')
-		if request.POST.get('email') and not request.POST.get('email') == 'None':
-			if User.email_in_use(request.POST['email'], request):
-				return HttpResponseBadRequest("That email address is already in use, that can't happen.")
-			try:
-				EmailValidator()(value=request.POST['email'])
-			except ValidationError:
-				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
 		#if user.has_plain_avatar():
@@ -601,10 +594,6 @@ def user_view(request, username):
 					user.theme = request.POST['theme']
 		else:
 			user.theme = None
-		if request.POST.get('email') == 'None':
-			user.email = None
-		else:
-			user.email = request.POST.get('email')
 
 		profile.country = request.POST.get('country')
 		website = request.POST.get('website')
@@ -633,10 +622,6 @@ def user_view(request, username):
 			old_comment=comment_old,
 			new_nickname=request.POST.get('screen_name'),
 			new_comment=request.POST.get('profile_comment'))
-		if not user.email:
-			profile.email_login = 1
-		else:
-			profile.email_login = (request.POST.get('email_login') or 1)
 
 		profile.save()
 		user.save()
@@ -1735,20 +1720,40 @@ def message_rm(request, message):
 def prefs(request):
 	profile = request.user.profile()
 	if request.method == 'POST':
-		if request.POST.get('a'):
-			profile.let_yeahnotifs = True
+		profile.let_yeahnotifs = bool(request.POST.get('a'))
+		request.user.hide_online = bool(request.POST.get('b'))
+		if request.POST.get('email') and not request.POST.get('email') == 'None':
+			if User.email_in_use(request.POST['email'], request):
+				return json_response("That email address is already in use, that can't happen.")
+			try:
+				EmailValidator()(value=request.POST['email'])
+			except ValidationError:
+				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
+		if request.POST.get('email') == 'None':
+			request.user.email = None
 		else:
-			profile.let_yeahnotifs = False
-		if request.POST.get('b'):
-			request.user.hide_online = True
+			request.user.email = request.POST.get('email')
+		if not request.user.email:
+			profile.email_login = 1
 		else:
-			request.user.hide_online = False
+			profile.email_login = (request.POST.get('email_login') or 1)
 		profile.save()
 		request.user.save()
 		return HttpResponse()
 	lights = not (request.session.get('lights', False))
 	arr = [profile.let_yeahnotifs, lights, request.user.hide_online]
-	return JsonResponse(arr, safe=False)
+	if request.headers.get('x-requested-with') == 'XMLHttpRequest' \
+		and not request.META['QUERY_STRING']:
+		return JsonResponse(arr, safe=False)
+	# show account settings page otherwise (previously just json)
+	profile.setup(request)
+	user = request.user
+	user.mh = user.mh()
+	return render(request, 'closedverse_main/account-settings.html', {
+		'title': 'Account settings',
+		'user': user,
+		'profile': profile,
+	})
 
 def debug(request, username):
 	user = get_object_or_404(User, username=username)

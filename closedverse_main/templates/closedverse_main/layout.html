@@ -118,7 +118,8 @@
               <li id="global-menu-my-menu"><button class="symbol js-open-global-my-menu open-global-my-menu"></button>
                 <menu id="global-my-menu" class="invisible none">
                   <li><a href="{% url "main:profile-settings" %}" class="symbol my-menu-profile-setting"><span>Profile settings</span></a></li>
-                  <li><a href="#" class="symbol my-menu-account-setting"><span>Account preferences</span></a></li>
+                  <li><a href="{% url "main:account-settings" %}" class="symbol my-menu-account-setting"><span>Account settings</span></a></li>
+                  <li><a href="#" onclick="Olv.Closed.lights()" class="symbol my-menu-star-dark"><span>Toggle Dark Mode</span></a></li>
                   {% if inv %}<li><a href="{% url "main:invites" %}" class="symbol my-menu-guide"><span>Invites</span></a></li>{% endif %}
                   <li><a href="{% url "main:special-community-tag" "announcements" %}" class="symbol my-menu-openman"><span>{{ brand_name }} Announcements</span></a></li>
                   <li><a href="{% url "main:special-community-tag" "changelog" %}" class="symbol my-menu-openman"><span>{{ brand_name }} Changelog</span></a></li>
