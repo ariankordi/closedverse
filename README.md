@@ -1,7 +1,15 @@
-# closedverse-video-support
-Fork of [Closedverse](https://github.com/ariankordi/closedverse) with features from other forks ("Blueverse", Cedar-Django prior to July 2023).
+# Closedverse (2023)
+This was a Miiverse clone released on September 9th, 2017. Written in Python with Django. It originally ran from 2017 to 2019, with thousands of users.
 
-It was originally Term's idea but now this is pretty much a second awkward repo for me (Arian) to reluctantly add new features into this thing.
+The name originally mocked [Openverse](https://github.com/PF2M/Openverse) by PF2M, with the goal originally being to rewrite it to be flexible and more stable. The original code is [available in the main-2017 branch.](https://github.com/ariankordi/closedverse/tree/main-2017)
+
+The idea for a new version came up in 2023 by [TermOfficial/parakeet-live](https://github.com/parakeet-live), and I tried to add features from other forks ("Blueverse", Cedar-Django prior to July 2023).
+
+To be clear, I don't fully support running Miiverse clones and especially dread this old codebase by now. However, if I don't merge all of the forks together, then nobody will.
+
+So, this repo is a place for me to keep "supporting" this (as of writing) 9 year old codebase.
+
+The least worst alternative is [Indigo](https://github.com/PF2M/Indigo) which I've also tried to push changes to in 2023, but it has its own problems as well.
 
 # Install/setup
 _Updated January 18th, 2026_
