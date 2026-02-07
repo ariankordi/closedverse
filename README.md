@@ -38,11 +38,11 @@ When you use venv, **you will need to activate** (step 3) **every single time** 
 Downloading the master.zip and extracting it will work, but it's recommended to use Git.
 1. Install Git with `sudo apt install git`
 2. Then run the following:
-`git clone https://github.com/parakeet-live/closedverse-video-support`
+`git clone https://github.com/ariankordi/closedverse -b main-2023`
 
-Now Closedverse should be downloaded to the `closedverse-video-support` folder.
+Now Closedverse should be downloaded to the `closedverse` folder.
 ### Install from dependencies.txt
-In the `closedverse-video-support` folder, run this:
+In the `closedverse` folder, run this:
 * `python3 -m pip install -r requirements.txt`
 
 If you install something with pip and see an error saying `error: externally-managed-environment`, **then you'll need to use venv.** [Set it up and activate](#configure-venv-you-can-skip-this), **then try pip after it's set up.**
@@ -106,7 +106,7 @@ AKA, how to run Closedverse automatically, on boot, with error and access loggin
 2. Copy `gunicorn-closedverse.service` to `/etc/systemd/system`.
 3. Edit the file (`sudo nano /etc/systemd/system/gunicorn-closedverse.service`) and adjust it accordingly.
 	* If you're using venv, make sure the PATH reflects it.
-	* More importantly, change the user if you don't intend to run this as root, and change the path to the closedverse-video-support directory if it's not at the root of your home directory. `%h` is used as a standin for your home directory in systemd services.
+	* More importantly, change the user if you don't intend to run this as root, and change the path to the `closedverse` directory if it's not at the root of your home directory. `%h` is used as a standin for your home directory in systemd services.
 	* Also adjust the port accordingly with the `bind` parameter. [Optionally enable SSL.](https://docs.gunicorn.org/en/stable/settings.html#ssl)
 4. Run `sudo systemctl daemon-reload`.
 	* You will need to run this every time you change the .service file, or else the changes will not persist.
